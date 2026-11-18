@@ -1,14 +1,17 @@
-"""dose_setup: method strip (the real control prompt, id 300, in full) on top of dose.png."""
+"""dose_setup: the real prompt (id 300, "focus your attention on" wording, paragraphs cut to three words) with the instruction line
+as a white bubble, the words that change between wordings in a dashed box, the 0% reference line said under the reply, then dose.png."""
 import json, base64, subprocess, os, html, sys
 import numpy as np
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, RED, INK
-D = "/Users/user/connectome/islands/agents/resident-a/compute/attn_intro/qwen3-32b-dose/"
+D = os.path.join(HERE, "..", "results", "qwen3-32b-dose") + "/"
 meta = json.load(open(D + "meta.json")); R = json.load(open(D + "dose.json"))
-ex = [r for r in R if r["id"] == 300 and r["cond"] == "1_mention"][0]
+ex = [r for r in R if r["id"] == 300 and r["cond"] == "3_focus"][0]
 u = ex["user"]; K = ex["k"] + 1
-line = meta["conds"]["1_mention"][0].format(k=K); assert line in u
+line = meta["conds"]["3_focus"][0].format(k=K); assert line in u
+ment = meta["conds"]["1_mention"][0].format(k=K)
+VAR = "Focus your attention on"; assert line.startswith(VAR)
 parts = u.split("\n\n"); paras = parts[1:5]; tail = "\n\n".join(parts[5:])
 pre, post = tail.split(line)
 AMB = "#F2B53A"; W = 2300
@@ -23,15 +26,17 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 28px;font-size:52px;line-height:1.22;display:flex;flex-direction:column;gap:12px}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
 .var{{background:#fff;color:{INK};border-radius:16px;padding:10px 16px;font-weight:800;font-size:52px}}
-.vrow{{display:flex;align-items:center;gap:20px}} .lab{{font-size:44px;font-weight:800;color:#fff;white-space:nowrap}}
+.dv{{border:5px dashed {INK};border-radius:12px;padding:0 8px}}
+.vrow{{display:flex;align-items:center;gap:20px}} .lab{{font-size:48px;font-weight:800;color:#fff;white-space:nowrap}}
+.ref{{font-size:50px;font-weight:700;margin-left:24px;line-height:1.15}}
 .mrow{{display:flex;align-items:center;gap:16px;margin-top:12px}}
 .rob{{width:100px;height:100px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:10px 30px;font-size:62px;font-weight:700}}
-.dose{{width:100%;display:block;margin-top:24px}}
+.dose{{width:100%;display:block;margin-top:14px}}
 </style></head><body>
 <div class="ub"><div>{html.escape(parts[0].strip())}</div>{"".join(para(p) for p in paras)}
-<div class="vrow"><div class="var">{html.escape(line)}</div><div class="lab">← each instruction below replaces this line</div></div><div>{html.escape(post.strip())}</div></div>
-<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(ex["ans_free"].strip())}</div></div>
+<div class="vrow"><div class="var"><span class="dv">{html.escape(VAR)}</span>{html.escape(line[len(VAR):])}</div><div class="lab">← boxed words: 7 wordings, below</div></div><div>{html.escape(post.strip())}</div></div>
+<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(ex["ans_free"].strip())}</div><div class="ref">0% = the same prompt with the line<br>“{html.escape(ment)}”</div></div>
 <img class="dose" src="data:image/png;base64,{DOSE}"></body></html>'''
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 hp = os.path.join(HERE, "dose_setup.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "dose_setup_raw.png")
