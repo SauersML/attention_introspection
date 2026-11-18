@@ -18,7 +18,7 @@ We then tried a ladder of wordings, all measured against the mention line on the
 
 ![Wording ladder at layer 28, against only naming the paragraph: focus on +242%, focus strongly +192%, glance at +184%, very strongly and only +112%, a little less +10%, do not pay attention +5%, completely ignore −25%; no instruction at all is −12%](figures/dose_full.png)
 
-(The figure shows layer 28, the peak; the numbers in the paragraph above are averaged over layers 21–53, which is why they are smaller. The order of the wordings is the same either way.)
+(The figure shows layer 28, the peak; the numbers in the paragraph above are averaged over layers 21–53, which is why they are smaller. The ranking is nearly the same either way.)
 
 Is the boost really aimed at the paragraph that was named, or does any focus instruction just stir attention around? To check, we took 100 prompts and asked the model to focus on each of the four paragraphs in turn, keeping everything else fixed. The named paragraph gets the biggest boost in every row. Per prompt, the named paragraph gained the most of the four in 97% of cases (chance would be 25%). The boost spills onto neighbouring paragraphs, and it is smallest for P4, the paragraph right before the question.
 
