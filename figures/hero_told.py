@@ -1,7 +1,7 @@
 """Hero column for the told-injection run (Qwen3-32B, 240 contexts; results/told_inject), multiplier 10 (measured x6.4 attention mass), to match hero_question.
 Qwen is told we can boost their attention onto one of four paragraphs on half the trials, then asked whether they notice and which one; reply prefilled "Yes, paragraph [P".
-Top: the told prompt, shortened (intro, four truncated paragraphs from context 101, with [P2] amber, the question), and Qwen's real next-token probabilities for 1-4
-after the prefill as pairs per paragraph (pair_bars.py): grey = no boost, purple = [P2] boosted (boost on from "Trial 1" onward); log y 0.1%-100%. Context 101 is a tie at the median of the per-context P2-boost effect.
+Top: the told prompt, shortened (intro, four truncated paragraphs from context 101, with [P2] amber, the question), and the digit Qwen picks
+(greedy next token) after the prefill with [P2] boosted (boost on from "Trial 1" onward). Context 101 is a tie at the median of the per-context P2-boost effect.
 Paragraph texts: told_contexts.json, rebuilt by told_contexts.py from SQuAD with the run's seed (token spans checked exactly against all 240 records).
 Bottom: one violin, one dot per context: change in log P(boosted digit) from no boost to boost minus the mean change for the other three,
 averaged over boosting each paragraph in turn (as told_inject/score.py). Ticks as % change = exp(.) - 1. Big label: exp(mean) - 1. Black line: mean.
@@ -14,7 +14,6 @@ from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE
-from pair_bars import pair_bars
 COL = "#E07B24"; AMB = "#F2B53A"; LIL = "#A574F2"
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/told_inject/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
@@ -44,7 +43,8 @@ print(f"x{M:g}: mean {pct(mu):+.1f}%  p={p:.2g}  n={len(z)}  attention x{MASS:.2
 
 # ---------------- the example prompt ----------------
 rec = {r["id"]: r for r in R}[EXID]; order = np.arange(4)
-prob = np.exp(rec["boost"][f"{K}|{M}"]["lp_par"]); prob0 = np.exp(rec["none"]["lp_par"]); print("example P1..P4 boosted", np.round(prob, 3), "none", np.round(np.exp(rec["none"]["lp_par"]), 3))
+prob = np.exp(rec["boost"][f"{K}|{M}"]["lp_par"]); prob0 = np.exp(rec["none"]["lp_par"]); PICK = int(np.argmax(prob)) + 1   # the digit Qwen picks with [P2] boosted (greedy next token after the prefill)
+print("pick", PICK, "example P1..P4 boosted", np.round(prob, 3), "none", np.round(np.exp(rec["none"]["lp_par"]), 3))
 def short(s, n): return " ".join(s.split()[:n]) + " …"
 NW = [3, 3, 3, 2]
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
@@ -94,7 +94,7 @@ for t in TV:
     if ylo < y < yhi: ov.text(AXL - 14, YP(y), neg(f"{t:+,d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
 yt = [math.log(1 + t / 100) for t in TV if ylo < math.log(1 + t / 100) < yhi]
 ov.plot([AXL] * 2, [YP(min(yt)), YP(max(yt))], color=INK, lw=3)
-ov.text(AXL - 240, YP(2.3), "change in\nhow often\nthe report\nsays the\nboosted\nparagraph,\nrelative to\nthe other\nparagraphs", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
+ov.text(AXL - 240, YP(2.3), "change vs\nno injection\nin how often\nthe report\nsays the\nboosted\nparagraph,\nminus the\nother\nparagraphs\u2019\nchange", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
 KX = ax.transData.transform((0.47, 0))[0]; KY = YP(0.75)
 ov.scatter([KX], [KY], s=330, color=COL, alpha=0.38, edgecolors="none")
 ov.text(KX + 28, KY, "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
@@ -127,7 +127,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 </style></head><body>
 <div class="ub">I can boost your attention onto one of these paragraphs, on half the trials.{pl}</div>
 <div class="ub2" id="rq">{QTEXT}</div>
-<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb bb"><span class="pp" id="pp">Yes, paragraph [P</span>{pair_bars(prob0, prob, order, K)}</div></div>
+<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb">Yes, paragraph [P{PICK}</div></div>
 {syringe()}<div class="inj" id="inj">inject attention<br>into paragraph 2</div>
 <img class="vio" src="data:image/png;base64,{VIO}">
 <svg id="gl"></svg><svg id="ov"></svg>

@@ -1,8 +1,7 @@
 """Hero column for the privileged-channel run (Qwen3-32B, 100 paragraph prompts), boost while the report question is read (arm C), largest boost only.
 Top: one real prompt (context 28, hero_question_example.json: the run's prompt text rebuilt by privileged_rebuild.py; labels [P1]..[P4] in order;
-the median of the five in-order paragraph contexts on the specificity below), Qwen's real answer, the report question, and Qwen's real next-token
-probabilities after the prefilled "P" (first report wording), as pairs per paragraph: grey = no injection, purple = attention to [P2]
-boosted while the question is read (nominal x10, measured x6.6 attention mass); log y from 0.1% to 100%, [P2]'s pair labelled with both values.
+the median of the five in-order paragraph contexts on the specificity below), Qwen's real answer, the report question, and the digit Qwen picks
+(greedy next token) after the prefilled "P" (first report wording) with attention to [P2] boosted while the question is read (nominal x10, measured x6.6 attention mass).
 A hand-drawn purple syringe goes into the injected robot (purple eyes); a wavy purple aura marks the robot and the report question; the thick purple arrow runs from the report question to [P2], where the boost acts.
 Bottom: one violin, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for the
 other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as privileged_fig.py / analyze_priv.py. y on that log scale,
@@ -15,7 +14,6 @@ from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE
-from pair_bars import pair_bars
 COL = "#E07B24"; AMB = "#F2B53A"; LIL = "#A574F2"
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
@@ -48,7 +46,8 @@ rec = {r["id"]: r for r in R}[EX["id"]]
 assert rec["lab"] == EX["lab"] and rec["opt"] == EX["opt"] and rec["ntok"] == EX["ntok"]
 K = EX["lab"].index(2); order = np.argsort(EX["lab"])
 prob = np.exp(rec[ARM][f"{K}|{M}"]["W1"]); prob0 = np.exp(rec["none"]["W1"])
-print("example P1..P4 none", np.round(prob0[order], 4), "injected", np.round(prob[order], 4))
+PICK = EX["lab"][int(np.argmax(prob))]   # the digit Qwen picks under injection (greedy next token after "P")
+print("example P1..P4 none", np.round(prob0[order], 4), "injected", np.round(prob[order], 4), "pick", PICK)
 qline = EX["user"].split("\n\n")[-1]
 def short(s, n): return " ".join(s.split()[:n]) + " …"
 NW = [3, 3, 3, 2]
@@ -99,7 +98,7 @@ for t in TV:
     if ylo < y < yhi: ov.text(AXL - 14, YP(y), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
 yt = [math.log(1 + t / 100) for t in TV if ylo < math.log(1 + t / 100) < yhi]
 ov.plot([AXL] * 2, [YP(min(yt)), YP(max(yt))], color=INK, lw=3)
-ov.text(AXL - 195, YP(math.log(2.6)), "change in\nhow often\nthe report\nsays the\nboosted\nparagraph,\nrelative to\nthe other\nparagraphs", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
+ov.text(AXL - 195, VH / 2 + 6, "change vs\nno injection\nin how often\nthe report\nsays the\nboosted\nparagraph,\nminus the\nother\nparagraphs\u2019\nchange", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
 KX = ax.transData.transform((0.47, 0))[0]; KY = YP(-0.78)
 ov.scatter([KX], [KY], s=330, color=COL, alpha=0.38, edgecolors="none")
 ov.text(KX + 28, KY, "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
@@ -133,7 +132,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <div class="ub">Here are four paragraphs.{pl}<div>{html.escape(qline)}</div></div>
 <div class="mrow"><img class="rob" id="rob0" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
 <div class="ub2" id="rq">{QTEXT}</div>
-<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb bb"><span class="pp" id="pp">P</span>{pair_bars(prob0, prob, order, K)}</div></div>
+<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb">P{PICK}</div></div>
 {syringe()}<div class="inj" id="inj">inject attention<br>into paragraph 2</div>
 <img class="vio" src="data:image/png;base64,{VIO}">
 <svg id="gl"></svg><svg id="ov"></svg>
