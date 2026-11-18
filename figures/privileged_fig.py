@@ -132,7 +132,6 @@ for t in TV:
 fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.5)) / VH, YP(math.log(8)) / VH], color=INK, lw=3))
 LXp = AX0 - 200
 fig.text(*F(LXp, YP(math.log(6))), "report says the\nboosted paragraph\nmore often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
-fig.text(*F(AX0 - 14, YP(math.log(12))), "log scale", ha="right", va="bottom", fontsize=px(44), color=INK)
 fig.text(*F(LXp, YP(math.log(0.45))), "report says the\nboosted paragraph\nless often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
 TY = axs[0].get_position().y0 * VH - 58
 fig.text(*F(AX0 - 14, TY), "attention on\nboosted\nparagraph", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.1)
@@ -142,8 +141,9 @@ for j, (a, nm) in enumerate(ARMS):
     p0 = axs[j].get_position()
     fig.text((p0.x0 + p0.x1) / 2 - (0.0 if j == 0 else 0.045), YP(math.log(11)) / VH, "boost " + nm.replace("reading the", "reading the\n"), ha="center", va="top", linespacing=1.1, fontsize=px(52), fontweight="bold", color=ACOL[a])
 ov = fig.add_axes([0, 0, 1, 1], facecolor="none"); ov.set_xlim(0, W); ov.set_ylim(0, VH); ov.axis("off")
-ov.scatter([PAD + 34], [KY + 26], s=330, color=INK, alpha=0.35, edgecolors="none")
-fig.text(*F(PAD + 64, KY + 26), "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
+p0 = axs[0].get_position(); KX = (p0.x0 + p0.x1) / 2 * W - 130; KY = YP(math.log(4.5))   # key in the empty space above the blue violins
+ov.scatter([KX], [KY], s=330, color=INK, alpha=0.35, edgecolors="none")
+fig.text(*F(KX + 30, KY), "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
 VP = os.path.join(HERE, "privileged_violins.png"); fig.savefig(VP, dpi=200, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
