@@ -12,7 +12,7 @@ Each prompt has four short Wikipedia paragraphs labelled [P1]..[P4] and an unrel
 - **Reporting:** asked which paragraph it attended to most, the model does no better than the same model reading the transcript.
 - **A trace through the cache:** boosting attention on one paragraph (with the answer text identical) moves the model's report about its attention, in log-probability, consistently and with dose. The sign is negative: it becomes less likely to name the boosted paragraph. A sham-boost control is running.
 
-![violin](figures/violin3.png)
+![violin](figures/violin4.png)
 
 ## Files
 - attn_intro.py: the experiment (patched eager attention, the boost intervention, the report).
