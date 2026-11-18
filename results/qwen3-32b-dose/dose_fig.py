@@ -8,8 +8,8 @@ R = json.load(open(D + "/dose_results.json"))
 INK = pal.INK
 plt.rcParams.update({"font.family": "Helvetica", "font.size": 56, "text.color": INK, "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": INK, "axes.edgecolor": INK})
 CS = [("2_glance", "“glance\nat”"), ("3_focus", "“focus\non”"), ("4_focus_strongly", "“focus\nstrongly”"), ("5_very_strongly_only", "“very\nstrongly\nand only”"),
-      ("6_twice", "“…twice”"), ("7_little_less", "“a little\nless”"), ("8_do_not", "“do not\npay\nattention”"), ("9_completely_ignore", "“com-\npletely\nignore”")]
-Z = [np.log2(1 + np.array(R["vs_mention"][c]["z"]) / 100) for c, _ in CS]  # plotted on a log scale; labels in % change
+      ("7_little_less", "“a little\nless”"), ("8_do_not", "“do not\npay\nattention”"), ("9_completely_ignore", "“com-\npletely\nignore”")]
+Z = [np.array(R["vs_mention"][c]["z"]) for c, _ in CS]  # % change, linear
 allz = np.concatenate(Z); lo_, hi_ = np.percentile(allz, 0.5), np.percentile(allz, 99.5)
 norm = pal.norm(np.percentile(allz, 3), np.percentile(allz, 90)); cmap = pal.DIV
 fig, a = plt.subplots(figsize=(32, 24)); rng = np.random.default_rng(1)
@@ -19,19 +19,17 @@ for p, ((c, lab), z) in enumerate(zip(CS, Z)):
     for b in v["bodies"]: b.set_facecolor(col); b.set_alpha(0.2); b.set_edgecolor(col); b.set_linewidth(2.5)
     xj = p + rng.uniform(-0.3, 0.3, len(z))
     a.scatter(xj, z, s=420, c=cmap(norm(z)), alpha=0.45, edgecolors="none", zorder=3)
-    a.scatter(xj, z, s=5, color="black", edgecolors="none", zorder=4)
     m, l, h = R["vs_mention"][c]["mean"]; mp = m
-    m, l, h = (np.log2(1 + t / 100) for t in (m, l, h))
-    a.plot([p, p], [l, h], color=INK, lw=12, solid_capstyle="butt", zorder=5); a.plot([p - 0.22, p + 0.22], [m, m], color=INK, lw=6, zorder=6)
     up = mp > 0
-    a.text(p, (z.max() + 0.06) if up else (z.min() - 0.06), MN(f"{mp:+.0f}%"), fontsize=74, fontweight="bold", ha="center", va="bottom" if up else "top", zorder=7)
+    a.text(p, (z.max() + 3) if up else (z.min() - 3), MN(f"{mp:+.0f}%"), fontsize=74, fontweight="bold", ha="center", va="bottom" if up else "top", zorder=7)
 a.axhline(0, color=INK, lw=4, zorder=4)
 a.set_xticks(range(len(CS))); a.set_xticklabels([l for _, l in CS], fontsize=50, fontweight="bold", linespacing=1.05)
 for t, (c, _) in zip(a.get_xticklabels(), CS): t.set_color(pal.PURPLE if R["vs_mention"][c]["mean"][0] > 0 else pal.RED)
-a.set_xlim(-0.6, len(CS) - 0.4); a.set_ylim(allz.min() - 0.27, allz.max() + 0.3)
-yt = [-25, 0, 50, 100, 200, 400]
-a.set_yticks([np.log2(1 + t / 100) for t in yt]); a.set_yticklabels([MN(f"{t:+d}%") if t else "0%" for t in yt])
-a.set_ylabel("change in attention\nvs only naming the paragraph", fontsize=62, labelpad=24)
+a.set_xlim(-0.6, len(CS) - 0.4); a.set_ylim(allz.min() - 14, allz.max() + 16)
+yt = [-25, 0, 25, 50, 75, 100]
+yt = [t for t in yt if allz.min() - 14 <= t <= allz.max() + 16]
+a.set_yticks(yt); a.set_yticklabels([MN(f"{t:+d}%") if t else "0%" for t in yt])
+a.set_ylabel("change in attention vs\nonly naming the paragraph", fontsize=62, labelpad=24)
 for s in ["top", "right"]: a.spines[s].set_visible(False)
 a.spines["left"].set_linewidth(2.5); a.spines["bottom"].set_linewidth(2.5); a.tick_params(width=2.5, length=10, labelsize=64); a.tick_params(axis="x", length=0, labelsize=48)
 fig.tight_layout(); fig.savefig(OUT + "dose.png", dpi=100, facecolor="white"); fig.savefig(OUT + "dose.jpg", dpi=100, facecolor="white")
