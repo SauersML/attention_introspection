@@ -154,7 +154,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <div class="mrow"><img class="rob" id="rob0" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
 <div class="ub2" id="rq">{QTEXT}</div>
 <div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb bb"><span class="pp" id="pp">P</span>{bars(prob)}</div></div>
-{syringe()}<div class="inj" id="inj">inject attention<br>into paragraph two</div>
+{syringe()}<div class="inj" id="inj">inject attention<br>into paragraph 2</div>
 <img class="vio" src="data:image/png;base64,{VIO}">
 <svg id="gl"></svg><svg id="ov"></svg>
 <script>
