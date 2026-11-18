@@ -11,7 +11,7 @@ Black line: mean. Big label: mean in percentage points. p: two-sided sign-flip t
   question   DATA (default results/privileged/data) arm C (boost while the report question is read), multiplier 10, report wording W1, the 100 paragraph
              prompts; same top-answer metric as told. Example: the prompt whose top answer with [P2] boosted is [P2] and whose dot is nearest the
              median (ties: labels in order, then lowest id); its text from CTX (default figures/privileged_ctx.json, rebuilt by privileged_rebuild.py;
-             rebuild it for a rerun with other labels).                                                                        -> hero_question_top.png
+             rebuild it for a rerun with other labels; in-order rerun: figures/privileged_inorder_ctx.json from privileged_inorder_ctx.py).                                                                        -> hero_question_top.png
 usage: nice -n 19 python3 hero_top.py told_yes|told|question [DATA [CTX]]"""
 import json, glob, math, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
@@ -74,7 +74,8 @@ else:
     segs = EX["segs"]; LAB = EX["lab"]; QLINE = EX["user"].split("\n\n")[-1]
     PICKPOS = int(np.argmax(rec[ARM][f"{K}|{M}"]["W1"])); assert PICKPOS == K; REPLY = f"P{LAB[PICKPOS]}"
     NONEPICK = LAB[int(np.argmax(rec["none"]["W1"]))]; print("example no-injection top answer: P%d" % NONEPICK)
-    MANIP = json.load(open(os.path.join(os.path.dirname(os.path.dirname(D)), "results.json")))["manip"] if os.path.exists(os.path.join(os.path.dirname(os.path.dirname(D)), "results.json")) else None
+    RJ = os.path.join(os.path.dirname(os.path.dirname(D)), "results.json")
+    MANIP = json.load(open(RJ)).get("manip") if os.path.exists(RJ) else None   # the in-order rerun's results.json has no "manip": mean ratio from the records
     DOSE = f'{MANIP[ARM][str(M)]["mean"]:.1f}' if MANIP else f'{np.mean([np.mean([r["massC"][f"{k}|{M}"][k] / r["mass_none_rep"][k] for k in range(r["N"])]) for r in rs]):.1f}'
 
 mu = float(z.mean()); p = signflip(z); lo, hi = boot(z)
