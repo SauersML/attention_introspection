@@ -21,7 +21,7 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-from pal import INK, PURPLE
+from pal import INK, PURPLE, pct_colour
 from robot_injected import injected_robot
 COL = "#E07B24"; AMB = "#F2B53A"; LIL = "#A574F2"
 ROOT = os.path.dirname(HERE)
@@ -100,7 +100,7 @@ yy = np.linspace(z.min() - 16 * SC, z.max() + 16 * SC, 400); ylo, yhi = yy.min()
 ax.fill_betweenx(yy, -dd, dd, color=COL, alpha=0.16, lw=0); ax.plot(np.r_[-dd, dd[::-1]], np.r_[yy, yy[::-1]], color=COL, lw=3, alpha=0.75)
 rng = np.random.default_rng(1); zj = z + rng.uniform(-4.5 * SC, 4.5 * SC, len(z))
 xj = rng.uniform(-1, 1, len(z)) * kde(zj) / kde(yy).max() * 0.39
-ax.scatter(xj, zj, s=240, color=COL, alpha=0.34, edgecolors="none", zorder=3)
+ax.scatter(xj, zj, s=240, c=pct_colour(1 + z / 100), alpha=0.34, edgecolors="none", zorder=3); ax.scatter(xj, zj, s=3, color="black", zorder=4)   # colour: the prompt's ratio to no injection
 ax.plot([-0.26, 0.26], [mu] * 2, color=INK, lw=5, zorder=7, solid_capstyle="butt")
 ax.axhline(0, color=INK, lw=4, zorder=0)
 ps = "p < 0.0001" if p < 1e-4 else f"p = {p:.2g}"
@@ -125,7 +125,7 @@ YL = {"told_yes": "change vs\nno injection\nin how often\nQwen says\nthey notice
       "question": "change vs\nno injection\nin how often\nQwen\u2019s\nanswer is\nthe boosted\nparagraph"}[MODE]
 ov.text(AXL - (215 if PC else 175), VH / 2 + 6, YL, ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
 KX = ax.transData.transform((0.47, 0))[0]; KY = YP(min(TV)) if min(TV) < -20 else YP(0) - 90
-ov.scatter([KX], [KY], s=240, color=COL, alpha=0.34, edgecolors="none")
+ov.scatter([KX], [KY], s=240, c=pct_colour([2.0]), alpha=0.34, edgecolors="none"); ov.scatter([KX], [KY], s=3, color="black")
 ov.text(KX + 26, KY, "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
 VP = os.path.join(HERE, f"_v_{MODE}.png"); fig.savefig(VP, dpi=200, facecolor="white"); plt.close(fig)
 

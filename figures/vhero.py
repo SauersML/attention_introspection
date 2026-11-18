@@ -2,7 +2,7 @@ import json, math, numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 R="/Users/user/connectome/islands/agents/resident-a/compute/attn_intro/"
 OUT="/Users/user/connectome/islands/agents/resident-a/compute/fig/attn_intro/"
-import sys; sys.path.insert(0,"/Users/user/connectome/islands/agents/resident-a/compute/fig/attn_intro"); from pal import PURPLE, RED, INK, DIV, norm as dnorm
+import sys, os; sys.path.insert(0,os.path.dirname(os.path.abspath(__file__))); from pal import PURPLE, RED, INK, pct_colour
 BLUE=PURPLE; ORANGE=RED
 plt.rcParams.update({"font.family":"Helvetica","font.size":30,"text.color":INK,"axes.labelcolor":INK,"xtick.color":INK,"ytick.color":INK,"axes.edgecolor":INK})
 def load(m):
@@ -70,14 +70,14 @@ for m,name,cond in [("qwen3-32b","“focus your\nattention”","focus"),("qwen3-
 plt.rcParams.update({"font.size":56})
 fig,a=plt.subplots(figsize=(23,8.2)); b=None
 cmap=colors.LinearSegmentedColormap.from_list("hy",["#BFD3EE","#5B8BD0","#2B4FA8","#4B2A8F","#2A0F4F"])
-allz=np.concatenate([res[n]["z"] for n in res]); vm=np.percentile(np.abs(allz),97); DN=dnorm(np.percentile(allz,1),vm)
+allz=np.concatenate([res[n]["z"] for n in res])
 rng=np.random.default_rng(1)
 for p,name in enumerate(res):
     r=res[name]; z=r["z"]
     vv=a.violinplot([z],positions=[p*1.35],widths=0.7,showextrema=False)
     col=PURPLE if np.mean(z)>0 else RED
     for bb in vv["bodies"]: bb.set_facecolor(col); bb.set_alpha(0.22); bb.set_edgecolor(col); bb.set_linewidth(2.5)
-    xj=p*1.35+rng.uniform(-0.25,0.25,len(z)); a.scatter(xj,z,s=650,c=DIV(DN(z)),alpha=0.45,edgecolors="none",zorder=3); a.scatter(xj,z,s=6,color="black",zorder=4)
+    xj=p*1.35+rng.uniform(-0.25,0.25,len(z)); a.scatter(xj,z,s=650,c=pct_colour(1+z/100),alpha=0.45,edgecolors="none",zorder=3); a.scatter(xj,z,s=6,color="black",zorder=4)
     a.plot([p*1.35,p*1.35],[r["lo"],r["hi"]],color=INK,lw=12,solid_capstyle="butt",zorder=5); a.plot([p*1.35-0.22,p*1.35+0.22],[r["mean"]]*2,color=INK,lw=6,zorder=6)
     a.text(p*1.35,(z.max()+2) if r["mean"]>0 else (z.min()-2),(f"{r['mean']:+.0f}% attention".replace("-","−")),fontsize=100,fontweight="bold",color=(PURPLE if r["mean"]>0 else RED),ha="center",va=("bottom" if r["mean"]>0 else "top"),zorder=7)
 a.set_xticks([]); 

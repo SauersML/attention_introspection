@@ -6,7 +6,7 @@ Reply bars (pair_bars.py): the model's real next-token probabilities after the p
 Bottom: violins, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for
 the other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as analyze_priv.py; y drawn on that log scale,
 ticks labelled as % change = exp(.) - 1 at x0.5, x1, x2, x4, x8 (evenly spaced). Big labels: exp(mean) - 1. Black line: the mean.
-95% bootstrap CI of the mean (10,000 resamples) printed, not drawn. Dots coloured by arm only. p over the largest boost and wherever p >= 0.0001 (every other p < 0.0001): two-sided sign-flip test over prompts (200,000 flips). Bottom line: the other five setups at x10 (CI excludes 0 or not).
+95% bootstrap CI of the mean (10,000 resamples) printed, not drawn. Dots coloured by their % change, exp(.), on the shared fixed scale (pal.pct_colour). p over the largest boost and wherever p >= 0.0001 (every other p < 0.0001): two-sided sign-flip test over prompts (200,000 flips). Bottom line: the other five setups at x10 (CI excludes 0 or not).
 usage: privileged_fig.py   (writes figures/privileged.png)"""
 import json, glob, math, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
@@ -14,7 +14,7 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-from pal import PURPLE, RED, INK, DIV, norm as dnorm
+from pal import PURPLE, RED, INK, pct_colour
 from pair_bars import pair_bars
 import matplotlib.patheffects as pe
 ACOL = {"A": "#2B5FA8", "C": "#E07B24"}   # one colour per arm (the compared things)
@@ -88,7 +88,7 @@ def column(i, title, sub, key, tcol=INK):
 VH = 1250; px = lambda v: v * 72 / 100   # px -> pt at dpi 100
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 fig = plt.figure(figsize=(W / 100, VH / 100), dpi=100)
-allz = np.concatenate(list(Z.values())); DN = dnorm(np.percentile(allz, 1), np.percentile(np.abs(allz), 97))
+allz = np.concatenate(list(Z.values()))
 ylo, yhi = allz.min() - 0.08, allz.max() + 0.5
 axs = []
 for j, (a, _) in enumerate(ARMS):
@@ -100,7 +100,7 @@ for j, (a, _) in enumerate(ARMS):
         kde = gaussian_kde(z, bw_method=0.35); yy = np.linspace(z.min() - 0.05, z.max() + 0.05, 200); dd = kde(yy); dd = dd / dd.max() * 0.40
         ax.fill_betweenx(yy, i - dd, i + dd, color=col, alpha=0.16, lw=0); ax.plot(np.r_[i - dd, (i + dd)[::-1]], np.r_[yy, yy[::-1]], color=col, lw=2.5, alpha=0.7)
         xj = i + rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.38
-        ax.scatter(xj, z, s=200, color=col, alpha=0.35, edgecolors="none", zorder=3)
+        ax.scatter(xj, z, s=200, c=pct_colour(np.exp(z)), alpha=0.35, edgecolors="none", zorder=3); ax.scatter(xj, z, s=2, color="black", zorder=4)
         ax.plot([i - 0.17, i + 0.17], [st["mean"]] * 2, color=INK, lw=3, zorder=7, solid_capstyle="butt")             # mean
         lab = neg(f"{pct(st['mean']):+.0f}%")
         yl = z.max() + 0.06 if up else z.min() - 0.06
@@ -133,7 +133,7 @@ for j, (a, nm) in enumerate(ARMS):
     fig.text((p0.x0 + p0.x1) / 2 - (0.0 if j == 0 else 0.045), YP(math.log(11)) / VH, "boost " + nm.replace("reading the", "reading the\n"), ha="center", va="top", linespacing=1.1, fontsize=px(52), fontweight="bold", color=ACOL[a])
 ov = fig.add_axes([0, 0, 1, 1], facecolor="none"); ov.set_xlim(0, W); ov.set_ylim(0, VH); ov.axis("off")
 p0 = axs[0].get_position(); KX = (p0.x0 + p0.x1) / 2 * W - 130; KY = YP(math.log(4.5))   # key in the empty space above the blue violins
-ov.scatter([KX], [KY], s=330, color=INK, alpha=0.35, edgecolors="none")
+ov.scatter([KX], [KY], s=330, c=pct_colour([2.0]), alpha=0.35, edgecolors="none"); ov.scatter([KX], [KY], s=3, color="black")
 fig.text(*F(KX + 30, KY), "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
 VP = os.path.join(HERE, "privileged_violins.png"); fig.savefig(VP, dpi=200, facecolor="white"); plt.close(fig)
 

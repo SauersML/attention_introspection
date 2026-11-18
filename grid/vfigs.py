@@ -6,7 +6,7 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from PIL import Image
 HERE = "/Users/user/connectome/islands/agents/resident-a/compute/fig/attn_intro/"
 DATA = "/Users/user/connectome/islands/agents/resident-a/compute/attn_intro/grid/"
-sys.path.insert(0, HERE); from pal import PURPLE, RED, INK, DIV, norm as dnorm
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "figures")); from pal import PURPLE, RED, INK, pct_colour
 R = json.load(open(sys.argv[1])); IDS = [r["id"] for r in R]
 MINUS = "\u2212"
 LINE = {"focus": "Focus your attention on paragraph [P{k}].", "ignore": "Do not pay attention to paragraph [P{k}].",
@@ -35,13 +35,13 @@ COL = {"focus": PURPLE, "ignore": RED, "mention": PURPLE}
 def violins(res, ref, png, W):
     plt.rcParams.update({"font.family": "Helvetica", "font.size": 56, "text.color": INK})
     n = len(res); fig, a = plt.subplots(figsize=(W / 100, 8.2))
-    allz = np.concatenate([r["z"].ravel() for r in res]); DN = dnorm(np.percentile(allz, 1), np.percentile(np.abs(allz), 97))
+    allz = np.concatenate([r["z"].ravel() for r in res])
     rng = np.random.default_rng(1); GS = max(allz.max(), 0) - min(allz.min(), 0)
     for p, r in enumerate(res):
         z = r["z"].ravel(); x0 = p * 1.35; col = PURPLE if r["mean"] > 0 else RED
         vv = a.violinplot([z], positions=[x0], widths=0.7, showextrema=False)
         for bb in vv["bodies"]: bb.set_facecolor(col); bb.set_alpha(0.22); bb.set_edgecolor(col); bb.set_linewidth(2.5)
-        xj = x0 + rng.uniform(-0.25, 0.25, len(z)); a.scatter(xj, z, s=650, c=DIV(DN(z)), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
+        xj = x0 + rng.uniform(-0.25, 0.25, len(z)); a.scatter(xj, z, s=650, c=pct_colour(1 + z / 100), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
         a.plot([x0, x0], [r["lo"], r["hi"]], color=INK, lw=12, solid_capstyle="butt", zorder=5); a.plot([x0 - 0.22, x0 + 0.22], [r["mean"]] * 2, color=INK, lw=6, zorder=6)
         a.text(x0, (z.max() + 0.03 * GS) if r["mean"] > 0 else (z.min() - 0.05 * GS), f"{r['mean']:+.0f}% attention".replace("-", MINUS), fontsize=100, fontweight="bold",
                color=col, ha="center", va=("bottom" if r["mean"] > 0 else "top"), zorder=7)

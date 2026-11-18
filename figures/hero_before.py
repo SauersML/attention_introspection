@@ -10,7 +10,7 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-from pal import PURPLE, RED, INK, DIV, norm as dnorm
+from pal import PURPLE, RED, INK, pct_colour
 D = "/Users/user/connectome/islands/agents/resident-a/compute/attn_intro/qwen3-32b-before/"
 meta = json.load(open(D + "meta.json")); L = meta["LAYERS"]
 R = json.load(open(D + "dose.json")); by = {(r["id"], r["cond"]): r for r in R}
@@ -67,7 +67,7 @@ for ctrl, ctag, out in [("b_mention", "mention", "hero_before")]:
         vv = a.violinplot([z], positions=[x0], widths=0.45, showextrema=False)
         for bb in vv["bodies"]: bb.set_facecolor(colr); bb.set_alpha(0.18); bb.set_edgecolor(colr); bb.set_linewidth(2.5)
         xj = x0 + rng.uniform(-0.15, 0.15, len(z))
-        for ax in (a, at): ax.scatter(xj, z, s=300, color=colr, alpha=0.5, edgecolors="none", zorder=3)
+        for ax in (a, at): ax.scatter(xj, z, s=300, c=pct_colour(1 + z / 100), alpha=0.5, edgecolors="none", zorder=3); ax.scatter(xj, z, s=3, color="black", zorder=4)
         a.plot([x0, x0], [lo95, hi95], color=INK, lw=16, solid_capstyle="butt", zorder=6)
         a.plot([x0 - 0.1, x0 + 0.1], [r["mean"]] * 2, color=INK, lw=7, zorder=7)
         eff = f"{r['mean']:+.0f}%".replace("-", "\u2212")

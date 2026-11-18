@@ -27,7 +27,7 @@ for p, (c, lab) in enumerate(CS):
     z = np.array(VM[c]["z"]); m, lo, hi = VM[c]["mean"]
     v = a.violinplot([z], positions=[p], widths=0.86, showextrema=False)
     for b in v["bodies"]: b.set_facecolor("#E9E9EE"); b.set_alpha(1); b.set_edgecolor("#B9B9C2"); b.set_linewidth(2)
-    a.scatter(p + rng.uniform(-0.28, 0.28, len(z)), z, s=110, color=DOT, alpha=0.4, edgecolors="none", zorder=3)
+    xj = p + rng.uniform(-0.28, 0.28, len(z)); a.scatter(xj, z, s=110, c=pal.pct_colour(1 + z / 100), alpha=0.4, edgecolors="none", zorder=3); a.scatter(xj, z, s=2, color="black", zorder=4)
     # mean with its 95% CI: a thick bar at the mean, whiskers to the interval
     a.plot([p - 0.3, p + 0.3], [m, m], color=COL[c], lw=9, solid_capstyle="butt", zorder=6)
     a.plot([p, p], [lo, hi], color=COL[c], lw=5, zorder=6)
