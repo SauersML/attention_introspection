@@ -84,9 +84,8 @@ for j, c in enumerate(cols):
     ax.fill_betweenx(ys, -hw, hw, color=PURPLE, alpha=0.22, lw=0, zorder=1)
     ax.plot(np.r_[hw, -hw[::-1], hw[:1]], np.r_[ys, ys[::-1], ys[:1]], color=PURPLE, lw=2.5, zorder=1)
     xj = g.uniform(-0.9, 0.9, len(v)) * np.interp(v, ys, hw)
-    col = DIV(DN(v - c["base"]))
     v = np.clip(v + g.uniform(-0.03, 0.03, len(v)), 0, 1); c["vj"] = v   # small vertical jitter: values are discrete
-    ax.scatter(xj, v, s=635, c=col, alpha=0.45, edgecolors="none", zorder=3); ax.scatter(xj, v, s=5, color="black", zorder=4)
+    ax.scatter(xj, v, s=635, color=PURPLE, alpha=0.45, edgecolors="none", zorder=3)
     ie = int(np.argmin(np.abs(v - c["ex"]) + np.abs(xj) * 1e-3)) if j == 0 else None
     ax.axhline(c["base"], color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
     ax.text(0.98, c["base"] + 0.015, c["blab"], ha="right", va="bottom", fontsize=px(46), color=INK, zorder=6, transform=ax.get_yaxis_transform())
