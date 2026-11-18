@@ -116,21 +116,37 @@ for l in range(NL):
     lay.append(f'<rect x="{l*13}" y="0" width="10" height="56" rx="3" fill="{AMB if on else CELL}"/>')
 laysvg = f'<svg width="{NL*13}" height="56">' + "".join(lay) + "</svg>"
 
-# ---------------- pairing table ----------------
-def ministrip(k, c, name):
-    r = "".join(f'<rect x="{j*15}" y="0" width="11" height="46" rx="3" fill="{AMB}"/>' for j in range(24))
-    return (f'<div class="cell" style="border-color:{c}">'
-            f'<span class="pk">P{k}</span><svg width="{24*15}" height="46">{r}</svg></div>')
-ARROW = ('<div class="cmp"><svg width="150" height="50" viewBox="0 0 150 50"><path d="M18,25 H132" stroke="#1D1D1F" stroke-width="6"/>'
-         '<path d="M4,25 L24,12 L24,38 z M146,25 L126,12 L126,38 z" fill="#1D1D1F"/></svg></div>')
-trs = ""
-for s_, k in rows:
-    trs += (f'<div class="tr"><div class="rl">{s_}</div>' + ministrip(k, COND[2][1], "do not attend") + ARROW
-            + ministrip(k, COND[0][1], "mention") + ARROW + ministrip(k, COND[1][1], "focus") + '</div>')
-cmphead = ('<div class="thr"><div class="rl"></div>'
-           f'<div class="th" style="color:{COND[2][1]}">do not attend</div><div class="cw">compare</div>'
-           f'<div class="th" style="color:{COND[0][1]}">mention</div><div class="cw">compare</div>'
-           f'<div class="th" style="color:{COND[1][1]}">focus</div></div>')
+# ---------------- pairing panel: one question, three conditions, x N ----------------
+PC = [("mentioned", COND[0][1]), ("focus your attention", COND[1][1]), ("do not pay attention", COND[2][1])]
+pv = []
+CX0 = 240; CWD = 440; GAP = 280; CTOP = 110; CHT = 210; NSTK = 3; OFF = 20
+cx = [CX0 + i * (CWD + GAP) for i in range(3)]
+pv.append(f'<defs><marker id="cm" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="{INK}"/></marker></defs>')
+def ptext(x, yy, t, size=46, w=800, fill=INK, anchor="start"):
+    pv.append(f'<text x="{x}" y="{yy}" font-size="{size}" font-weight="{w}" fill="{fill}" text-anchor="{anchor}" font-family="Helvetica Neue, Helvetica, Arial">{html.escape(t)}</text>')
+for i, (nm, c) in enumerate(PC):
+    x = cx[i]
+    ptext(x + 4, CTOP - 26 - NSTK * OFF + 6, nm, 46, 800, c)
+    for s_ in range(NSTK, 0, -1):   # grey copies behind = other questions
+        pv.append(f'<rect x="{x + s_*OFF}" y="{CTOP - s_*OFF}" width="{CWD}" height="{CHT}" rx="20" fill="#F4F4F6" stroke="#C9C9D0" stroke-width="3"/>')
+    pv.append(f'<rect x="{x}" y="{CTOP}" width="{CWD}" height="{CHT}" rx="20" fill="white" stroke="{c}" stroke-width="6"/>')
+    for r in range(4):
+        yy = CTOP + 24 + r * 42
+        hot = (r + 1 == K)
+        for j in range(24):
+            pv.append(f'<rect x="{x + 26 + j*16.5}" y="{yy}" width="11" height="32" rx="3" fill="{AMB if hot else CELL}"/>')
+ptext(CX0 - 30, CTOP + CHT / 2 + 16, q.split("what is ")[1].split("?")[0], 54, 800, INK, "end")
+# compare: mentioned -> focus (straight), mentioned -> do not (arc under the cards)
+yA = CTOP + CHT / 2
+pv.append(f'<path d="M{cx[0]+CWD+NSTK*OFF+12},{yA} H{cx[1]-14}" stroke="{INK}" stroke-width="6" marker-end="url(#cm)"/>')
+ptext((cx[0] + CWD + NSTK*OFF + cx[1]) / 2, yA - 24, "compare", 42, 800, INK, "middle")
+yb = CTOP + CHT + 14
+x1 = cx[0] + CWD / 2; x2 = cx[2] + CWD / 2; dip = yb + 120
+pv.append(f'<path d="M{x1},{yb} C{x1},{dip} {x1+80},{dip} {x1+200},{dip} H{x2-200} C{x2-80},{dip} {x2},{dip} {x2},{yb+8}" fill="none" stroke="{INK}" stroke-width="6" marker-end="url(#cm)"/>')
+pv.append(f'<rect x="{(x1+x2)/2-120}" y="{dip-34}" width="240" height="60" fill="white"/>')
+ptext((x1 + x2) / 2, dip + 14, "compare", 42, 800, INK, "middle")
+PH = dip + 40
+svg2 = f'<svg width="{W-60}" height="{PH}" viewBox="0 0 {W-60} {PH}">' + "".join(pv) + "</svg>"
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:30px 30px 34px}}
@@ -157,6 +173,9 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .cmp{{width:200px;display:flex;justify-content:center}}
 .cn{{font-size:42px;font-weight:800;white-space:nowrap}}
 .cell{{flex:1;height:96px;border:5px solid;border-radius:20px;display:flex;align-items:center;gap:14px;padding:0 18px;overflow:hidden}}
+.rep{{display:flex;align-items:baseline;gap:50px;margin:18px 0 0 6px}}
+.big{{font-size:84px;font-weight:800}}
+.rnd{{font-size:46px;font-weight:800}}
 .pk{{font-size:44px;font-weight:800;color:{AMBD}}}
 </style></head><body>
 <div class="h">Qwen3-32B gets the same message under three conditions; only one line differs</div>
@@ -166,12 +185,9 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 {svg1}
 <div class="lay">{laysvg}<span>layers {L0}–{L1} of {NL}, averaged over all heads</span></div>
 <div class="sep"></div>
-<div class="h">Each of {N_ARITH} questions runs with and without the instruction; we compare the same question’s two runs</div>
-<div class="tbl">
-{cmphead}
-{trs}
-
-</div>
+<div class="h">The same question's attention is compared across conditions</div>
+{svg2}
+<div class="rep"><span class="big">× {N_ARITH} questions</span><span class="rnd">The named paragraph is picked at random for each question.</span></div>
 </body></html>'''
 open(os.path.join(HERE, "method.html"), "w").write(HTML)
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
