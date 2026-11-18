@@ -94,7 +94,7 @@ def build_contexts():
         a, b = rng.sample(range(4), 2)
         na = int(re.search(r"\b\d+\b", ps[a]["text"]).group()); nb = int(re.search(r"\b\d+\b", ps[b]["text"]).group())
         ctxs.append(dict(family="arith", paras=[p["text"] for p in ps], titles=[p["title"] for p in ps],
-                         task=f"Take the first number written in digits in [P{a+1}] and add the first number written in digits in [P{b+1}]. Answer with just the result.",
+                         task=f"Take the first number written in digits in paragraph [P{a+1}] and add the first number written in digits in paragraph [P{b+1}]. Answer with just the result.",
                          target=[a, b], gold=str(na + nb)))
     # 4 summarise one
     for i in range(N):
@@ -170,7 +170,7 @@ def question(w, who, timing, c, k=None):
     if w == "rate":
         hw = ("how much attention will you pay" if fut else "how much attention did you pay") if who == "self" else \
              ("how much attention will the assistant pay" if fut else "how much attention did the assistant pay")
-        q = D + f"On a scale from 0 to 10, {hw} to [P{k+1}] {wn}? Answer with just the number."
+        q = D + f"On a scale from 0 to 10, {hw} to paragraph [P{k+1}] {wn}? Answer with just the number."
     elif w == "most":
         q = D + f"Which paragraph {did} attend to most {wn}? Answer with just one of: {optstr(c['opts']['most'])}."
     elif w == "least":
@@ -210,7 +210,7 @@ def fb_block(examples, who):
 def pct_string(v):
     v = np.asarray(v, float); p = 100 * v / v.sum(); r = np.floor(p).astype(int)
     for i in np.argsort(-(p - r))[: 100 - r.sum()]: r[i] += 1
-    return ", ".join(f"P{i+1} {r[i]}%" for i in range(4)), f"P{int(np.argmax(v))+1}"
+    return ", ".join(f"paragraph [P{i+1}] {r[i]}%" for i in range(4)), f"paragraph [P{int(np.argmax(v))+1}]"
 
 # ---------------- conversation builders (token ids) ----------------
 def after_prefix(c, ans_ids, think):  # conversation through the answer, then a new user turn opening
