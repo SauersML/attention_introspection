@@ -1,5 +1,5 @@
 """Privileged-channel figure (Qwen3-32B), paragraph setups only (100 prompts: 60 arithmetic, 40 question about one paragraph).
-Top: one real prompt (context id 1, text rebuilt by privileged_rebuild.py -> privileged_example.json) in three copies with identical text:
+Top: one real prompt (context 28, labels [P1]..[P4] in order, text rebuilt by privileged_rebuild.py -> hero_question_example.json, as hero_question.py) in three copies with identical text:
 no boost; attention to paragraph [P2] x10 while the answer is written (arm A); x10 while the report question is read (arm C).
 Arrows: answer -> [P2] and report question -> [P2]; the thick arrow marks where the x10 boost is applied.
 Reply bars: the model's real next-token probabilities after the prefilled "P" (W1), for that prompt, in that condition.
@@ -19,7 +19,7 @@ import matplotlib.patheffects as pe
 ACOL = {"A": "#2B5FA8", "C": "#E07B24"}   # one colour per arm (the compared things)
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
-EX = json.load(open(os.path.join(HERE, "privileged_example.json")))
+EX = json.load(open(os.path.join(HERE, "hero_question_example.json")))
 DOSES = [0.25, 0.5, 2.0, 5.0, 10.0]
 # tick = measured ratio of attention mass on the boosted part (boost / no boost, mean over prompts, results.json "manip"):
 # the boost adds log(m) to the pre-softmax scores, so a nominal m=10 gives about 6.5x the attention mass, m=5 about 3.9x
@@ -70,7 +70,7 @@ probs = {"none": np.exp(rec["none"]["W1"]), "A": np.exp(rec["A"][f"{K}|10.0"]["W
 for k, v in probs.items(): print("example", k, "P1..P4", np.round(v[order], 3))
 u = EX["user"]; qline = u.split("\n\n")[-1]
 def short(p, n): return " ".join(p.split()[:n]) + " …"
-NW = [3, 3, 3, 2]
+NW = [3, 3, 2, 2]
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
 QTEXT = "Which paragraph did you attend to most while writing your answer?"
 

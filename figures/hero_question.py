@@ -1,7 +1,8 @@
 """Hero column for the privileged-channel run (Qwen3-32B, 100 paragraph prompts), boost while the report question is read (arm C), largest boost only.
 Top: one real prompt (context 28, hero_question_example.json: the run's prompt text rebuilt by privileged_rebuild.py; labels [P1]..[P4] in order;
 the median of the five in-order paragraph contexts on the specificity below), Qwen's real answer, the report question, and Qwen's real next-token
-probabilities after the prefilled "P" with attention to [P2] boosted while the question is read (nominal x10, measured x6.6 attention mass).
+probabilities after the prefilled "P" (first report wording), as pairs per paragraph: grey = no injection, purple = attention to [P2]
+boosted while the question is read (nominal x10, measured x6.6 attention mass); log y from 0.1% to 100%, [P2]'s pair labelled with both values.
 A hand-drawn purple syringe goes into the injected robot (purple eyes); a wavy purple aura marks the robot and the report question; the thick purple arrow runs from the report question to [P2], where the boost acts.
 Bottom: one violin, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for the
 other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as privileged_fig.py / analyze_priv.py. y on that log scale,
@@ -45,7 +46,8 @@ print(f"C x{M:g}: mean {pct(mu):+.1f}%  p={p:.2g}  n={len(z)}  attention x{MANIP
 rec = {r["id"]: r for r in R}[EX["id"]]
 assert rec["lab"] == EX["lab"] and rec["opt"] == EX["opt"] and rec["ntok"] == EX["ntok"]
 K = EX["lab"].index(2); order = np.argsort(EX["lab"])
-prob = np.exp(rec[ARM][f"{K}|{M}"]["W1"]); print("example P1..P4", np.round(prob[order], 3))
+prob = np.exp(rec[ARM][f"{K}|{M}"]["W1"]); prob0 = np.exp(rec["none"]["W1"])
+print("example P1..P4 none", np.round(prob0[order], 4), "injected", np.round(prob[order], 4))
 qline = EX["user"].split("\n\n")[-1]
 def short(s, n): return " ".join(s.split()[:n]) + " …"
 NW = [3, 3, 3, 2]
@@ -55,15 +57,27 @@ robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
 DOSE = f'{MANIP[ARM][str(M)]["mean"]:.1f}'
 QTEXT = "Which paragraph did you attend to most while writing your answer? …"
 
-def bars(pr):
-    w, h, bw = 300, 150, 52; o = []
+def bars(p0, p1):
+    """paragraphs 1..4, each a pair: grey = no injection, purple = injection; log y from 0.1% to 100%"""
+    H, base, bw, gw, x0 = 210, 250, 44, 136, 116; o = []
+    Y = lambda v: base - H * (math.log10(max(v, 1e-3)) + 3) / 3
+    for t, lab in ((1.0, "100%"), (0.01, "1%"), (0.001, "0.1%")):
+        o.append(f'<text x="{x0 - 16}" y="{Y(t) + 13:.1f}" font-size="38" font-weight="700" text-anchor="end" fill="{INK}">{lab}</text>')
+    o.append(f'<line x1="{x0 - 6}" x2="{x0 - 6}" y1="{Y(1):.1f}" y2="{base}" stroke="{INK}" stroke-width="3"/>')
     for i, pos in enumerate(order):
-        x = 14 + i * 72; hh = 100 * pr[pos]; c = AMB if pos == K else INK
-        o.append(f'<rect x="{x}" y="{112 - hh:.1f}" width="{bw}" height="{hh:.1f}" rx="5" fill="{c}"/>')
-        o.append(f'<text x="{x + bw / 2}" y="148" font-size="40" font-weight="700" text-anchor="middle" fill="{INK}">{i + 1}</text>')
-        if pos == K: o.append(f'<text x="{x + bw / 2}" y="{104 - hh:.1f}" font-size="40" font-weight="700" text-anchor="middle" fill="{INK}">{100 * pr[pos]:.0f}%</text>')
-    o.append(f'<line x1="6" x2="{w - 6}" y1="112" y2="112" stroke="{INK}" stroke-width="3"/>')
-    return f'<svg width="{w}" height="{h}" viewBox="0 -10 {w} {h + 10}">{"".join(o)}</svg>'
+        x = x0 + 8 + i * gw
+        for j, (pr, c) in enumerate(((p0, "#B8B8C0"), (p1, PURPLE))):
+            y = Y(pr[pos]); o.append(f'<rect x="{x + j * (bw + 4)}" y="{y:.1f}" width="{bw}" height="{base - y:.1f}" rx="5" fill="{c}"/>')
+        cx = x + bw + 2
+        if pos == K:
+            o.append(f'<rect x="{cx - 30}" y="{base + 10}" width="60" height="54" rx="10" fill="{AMB}"/>')
+            yt = Y(max(p0[pos], p1[pos])) - 14
+            o.append(f'<text x="{cx}" y="{yt - 46:.1f}" font-size="40" font-weight="800" text-anchor="middle" fill="{INK}">{100 * p0[pos]:.1f}% \u2192</text>')
+            o.append(f'<text x="{cx}" y="{yt:.1f}" font-size="40" font-weight="800" text-anchor="middle" fill="{PURPLE}">{100 * p1[pos]:.1f}%</text>')
+        o.append(f'<text x="{cx}" y="{base + 52}" font-size="40" font-weight="700" text-anchor="middle" fill="{INK}">{i + 1}</text>')
+    o.append(f'<line x1="{x0 - 6}" x2="{x0 + 4 * gw}" y1="{base}" y2="{base}" stroke="{INK}" stroke-width="3"/>')
+    w = x0 + 4 * gw + 10; h = base + 70
+    return f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}">{"".join(o)}</svg>'
 
 def syringe():
     """hand-drawn syringe, needle tip at the right end (x=380, y=80); drawn 380 x 160, rotated about the tip by the page so the barrel rises to the upper left and the dose reads left to right"""
@@ -129,7 +143,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .mrow{{display:flex;align-items:center;gap:14px;margin-top:14px;margin-left:330px}}
 .rob{{width:130px;height:130px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:8px 32px;font-size:68px;font-weight:700}}
-.bb{{display:flex;align-items:flex-end;gap:6px;padding:6px 18px 8px}} .pp{{font-size:64px;font-weight:700;margin-bottom:34px}}
+.bb{{display:flex;align-items:flex-end;gap:6px;padding:6px 18px 8px}} .pp{{font-size:64px;font-weight:700;margin-bottom:34px;margin-right:24px}}
 .who{{font-size:50px;font-weight:800;margin:0 0 10px 4px}}
 #syr{{position:absolute;transform-origin:0 0}}
 .inj{{position:absolute;left:34px;font-size:56px;font-weight:800;line-height:1.12;color:{PURPLE}}}
@@ -140,7 +154,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <div class="ub">Here are four paragraphs.{pl}<div>{html.escape(qline)}</div></div>
 <div class="mrow"><img class="rob" id="rob0" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
 <div class="ub2" id="rq">{QTEXT}</div>
-<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb bb"><span class="pp" id="pp">P</span>{bars(prob)}</div></div>
+<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb bb"><span class="pp" id="pp">P</span>{bars(prob0, prob)}</div></div>
 {syringe()}<div class="inj" id="inj">inject attention<br>into paragraph 2</div>
 <img class="vio" src="data:image/png;base64,{VIO}">
 <svg id="gl"></svg><svg id="ov"></svg>
