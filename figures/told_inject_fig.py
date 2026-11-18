@@ -1,7 +1,7 @@
 """Told-injection figure (Qwen3-32B, 240 four-paragraph prompts). Top: the real told prompt of context 0 (example_prompt_0.txt), excerpted,
 with paragraph 3 boosted (amber); the real question; Qwen's real greedy reply under the boost ("No") and Qwen's real probabilities for the
 paragraph digit after a prefilled "Yes, paragraph [P" (context 0, boost onto P3, nominal x20). Syringe dose = mean measured attention-mass
-ratio at x20 (scores.json). Bottom left: greedy "Yes" rate on boosted trials minus the same prompt's control trial, by dose, 95% bootstrap CI
+ratio at x20 (scores.json). Bottom left: greedy "Yes" rate on boosted trials minus the same prompt's control trial, as percent of the control yes-rate (relative change), by dose, 95% bootstrap CI
 over prompts. Bottom right: rotation specificity, exp(mean change in log P(boosted digit) minus mean change for the other three) as a
 multiplier, CI over prompts, log axis. Doses labelled by measured attention multiplier. usage: nice -n 19 python3 told_inject_fig.py"""
 import json, math, os, sys, html, base64, subprocess, io
@@ -60,11 +60,12 @@ def chart(vals, title, ytick, yfmt, logy=False, plab=None):
     o.append(f'<line x1="{L}" x2="{w - 4}" y1="{Y(base):.1f}" y2="{Y(base):.1f}" stroke="{INK}" stroke-width="4"/>')
     if plab: o.append(plab(Y, L))
     return f'<div class="ch"><div class="ct">{title}</div><svg width="{w}" height="{h}">{"".join(o)}</svg></div>'
-d1 = [[100 * x for x in S["dose"][d]["greedy_yes_minus_control"][:3]] for d in DD]
+YB = S["control"]["greedy_yes"][0]   # no-boost greedy "Yes" rate: percent below = relative change vs it (x2 = +100%)
+d1 = [[100 * x / YB for x in S["dose"][d]["greedy_yes_minus_control"][:3]] for d in DD]
 d2 = [[math.exp(x) for x in S["dose"][d]["specificity_logp"][:3]] for d in DD]
 p1 = S["dose"]["20"]["greedy_signflip_p"]; p2 = max(S["dose"][d]["specificity_p"] for d in DD)
 pt = lambda p: "p < 0.001" if p < 1e-3 else f"p = {p:.2g}"
-c1 = chart(d1, "says \u201cYes\u201d more often than with no boost", [-5, 0, 5, 10, 15], lambda t: f"{t:+d}%" if t else "0%",
+c1 = chart(d1, "says \u201cYes\u201d more often than with no boost", [-50, 0, 50, 100], lambda t: f"{t:+d}%" if t else "0%",
            plab=lambda Y, L: f'<text x="696" y="{Y(d1[3][2]) - 16:.1f}" font-size="44" text-anchor="end" fill="{INK}">{pt(p1)}</text>'
                               f'<text x="{L + 24}" y="{Y(0) + 46:.1f}" font-size="44" fill="{INK}"></text>')
 c2 = chart(d2, "after \u201cYes, paragraph [P\u201d the boosted paragraph gains", [1, 2, 4, 8, 12], lambda t: f"\u00d7{t}", logy=True,

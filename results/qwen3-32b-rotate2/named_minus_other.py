@@ -15,3 +15,12 @@ for c in ["focus", "ignore"]:
         print(f"{c} vs {ctrl}: named minus other {m.mean():+.1f} pp [{np.percentile(bs,2.5):+.1f}, {np.percentile(bs,97.5):+.1f}]; by named P1..P4 "
               + ", ".join(f"{v:+.1f}" for v in d.mean(0)))
 json.dump(out, open("named_minus_other.json", "w"), indent=1)
+# Relative version (the README's convention: percent = relative change): per context and named paragraph, the named paragraph's
+# attention ratio (instruction / control) divided by the mean ratio of the other three, minus 1; mean over contexts of its log, exp - 1.
+for c in ["focus", "ignore"]:
+    for ctrl, B in [("mention", A["mention"]), ("none", A0)]:
+        Q = A[c] / B; lr = np.array([[np.log(Q[i, k, k] / np.delete(Q[i, k], k).mean()) for k in range(4)] for i in range(n)]).mean(1)
+        bs = lr[BI].mean(1); f = lambda v: 100 * (np.exp(v) - 1)
+        out[f"{c}_vs_{ctrl}"]["relative"] = dict(mean=f(lr.mean()), lo=f(np.percentile(bs, 2.5)), hi=f(np.percentile(bs, 97.5)))
+        print(f"{c} vs {ctrl}: named relative to the others {f(lr.mean()):+.1f}% [{f(np.percentile(bs, 2.5)):+.1f}, {f(np.percentile(bs, 97.5)):+.1f}]")
+json.dump(out, open("named_minus_other.json", "w"), indent=1)

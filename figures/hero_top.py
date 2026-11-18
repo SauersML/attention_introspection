@@ -3,10 +3,10 @@ the real prompt drawn on top (syringe into the purple-eyed robot, wavy aura, pur
 Per-prompt values are discrete (steps of 25 points), so dots are jittered and the violin uses a fixed modest bandwidth (9 points).
 told, question: each dot = one prompt's percent change vs no injection in how often the top answer is the boosted paragraph
 (its rate over the 4 rotations / 25% - 1; the no-injection rate is exactly 25% for every prompt by rotation), so -100%, 0, +100%, +200%, +300%.
-told_yes: change in percentage points of "Yes" answers, as before. Black line: mean. Big label: the mean (told, question: mean percent change). p: two-sided sign-flip test over prompts (200,000 flips). 95% CI (printed only): bootstrap over prompts, 10,000 resamples.
+told_yes: percent change vs no injection in how often Qwen says "Yes" (relative: the boosted yes-rate over the no-injection yes-rate, minus 1); per prompt, its change in yes-rate divided by the mean no-injection yes-rate over all prompts, so the dots average to the relative change. Black line: mean. Big label: the mean (told, question: mean percent change). p: two-sided sign-flip test over prompts (200,000 flips). 95% CI (printed only): bootstrap over prompts, 10,000 resamples.
 
   told_yes   results/told_inject/data, multiplier 20 (measured x9.9). Per prompt: percent of the 4 boosted trials whose greedy reply starts "Yes",
-             minus the no-injection trial's (0 or 100). Example: context 101, [P2] boosted, its real greedy reply.          -> hero_told_yes_top.png
+             minus the no-injection trial's (0 or 100), divided by the mean no-injection yes-rate. Example: context 101, [P2] boosted, its real greedy reply.          -> hero_told_yes_top.png
   told       same data, multiplier 10 (x6.4). Per prompt: percent of the 4 rotations whose top paragraph after "Yes, paragraph [P" (argmax of lp_par)
              is the boosted one, minus the same percent with no injection (the no-injection top answer compared to each boosted paragraph in turn:
              exactly 25 points). Example: context 101, [P2] boosted.                                                          -> hero_told_top.png
@@ -80,10 +80,10 @@ else:
     MANIP = json.load(open(RJ)).get("manip") if os.path.exists(RJ) else None   # the in-order rerun's results.json has no "manip": mean ratio from the records
     DOSE = f'{MANIP[ARM][str(M)]["mean"]:.1f}' if MANIP else f'{np.mean([np.mean([r["massC"][f"{k}|{M}"][k] / r["mass_none_rep"][k] for k in range(r["N"])]) for r in rs]):.1f}'
 
-PC = MODE != "told_yes"   # told, question: percent change vs no injection, rate / 25% - 1 (the no-injection rate is 25% for every prompt by rotation)
-SC = 100 / 25 if PC else 1; z = z * SC
-mu = float(z.mean()); p = signflip(z); lo, hi = boot(z)
+PC = True   # every mode: percent = relative change vs no injection. told, question: rate / 25% - 1 (25% for every prompt by rotation); told_yes: change / mean no-injection yes-rate
 BASE = 100 * float(np.mean([yes(r["none"]["text"]) for r in R])) if MODE == "told_yes" else 25.0   # no-injection rate: yes-rate, or 1 in 4 paragraphs
+SC = 100 / BASE; z = z * SC
+mu = float(z.mean()); p = signflip(z); lo, hi = boot(z)
 ex_i = ids.index(EXID); rank = int((z < z[ex_i]).sum()) + 1; rank_hi = int((z <= z[ex_i]).sum())
 print(f"{MODE}: mean {mu:+.1f} {'% change' if PC else 'points'}, 95% CI {lo:+.1f}..{hi:+.1f}, p={p:.2g}, n={len(z)}, median {np.median(z):+.0f}, attention x{DOSE}")
 print(f"example id {EXID}: value {z[ex_i]:+.0f} (median {np.median(z):+.0f}), rank {rank}-{rank_hi} of {len(z)} (ties), reply {REPLY!r}")
@@ -116,7 +116,8 @@ else:
     ov.text(LX, Y0, f"from {BASE:.0f}%", ha="left", va="top", fontsize=px(56), fontweight="bold", color=COL)
 ov.text(LX, Y0 - (14 if PC else 80), ps, ha="left", va="top", fontsize=px(50), color=COL)
 ov.text(AXR, NIY, "no injection", ha="right", va="bottom" if NIY > YP(0) else "top", fontsize=px(46), color=INK)
-TV = [t for t in (range(-100, 401, 100) if PC else range(-100, 101, 50 if z.min() < -50 else 25)) if ylo < t < yhi]
+STEP = next(st for st in (100, 200, 250, 500, 1000) if (yhi - ylo) / st <= 7)   # tick step: at most ~7 ticks
+TV = [t for t in range(-10000, 10001, STEP) if ylo < t < yhi]
 for t in TV: ov.text(AXL - 14, YP(t), neg(f"{t:+d}%") if t else "0", ha="right", va="center", fontsize=px(46), color=INK)
 ov.plot([AXL] * 2, [YP(min(TV)), YP(max(TV))], color=INK, lw=3)
 YL = {"told_yes": "change vs\nno injection\nin how often\nQwen says\nthey notice\na boost",
