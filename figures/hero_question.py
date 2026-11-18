@@ -150,7 +150,7 @@ const R=e=>document.getElementById(e).getBoundingClientRect();
 const rb=R('rob1'), syr=document.getElementById('syr'), A=30, SC=1.0;
 const tipx=rb.left+rb.width*0.29, tipy=rb.top+rb.height*0.72;
 syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='380px 80px'; syr.style.transform=`rotate(${{A}}deg) scale(${{SC}})`;
-const inj=document.getElementById('inj'), r0=R('rob0'); inj.style.top=(r0.bottom+26)+'px';
+const inj=document.getElementById('inj'), r0=R('rob0'); inj.style.top=(r0.bottom+70)+'px';
 // wavy purple aura: layered rings, each rippled by turbulence and blurred
 const gl=document.getElementById('gl'); gl.setAttribute('width',document.body.scrollWidth); gl.setAttribute('height',document.body.scrollHeight);
 let g=`<defs>`;
