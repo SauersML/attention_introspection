@@ -16,7 +16,9 @@ That changes how to read the "don't" instructions. "Do not pay attention to para
 
 We then tried a ladder of wordings, all measured against the mention line on the same 150 prompts. From here on, numbers are averaged over layers 21–53 rather than taken at layer 28, so they are smaller. Going up, stronger words do not give stronger focus. "Glance at" gives +38%, "focus your attention on" +47%, "focus strongly on" back down to +38%, and "focus very strongly and only on … Ignore everything else." only +21%. Going down, "pay a little less attention to" (+1%) and "do not pay attention to" (−1%) are no different from just naming the paragraph; only "completely ignore" (−14%) does anything.
 
-![Wording ladder: glance +38%, focus +47%, focus strongly +38%, very strongly and only +21%, a little less +1%, do not pay attention −1%, completely ignore −14%, all against only naming the paragraph](figures/dose_full.png)
+![Wording ladder at layer 28, against only naming the paragraph: focus on +242%, focus strongly +192%, glance at +184%, very strongly and only +112%, a little less +10%, do not pay attention +5%, completely ignore −25%; no instruction at all is −12%](figures/dose_full.png)
+
+(The figure shows layer 28, the peak; the numbers in the paragraph above are averaged over layers 21–53, which is why they are smaller. The order of the wordings is the same either way.)
 
 Is the boost really aimed at the paragraph that was named, or does any focus instruction just stir attention around? To check, we took 100 prompts and asked the model to focus on each of the four paragraphs in turn, keeping everything else fixed. The named paragraph gets the biggest boost in every row. Per prompt, the named paragraph gained the most of the four in 97% of cases (chance would be 25%). The boost spills onto neighbouring paragraphs, and it is smallest for P4, the paragraph right before the question.
 
