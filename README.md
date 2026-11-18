@@ -4,13 +4,9 @@ When you tell a person "focus on the second paragraph", they can do it, and afte
 
 The setup is simple. We give Qwen3-32B four short Wikipedia paragraphs labelled [P1] to [P4], followed by an unrelated arithmetic question ("what is 83 + 80? Answer with just the number."). The paragraphs are useless for the answer, so the model has no task reason to look at any of them. Sometimes we add one line before the question that asks it to attend to, or ignore, one paragraph. We then measure how much the answer tokens attend to that paragraph, averaged over all heads and over layers 21–53 of the model's 64, and per token of the paragraph. All instructed versions are scored on the same answer tokens, so the only thing that changes is the instruction line.
 
-"Focus your attention on paragraph [P2]." works. Attention on the named paragraph goes up by 62% compared with no instruction at all, across 150 prompts, and in every single prompt. "Completely ignore paragraph [P2]. Do not look at it at all." works too, but weakly: attention drops by 6%. The answer doesn't change: the model still says 163, and over all prompts its free answer under either instruction is the same as without one in more than 99% of cases.
+Both instructions *name* the paragraph, and naming might matter by itself. So we compare each instruction against a line that names the paragraph and asks for nothing: "Note that one of the paragraphs is labelled [Pk]." The effect is strongest at layer 28, so the figure shows that layer. There, "Focus your attention on paragraph [P2]." raises attention on the named paragraph by 242% over the mention line, across 150 prompts, and in every single prompt. "Completely ignore paragraph [P2]. Do not look at it at all." lowers it by 25%, in 97% of prompts. Both are significant (p < 0.00001). The answer doesn't change: the model still says 163, and over all prompts its free answer under either instruction is the same as without one in more than 99% of cases.
 
-![Focus raises attention on the named paragraph by 62%, completely ignore lowers it by 6%, compared with no instruction; the answer stays 163](figures/hero_none.png)
-
-There's a catch in that comparison, though. Both instructions also *name* the paragraph, and naming might matter by itself. So the fairer comparison is against a line that names the paragraph and asks for nothing: "Note that one of the paragraphs is labelled [Pk]." Against that, focus is +47% and completely ignore is −14%, and both are significant (p < 0.00001).
-
-![Against a line that only mentions the paragraph, focus is +47% and completely ignore is −14%](figures/hero.png)
+![At layer 28, against a line that only mentions the paragraph, focus raises attention on it by 242% and completely ignore lowers it by 25%; the answer stays 163](figures/hero_L28.png)
 
 The mention line deserves its own look, because it turns out that just naming a paragraph pulls attention toward it. In a separate set of 100 prompts, the neutral "Note that one of the paragraphs is labelled [P3]." raised attention on P3 by 10% compared with no instruction.
 
@@ -52,7 +48,7 @@ Some honest limits. Almost everything here is one model, Qwen3-32B (Qwen3-8B, in
 - `results/qwen3-32b-dose/` is the wording ladder and the hero prompts (`dose.py`, `dose_run.sh`, `dose_analyze.py`; write-up in `DOSE.md`, all numbers in `dose_results.json`).
 - `results/qwen3-32b-rotate/` is the rotation test and the sham boost (`rotate.py`, `rotate_run.sh`; write-up in `ROTATE.md`, numbers in `rotate_results.json` and `sham_results.json`).
 - `grid/` is the per-token run behind the token grid and the mention figure (`grid_pod.py`, `grid_run.sh`, then `grid.py` and `vfigs.py`; numbers in `grid/data/violins.json` and `grid_summary.json`).
-- `figures/` holds the figures and the scripts that draw them (`hero_dose.py` for the two hero figures, `trace3.py`, `rotate_fig.py`, `results/qwen3-32b-dose/dose_fig.py` for the ladder). Older figures from the first instruction wording are kept there but not shown above.
+- `figures/` holds the figures and the scripts that draw them (`hero_L28.py` for the hero figure, `trace3.py`, `rotate_fig.py`, `results/qwen3-32b-dose/dose_fig.py` for the ladder). Older figures from the first instruction wording are kept there but not shown above.
 - `monitor/` and `privileged/` are follow-up experiments on the report (more wordings, timings and feedback; a privileged-channel test); their plans are in `results/monitor/PREREG.md` and `results/privileged/PREREG.md`, and they have no results yet.
 
 The Qwen3-32B runs each fit on one A100 80 GB and take about half an hour. The figure scripts read from absolute paths on our machine, set at the top of each script; point them at your copy before rerunning.
