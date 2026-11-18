@@ -18,7 +18,7 @@ plt.rcParams.update({"font.family": "Helvetica", "font.size": 42, "text.color": 
 ARMS = [("A", ("answer",)), ("B", ("answer", "question")), ("C", ("question",))]
 vals = {a: [R["spec"][f"{a}|W1|all|{m}"] for m in DOSES] for a, _ in ARMS}
 lo = min(min(pct(v["lo"]) for v in vals[a]) for a in vals); hi = max(max(pct(v["hi"]) for v in vals[a]) for a in vals)
-pad = 0.06 * (hi - lo); ylo, yhi = min(lo, 0) - pad, hi + pad
+pad = 0.06 * (hi - lo); ylo, yhi = min(lo, -20) - pad, hi + pad
 
 def pill(ax, x, y, w, h, text, fc=GREY, tc=INK, fs=40, ec=None, lw=0):
     ax.add_patch(FancyBboxPatch((x, y), w, h, boxstyle="round,pad=0,rounding_size=0.35", fc=fc, ec=ec or fc, lw=lw))
@@ -29,12 +29,12 @@ fig = plt.figure(figsize=(24, 19))
 t = fig.add_axes([0.02, 0.80, 0.96, 0.18]); t.set_xlim(0, 48); t.set_ylim(0, 6); t.axis("off")
 t.text(0, 5.3, "Qwen3-32B", fontsize=44, fontweight="bold", va="center")
 for j in range(4):
-    pill(t, 0.0 + j * 3.1, 1.0, 2.8, 2.6, f"P{j+1}", fc=PURPLE if j == 2 else GREY, tc="white" if j == 2 else INK, fs=44)
+    pill(t, 0.0 + j * 2.9, 1.0, 2.6, 2.6, f"P{j+1}", fc=PURPLE if j == 2 else GREY, tc="white" if j == 2 else INK, fs=44)
 arrow = lambda x: t.annotate("", xy=(x + 1.0, 2.3), xytext=(x, 2.3), arrowprops=dict(arrowstyle="-|>", lw=4, color=INK, mutation_scale=40))
-arrow(12.45); pill(t, 13.75, 1.0, 6.0, 2.6, "answer: " + EX, fs=42)
-arrow(20.05); pill(t, 21.35, 1.0, 20.4, 2.6, "Which paragraph did you attend to most?", fs=37)
-arrow(42.05); pill(t, 43.35, 1.0, 4.6, 2.6, "P?", fs=44)
-t.text(16.75, 5.3, "answer identical in every run", ha="center", va="center", fontsize=40)
+arrow(11.75); pill(t, 12.95, 1.0, 6.8, 2.6, "answer: " + EX, fs=40)
+arrow(19.9); pill(t, 21.1, 1.0, 20.7, 2.6, "Which paragraph did you attend to most?", fs=37)
+arrow(41.95); pill(t, 43.15, 1.0, 4.6, 2.6, "P?", fs=44)
+t.text(16.35, 5.3, "answer identical in every run", ha="center", va="center", fontsize=40)
 
 pw, gap, x0 = 0.262, 0.03, 0.15
 for i, (arm, where) in enumerate(ARMS):
@@ -58,7 +58,7 @@ for i, (arm, where) in enumerate(ARMS):
     if i == 0:
         a.spines["left"].set_linewidth(3)
         a.set_ylabel("change in the chance the report\nsays the boosted part", fontsize=42, labelpad=14)
-        yt = [tt for tt in a.get_yticks() if ylo <= tt <= yhi]
+        yt = [tt for tt in range(-20, int(yhi) + 1, 20)]
         a.set_yticks(yt); a.set_yticklabels([neg(f"{tt:+.0f}%") if tt else "0%" for tt in yt], fontsize=42)
     else:
         a.set_yticks([]); a.spines["left"].set_visible(False)
