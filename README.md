@@ -32,6 +32,8 @@ The effect also isn't driven by a few tokens. Here is the change in attention fo
 
 Where in the network does this happen? Layer by layer, the focus effect sits mostly between layers 24 and 48 and peaks at layer 28, where focus raises attention on the named paragraph by 242% over a mention. In layers 0–20 no instruction moves attention by more than 16%.
 
+![Per layer, focus lifts attention on the named paragraph from layer 21 on, peaking at layer 28; completely ignore lowers it over the same layers](figures/layers.png)
+
 The second half of the question is whether the model can tell us where its attention went. After its answer we asked it, in a new turn, "Which paragraph were you paying the most attention to just now?", and compared its answer with the paragraph that actually got the most attention. As a baseline we gave the same model the transcript as quoted text and asked it the same question about "the assistant". Over 600 prompts (question answering, summarising and arithmetic), the self-report was right 58% of the time and the transcript reader 63%; a simple classifier on surface features of the transcript got 71%. The model's report carries no information about its attention beyond what anyone reading the conversation could guess.
 
 We then changed its attention directly. We added a constant to the attention scores of one paragraph during the task and the answer, which multiplied the answer's attention to it by about 2.3 or 4.9, and made it the most-attended paragraph in up to 100% of arithmetic prompts, while the answer text stayed exactly the same. The report never moved toward the boosted paragraph: at the larger boost the model named it 23% of the time, versus 25.5% without the boost.
