@@ -13,6 +13,7 @@ ap.add_argument("--shard", type=int, default=0)
 ap.add_argument("--nshard", type=int, default=1)
 ap.add_argument("--seed", type=int, default=11)
 ap.add_argument("--limit", type=int, default=0)
+ap.add_argument("--inorder", action="store_true", help="labels in order ([P1]..[PN] in slots 1..N) and report options listed in order")
 args = ap.parse_args()
 os.makedirs(args.out, exist_ok=True)
 OUT = args.out
@@ -155,6 +156,7 @@ for setup, n in SETUPS:
         c["N"] = N
         c["lab"] = [x + 1 for x in rng.sample(range(N), N)]  # label number of the segment at each position
         c["opt"] = rng.sample(range(1, N + 1), N)               # option order in report questions
+        if args.inorder: c["lab"] = list(range(1, N + 1)); c["opt"] = list(range(1, N + 1))  # override after the draws
         c["noun"], c["L"] = META[setup]
         ctxs.append(c)
 for i, c in enumerate(ctxs): c["id"] = i

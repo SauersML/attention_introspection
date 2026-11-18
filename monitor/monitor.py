@@ -12,6 +12,7 @@ ap.add_argument("--shard", type=int, default=0)
 ap.add_argument("--nshards", type=int, default=1)
 ap.add_argument("--out", required=True)
 ap.add_argument("--seed", type=int, default=11)
+ap.add_argument("--inorder", action="store_true", help="list the report options in order (P1, P2, P3, P4) instead of a random order per prompt")
 args = ap.parse_args()
 os.makedirs(args.out, exist_ok=True)
 OUT = args.out
@@ -244,6 +245,8 @@ def parse_pct(s):
 
 # ======================================================================================
 ctxs_all = build_contexts()
+if args.inorder:  # override after the draws, so every context is otherwise identical
+    for c in ctxs_all: c["opts"] = {w: list(range(4)) for w in c["opts"]}
 ctxs = [c for c in ctxs_all if c["id"] % args.nshards == args.shard]
 log("contexts", len(ctxs_all), "this shard", len(ctxs))
 if args.phase == "gen1":
