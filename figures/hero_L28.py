@@ -14,7 +14,7 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-from pal import PURPLE, RED, INK, DIV, norm as dnorm
+from pal import PURPLE, RED, INK, pct_colour
 D = os.path.join(os.path.dirname(HERE), "results", "qwen3-32b-dose") + "/"
 meta = json.load(open(D + "meta.json")); L = [28]
 R = json.load(open(D + "dose.json")); by = {(r["id"], r["cond"]): r for r in R}
@@ -132,14 +132,14 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28")]:
         numbers[(ctag, c)] = (round(z.mean(), 1), p, nf, round(100 * (z > 0).mean()))
     # ---------- violins
     fig, a = plt.subplots(figsize=(23, 11.5)); fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
-    allz = np.concatenate([r["z"] for r in res]); DN = dnorm(np.percentile(allz, 1), np.percentile(np.abs(allz), 97))
+    allz = np.concatenate([r["z"] for r in res])
     rng = np.random.default_rng(1); X = [0, 1.35]; texts = []
     for x0, r in zip(X, res):
         z = r["z"]; up = r["mean"] > 0; colr = PURPLE if up else RED
         vv = a.violinplot([z], positions=[x0], widths=0.7, showextrema=False)
         for bb in vv["bodies"]: bb.set_facecolor(colr); bb.set_alpha(0.22); bb.set_edgecolor(colr); bb.set_linewidth(2.5)
         xj = x0 + rng.uniform(-0.25, 0.25, len(z))
-        a.scatter(xj, z, s=650, c=DIV(DN(z)), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
+        a.scatter(xj, z, s=650, c=pct_colour(2.0 ** z), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
         eff = f"{r['mean']:+.0f}% attention".replace("-", "\u2212")
         pt = "p < 0.00001" if r["p"] * (r["nf"] + 1) < 1.5 else f"p = {r['p']:.1g}"
         assert r["p"] * (r["nf"] + 1) >= 1.5 or 1 / (r["nf"] + 1) < 1e-5

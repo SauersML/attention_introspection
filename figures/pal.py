@@ -7,3 +7,12 @@ def norm(lo, hi):
     """centre the diverging map on 0 whatever the range"""
     lo = min(lo, -1e-9); hi = max(hi, 1e-9)
     return colors.TwoSlopeNorm(vmin=lo, vcenter=0, vmax=hi)
+# One fixed colour per % change, the same in every figure: log2(value / baseline), symmetric, clipped at the ends.
+# Range ±PCTR in log2: ratio 1/2**PCTR (darkest red) .. 2**PCTR (darkest purple); 1 = no change (cream).
+import numpy as _np
+PCTR = 2.0
+PCTNORM = colors.Normalize(vmin=-PCTR, vmax=PCTR, clip=True)
+def pct_colour(ratio):
+    """ratio = value / baseline (1 = no change); 0 or below takes the darkest red end"""
+    r = _np.asarray(ratio, dtype=float)
+    return DIV(PCTNORM(_np.log2(_np.clip(r, 2.0 ** -PCTR, 2.0 ** PCTR))))
