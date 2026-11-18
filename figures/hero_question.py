@@ -119,7 +119,7 @@ for t in TV:
     if ylo < y < yhi: ov.text(AXL - 14, YP(y), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
 yt = [math.log(1 + t / 100) for t in TV if ylo < math.log(1 + t / 100) < yhi]
 ov.plot([AXL] * 2, [YP(min(yt)), YP(max(yt))], color=INK, lw=3)
-ov.text(AXL - 195, YP(math.log(2.6)), "change in\nhow often\nthe report\nsays the\nboosted\nparagraph,\nrelative to\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
+ov.text(AXL - 195, YP(math.log(2.6)), "change in\nhow often\nthe report\nsays the\nboosted\nparagraph,\nrelative to\nthe other\nparagraphs", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
 KX = ax.transData.transform((0.47, 0))[0]; KY = YP(-0.78)
 ov.scatter([KX], [KY], s=330, color=COL, alpha=0.38, edgecolors="none")
 ov.text(KX + 28, KY, "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
