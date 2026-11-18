@@ -55,29 +55,36 @@ def method_svg(w, h, cf, ci, rob):
     """(a) answer tokens attending back to the named paragraph; (b) per-layer curve with layer 28 marked."""
     F = 40; o = []
     # ---- (a) top: token row (four paragraphs, then the answer), arcs from the answer to the named paragraph
-    ty = 150; sq = 26; gp = 6; gg = 22; x = 24; toks = []
+    # real per-token attention from the answer (grid run, Qwen3-32B, focus on P2, mean over heads and answer tokens,
+    # layers 21-53): each paragraph shown as 8 chunks, arrow width and darkness = that chunk's attention
+    GG = json.load(open("/Users/user/mpd-data/runpod/hypha-prod-attngridv2a/out/G.json"))
+    NCH = 8
+    def chunks(r): return [[float(np.mean(c)) for c in np.array_split(np.array(r["vers"]["focus2"]["tok"][g]), NCH)] for g in range(4)]
+    def p2share(r): v = chunks(r); return np.mean(v[1]) / np.mean([np.mean(v[g]) for g in (0, 2, 3)])
+    gr = sorted(GG, key=p2share)[len(GG) // 2]   # a typical question: median P2 share
+    vals = chunks(gr)
+    vmax = max(max(v) for v in vals)
+    ty = 150; sq = 15; gp = 3; gg = 20; x = 24; toks = []
     for g in range(4):
         xs = []
-        for t in range(4):
-            fill = AMB if g == K - 1 else "#C9CCD3"
-            o.append(f'<rect x="{x:.1f}" y="{ty:.1f}" width="{sq}" height="{sq}" rx="5" fill="{fill}"/>'); xs.append(x + sq / 2); x += sq + gp
+        for t in range(NCH):
+            fill = AMB if g == 1 else "#C9CCD3"
+            o.append(f'<rect x="{x:.1f}" y="{ty:.1f}" width="{sq}" height="{sq + 8}" rx="3" fill="{fill}"/>'); xs.append(x + sq / 2); x += sq + gp
         toks.append(xs)
-        lab_col = INK if g == K - 1 else "#8A8F99"
-        o.append(f'<text x="{(xs[0] + xs[-1]) / 2:.1f}" y="{ty + sq + 40:.1f}" font-size="{F - 4}" font-weight="700" fill="{lab_col}" text-anchor="middle">P{g+1}</text>')
+        lab_col = INK if g == 1 else "#8A8F99"
+        o.append(f'<text x="{(xs[0] + xs[-1]) / 2:.1f}" y="{ty + sq + 48:.1f}" font-size="{F - 4}" font-weight="700" fill="{lab_col}" text-anchor="middle">P{g+1}</text>')
         x += gg - gp
     bx = x + 14; bw = 118; bh = 64; by_ = ty + sq / 2 - bh / 2
     o.append(f'<rect x="{bx:.1f}" y="{by_:.1f}" width="{bw}" height="{bh}" rx="22" fill="#fff" stroke="#BFC3CB" stroke-width="3"/>')
     o.append(f'<text x="{bx + bw / 2:.1f}" y="{by_ + bh / 2 + 15:.1f}" font-size="44" font-weight="800" fill="{INK}" text-anchor="middle">{ANS["3_focus"]}</text>')
     sx, sy = bx + bw / 2, by_ - 4
-    ex = by[EX, "3_focus"]; att = np.array(ex["att_mean"])[28]   # real: example question, focus, layer 28, mean over heads
-    wts = att / att.max()
-    for g in range(4):   # one arrow per paragraph, width = its attention; the named paragraph in ink, the rest grey
-        tx = (toks[g][0] + toks[g][-1]) / 2; ey = ty - 8; cy = ty - 110 - 30 * (g == K - 1)
-        col = INK if g == K - 1 else "#A7ABB3"
-        o.append(f'<path d="M{sx:.1f},{sy:.1f} C{sx - 40:.1f},{cy:.1f} {tx + 40:.1f},{cy:.1f} {tx:.1f},{ey:.1f}" fill="none" stroke="{col}" stroke-width="{2 + 16 * wts[g]:.1f}" stroke-linecap="round"/>')
+    for g in range(4):
+        for t, tx in enumerate(toks[g]):
+            v = (vals[g][t] / vmax) ** 0.5; ey = ty - 6; cy = ty - 40 - 70 * v
+            o.append(f'<path d="M{sx:.1f},{sy:.1f} C{sx - 30:.1f},{cy:.1f} {tx + 20:.1f},{cy:.1f} {tx:.1f},{ey:.1f}" fill="none" stroke="{(INK if g == 1 else "#B9BDC5")}" stroke-opacity="{(0.35 + 0.65 * v) if g == 1 else (0.15 + 0.45 * v):.2f}" stroke-width="{0.8 + 7 * v:.1f}" stroke-linecap="round"/>')
     cx = (bx + bw + w) / 2 + 4
-    for j, t in enumerate(["attention from", "the answer,", "averaged over", "heads and tokens"]):
-        o.append(f'<text x="{cx:.1f}" y="{ty - 70 + 44 * j:.1f}" font-size="{F}" fill="{INK}" text-anchor="middle">{t}</text>')
+    for j, t in enumerate(["attention", "from the answer,", "averaged over", "heads and", "answer tokens"]):
+        o.append(f'<text x="{cx + 6:.1f}" y="{ty - 82 + 40 * j:.1f}" font-size="{F - 6}" fill="{INK}" text-anchor="middle">{t}</text>')
     o.append(f'<line x1="24" x2="{w - 24:.0f}" y1="{ty + 92}" y2="{ty + 92}" stroke="#E4E5E9" stroke-width="3"/>')
     # ---- (b) bottom: per-layer curve
     x0 = 160; x1 = w - 40; y0 = ty + 165; y1 = h - 84
