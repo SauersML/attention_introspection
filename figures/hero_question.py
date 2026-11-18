@@ -1,5 +1,6 @@
 """Hero column for the privileged-channel run (Qwen3-32B, 100 paragraph prompts), boost while the report question is read (arm C), largest boost only.
-Top: one real prompt (privileged_example.json, as privileged_fig.py), Qwen's real answer, the report question, and Qwen's real next-token
+Top: one real prompt (context 28, hero_question_example.json: the run's prompt text rebuilt by privileged_rebuild.py; labels [P1]..[P4] in order;
+the median of the five in-order paragraph contexts on the specificity below), Qwen's real answer, the report question, and Qwen's real next-token
 probabilities after the prefilled "P" with attention to [P2] boosted while the question is read (nominal x10, measured x6.6 attention mass).
 A hand-drawn purple syringe goes into the injected robot (purple eyes); a wavy purple aura marks the robot and the report question; the thick purple arrow runs from the report question to [P2], where the boost acts.
 Bottom: one violin, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for the
@@ -16,7 +17,7 @@ from pal import INK, PURPLE
 COL = "#E07B24"; AMB = "#F2B53A"; LIL = "#A574F2"
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
-EX = json.load(open(os.path.join(HERE, "privileged_example.json")))
+EX = json.load(open(os.path.join(HERE, "hero_question_example.json")))
 MANIP = json.load(open(os.path.join(ROOT, "results/privileged/results.json")))["manip"]
 ARM, M = "C", 10.0
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"

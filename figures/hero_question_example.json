@@ -1,0 +1,32 @@
+{
+ "id": 28,
+ "setup": "par_arith",
+ "lab": [
+  1,
+  2,
+  3,
+  4
+ ],
+ "opt": [
+  2,
+  4,
+  1,
+  3
+ ],
+ "user": "Here are four paragraphs.\n\n[P1] In the 1990s, Dell switched from using primarily ATX motherboards and PSU to using boards and power supplies with mechanically identical but differently wired connectors. This meant customers wishing to upgrade their hardware would have to replace parts with scarce Dell-compatible parts instead of commonly available parts. While motherboard power connections reverted to the industry standard in 2003, Dell continues to remain secretive about their motherboard pin-outs for peripherals (such as MMC readers and power on/off switches and LEDs).\n\n[P2] The Late Jurassic Archaeopteryx is well known as one of the first transitional fossils to be found, and it provided support for the theory of evolution in the late 19th century. Archaeopteryx was the first fossil to display both clearly traditional reptilian characteristics: teeth, clawed fingers, and a long, lizard-like tail, as well as wings with flight feathers similar to those of modern birds. It is not considered a direct ancestor of birds, though it is possibly closely related to the true ancestor.\n\n[P3] According to Ethnologue, the lexical similarity between Catalan and other Romance languages is: 87% with Italian; 85% with Portuguese; 80% with Spanish; 76% with Ladin; 75% with Sardinian; and 73% with Romanian.\n\n[P4] The England national football team represents England and the Crown Dependencies of Jersey, Guernsey and the Isle of Man for football matches as part of FIFA-authorised events, and is controlled by The Football Association, the governing body for football in England. England are one of the two oldest national teams in football; alongside Scotland, whom they played in the world's first international football match in 1872. England's home ground is Wembley Stadium, London, and the current team manager is Roy Hodgson.\n\nUnrelated question: what is 34 + 37? Answer with just the number.",
+ "ntok": [
+  97,
+  103,
+  61,
+  102
+ ],
+ "segs": [
+  "In the 1990s, Dell switched from using primarily ATX motherboards and PSU to using boards and power supplies with mechanically identical but differently wired connectors. This meant customers wishing to upgrade their hardware would have to replace parts with scarce Dell-compatible parts instead of commonly available parts. While motherboard power connections reverted to the industry standard in 2003, Dell continues to remain secretive about their motherboard pin-outs for peripherals (such as MMC readers and power on/off switches and LEDs).",
+  "The Late Jurassic Archaeopteryx is well known as one of the first transitional fossils to be found, and it provided support for the theory of evolution in the late 19th century. Archaeopteryx was the first fossil to display both clearly traditional reptilian characteristics: teeth, clawed fingers, and a long, lizard-like tail, as well as wings with flight feathers similar to those of modern birds. It is not considered a direct ancestor of birds, though it is possibly closely related to the true ancestor.",
+  "According to Ethnologue, the lexical similarity between Catalan and other Romance languages is: 87% with Italian; 85% with Portuguese; 80% with Spanish; 76% with Ladin; 75% with Sardinian; and 73% with Romanian.",
+  "The England national football team represents England and the Crown Dependencies of Jersey, Guernsey and the Isle of Man for football matches as part of FIFA-authorised events, and is controlled by The Football Association, the governing body for football in England. England are one of the two oldest national teams in football; alongside Scotland, whom they played in the world's first international football match in 1872. England's home ground is Wembley Stadium, London, and the current team manager is Roy Hodgson."
+ ],
+ "q": null,
+ "gold": null,
+ "j": null
+}
