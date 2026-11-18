@@ -53,35 +53,43 @@ for ctrl, ctag, out in [("b_mention", "mention", "hero_before")]:
         p, nf = signflip(z)
         res.append(dict(c=c, z=z, mean=z.mean(), p=p, nf=nf, above=float((z > 0).mean())))
         numbers[(ctag, c)] = (round(z.mean(), 1), p, nf, round(100 * (z > 0).mean()))
-    # ---------- violins
-    fig, a = plt.subplots(figsize=(23, 8.2)); fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
-    allz = np.concatenate([r["z"] for r in res]); DN = dnorm(np.percentile(allz, 1), np.percentile(np.abs(allz), 97))
-    rng = np.random.default_rng(1); X = [0, 1.35]; texts = []
+    # ---------- violins on a labelled axis: zero = the line that only mentions the paragraph; mean with 95% bootstrap CI.
+    # Broken y axis: one ignore prompt sits near +192%; the top strip shows it so no prompt is dropped.
+    allz = np.concatenate([r["z"] for r in res]); BLO, BHI = -49, 96
+    hiz = allz[allz > BHI]
+    fig, (at, a) = plt.subplots(2, 1, figsize=(23, 10.5), sharex=True, gridspec_kw=dict(height_ratios=[1, 7.5], hspace=0.04))
+    fig.subplots_adjust(left=0.11, right=0.995, top=0.985, bottom=0.02)
+    rng = np.random.default_rng(1); X = [0, 1.35]
     for x0, r in zip(X, res):
-        z = r["z"]; up = r["mean"] > 0; colr = PURPLE if up else RED
-        vv = a.violinplot([z], positions=[x0], widths=0.7, showextrema=False)
-        for bb in vv["bodies"]: bb.set_facecolor(colr); bb.set_alpha(0.22); bb.set_edgecolor(colr); bb.set_linewidth(2.5)
-        xj = x0 + rng.uniform(-0.25, 0.25, len(z))
-        a.scatter(xj, z, s=650, c=DIV(DN(z)), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
-        eff = f"{r['mean']:+.0f}% attention".replace("-", "\u2212")
+        z = r["z"]; colr = PURPLE if r["mean"] > 0 else RED
+        bs = z[np.random.default_rng(0).integers(0, len(z), (20000, len(z)))].mean(1); lo95, hi95 = np.percentile(bs, [2.5, 97.5])
+        r["ci"] = (lo95, hi95)
+        vv = a.violinplot([z], positions=[x0], widths=0.45, showextrema=False)
+        for bb in vv["bodies"]: bb.set_facecolor(colr); bb.set_alpha(0.18); bb.set_edgecolor(colr); bb.set_linewidth(2.5)
+        xj = x0 + rng.uniform(-0.15, 0.15, len(z))
+        for ax in (a, at): ax.scatter(xj, z, s=300, color=colr, alpha=0.5, edgecolors="none", zorder=3)
+        a.plot([x0, x0], [lo95, hi95], color=INK, lw=16, solid_capstyle="butt", zorder=6)
+        a.plot([x0 - 0.1, x0 + 0.1], [r["mean"]] * 2, color=INK, lw=7, zorder=7)
+        eff = f"{r['mean']:+.0f}%".replace("-", "\u2212")
         pt = "p < 0.00001" if r["p"] * (r["nf"] + 1) < 1.5 else f"p = {r['p']:.1g}"
         assert r["p"] * (r["nf"] + 1) >= 1.5 or 1 / (r["nf"] + 1) < 1e-5
-        r["eff"], r["pt"] = eff, pt
-        if up:   # effect above the dots, p under the effect
-            texts.append(a.annotate(pt, (x0, z.max()), xytext=(0, 30), textcoords="offset points", fontsize=44, color=colr, ha="center", va="bottom"))
-            texts.append(a.annotate(eff, (x0, z.max()), xytext=(0, 90), textcoords="offset points", fontsize=100, fontweight="bold", color=colr, ha="center", va="bottom"))
-        else:    # effect below the dots, p under the effect
-            texts.append(a.annotate(eff, (x0, z.min()), xytext=(0, -26), textcoords="offset points", fontsize=100, fontweight="bold", color=colr, ha="center", va="top"))
-            texts.append(a.annotate(pt, (x0, z.min()), xytext=(0, -138), textcoords="offset points", fontsize=44, color=colr, ha="center", va="top"))
+        up = r["mean"] > 0; ye = r["mean"] + 6 if up else -6   # effect, then p under the effect
+        a.text(x0 + 0.27, ye, eff, fontsize=96, fontweight="bold", color=colr, ha="left", va="bottom" if up else "top")
+        a.text(x0 + 0.29, ye - 1.5 if up else ye - 22, pt, fontsize=46, color=colr, ha="left", va="top")
     a.axhline(0, color=INK, lw=4, zorder=4)
-    a.set_xlim(-0.66, 2.01); a.set_xticks([]); a.set_yticks([])
-    for s_ in a.spines.values(): s_.set_visible(False)
-    lo, hi = min(allz.min(), 0), max(allz.max(), 0); a.set_ylim(lo, hi)
-    for _ in range(6):   # grow y-limits until every label fits
-        fig.canvas.draw(); rd = fig.canvas.get_renderer(); inv = a.transData.inverted()
-        ys = [inv.transform(t.get_window_extent(rd).get_points())[:, 1] for t in texts]
-        ylo = min(lo, min(y.min() for y in ys)); yhi = max(hi, max(y.max() for y in ys))
-        pad = 0.01 * (yhi - ylo); a.set_ylim(ylo - pad, yhi + pad)
+    a.text(-0.98, -2, "only mentions [P%d]" % K, fontsize=46, color=INK, ha="left", va="top")
+    a.set_xlim(-1.0, 2.15); a.set_xticks([])
+    a.set_ylim(BLO, BHI); at.set_ylim(hiz.min() - 8, hiz.max() + 8)
+    a.set_yticks([-40, -20, 0, 20, 40, 60, 80]); at.set_yticks([190])
+    fmt = matplotlib.ticker.FuncFormatter(lambda v, _: f"{v:+.0f}%".replace("-", "\u2212") if v else "0")
+    for ax in (a, at):
+        ax.yaxis.set_major_formatter(fmt); ax.tick_params(axis="y", labelsize=44, width=4, length=14, colors=INK)
+        ax.tick_params(axis="x", length=0)
+        for s_ in ["top", "right", "bottom"]: ax.spines[s_].set_visible(False)
+        ax.spines["left"].set_linewidth(4)
+    for ax, y in ((at, 0), (a, 1)):   # break marks on the y axis
+        ax.plot([-0.012, 0.012], [y - 0.006 * (8 if y == 0 else 1), y + 0.006 * (8 if y == 0 else 1)], transform=ax.transAxes, color=INK, lw=4, clip_on=False)
+    a.set_ylabel("change in attention on [P%d]" % K, fontsize=48, labelpad=10)
     fig.savefig(os.path.join(HERE, f"v{out}.png"), dpi=110, facecolor="white"); plt.close(fig)
     # ---------- chat columns + violins
     VIO = base64.b64encode(open(os.path.join(HERE, f"v{out}.png"), "rb").read()).decode()
@@ -113,3 +121,4 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
     im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
     im = im.crop((0, 0, W, nz[-1] + 20)); im.save(os.path.join(HERE, out + ".png")); im.save(os.path.join(HERE, out + ".jpg"), quality=92); print(out, im.size)
 for k, v in numbers.items(): print(k, "mean %+.1f%%  p_signflip=%.2g (of %d flips)  share>0 %d%%" % v)
+for r in res: print(r["c"], "95% CI", np.round(r["ci"], 1))

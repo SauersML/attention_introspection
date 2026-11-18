@@ -5,8 +5,8 @@ Arrows: answer -> [P2] and report question -> [P2]; the thick arrow marks where 
 Reply bars: the model's real next-token probabilities after the prefilled "P" (W1), for that prompt, in that condition.
 Bottom: violins, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for
 the other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as analyze_priv.py; y drawn on that log scale,
-ticks labelled as % change = exp(.) - 1. Big labels: exp(mean) - 1. Black bar: 95% bootstrap CI of the mean (10,000 resamples).
-p: two-sided sign-flip test over prompts (200,000 flips). Bottom line: the other five setups at x10 (CI excludes 0 or not).
+ticks labelled as % change = exp(.) - 1 at x0.5, x1, x2, x4, x8 (evenly spaced). Big labels: exp(mean) - 1. Black box: 95% bootstrap CI
+of the mean (10,000 resamples), white line the mean. Dots coloured by arm only. p over the largest boost and wherever p >= 0.0001 (every other p < 0.0001): two-sided sign-flip test over prompts (200,000 flips). Bottom line: the other five setups at x10 (CI excludes 0 or not).
 usage: privileged_fig.py   (writes figures/privileged.png)"""
 import json, glob, math, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
@@ -15,6 +15,8 @@ from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, RED, INK, DIV, norm as dnorm
+import matplotlib.patheffects as pe
+ACOL = {"A": "#2B5FA8", "C": "#E07B24"}   # one colour per arm (the compared things)
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
 EX = json.load(open(os.path.join(HERE, "privileged_example.json")))
@@ -82,10 +84,10 @@ def bars(p):
     o.append(f'<line x1="6" x2="{w - 6}" y1="112" y2="112" stroke="{INK}" stroke-width="3"/>')
     return f'<svg width="{w}" height="{h}" viewBox="0 -10 {w} {h + 10}">{"".join(o)}</svg>'
 
-def column(i, title, sub, key):
+def column(i, title, sub, key, tcol=INK):
     pl = "".join(f'<div class="pl"><b class="{"k" if pos == K else "lb"}" {"id=p2c" + str(i) if pos == K else ""}>[P{EX["lab"][pos]}]</b> '
                  f'<span {"id=p2t" + str(i) if pos == K else ""}>{html.escape(short(EX["segs"][pos], NW[pos]))}</span></div>' for pos in range(4))
-    return f'''<div class="col"><div class="t1">{title}</div><div class="t2">{sub}</div>
+    return f'''<div class="col"><div class="t1" style="color:{tcol}">{title}</div><div class="t2">{sub}</div>
 <div class="ub">Here are four paragraphs.{pl}<div class="q">{html.escape(qline)}</div></div>
 <div class="mrow"><img class="rob" id="rob{i}" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
 <div class="ub2" id="rq{i}">{QTEXT} …</div>
@@ -103,19 +105,18 @@ for j, (a, _) in enumerate(ARMS):
     ax = fig.add_axes([x0 / W, 230 / VH, CW / W, (VH - 250) / VH]); axs.append(ax)
     rng = np.random.default_rng(1)
     for i, m in enumerate(DOSES):
-        z = Z[a, m]; st = ST[a, m]; up = st["mean"] > 0; col = PURPLE if up else RED
+        z = Z[a, m]; st = ST[a, m]; up = st["mean"] > 0; col = ACOL[a]
         kde = gaussian_kde(z, bw_method=0.35); yy = np.linspace(z.min() - 0.05, z.max() + 0.05, 200); dd = kde(yy); dd = dd / dd.max() * 0.40
         ax.fill_betweenx(yy, i - dd, i + dd, color=col, alpha=0.16, lw=0); ax.plot(np.r_[i - dd, (i + dd)[::-1]], np.r_[yy, yy[::-1]], color=col, lw=2.5, alpha=0.7)
         xj = i + rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.38
-        ax.scatter(xj, z, s=230, c=DIV(DN(z)), alpha=0.5, edgecolors="none", zorder=3); ax.scatter(xj, z, s=5, color="black", zorder=4)
-        ax.plot([i, i], [st["lo"], st["hi"]], color=INK, lw=9, solid_capstyle="butt", zorder=6)
-        ax.plot([i - 0.16, i + 0.16], [st["mean"]] * 2, color=INK, lw=6, zorder=6)
+        ax.scatter(xj, z, s=200, color=col, alpha=0.35, edgecolors="none", zorder=3)
+        ax.add_patch(matplotlib.patches.Rectangle((i - 0.17, st["lo"]), 0.34, st["hi"] - st["lo"], color=INK, zorder=6, lw=0))  # 95% CI
+        ax.plot([i - 0.17, i + 0.17], [st["mean"]] * 2, color="white", lw=3, zorder=7, solid_capstyle="butt")             # mean
         lab = neg(f"{pct(st['mean']):+.0f}%")
         yl = z.max() + 0.06 if up else z.min() - 0.06
         ax.text(i, yl, lab, ha="center", va="bottom" if up else "top", fontsize=px(58), fontweight="bold", color=col, zorder=7)
-        if m == 10.0:
-            assert st["p"] * 200001 < 1.5
-            ax.text(i, yl + (0.27 if up else -0.27), "p < 0.00001", ha="center", va="bottom" if up else "top", fontsize=px(46), color=col)
+        ps = "p<0.0001" if st["p"] < 1e-4 else f"p={st['p']:.2f}"
+        if m == 10.0 or st["p"] >= 1e-4: ax.text(i, yl + (0.25 if up else -0.25), ps, ha="center", va="bottom" if up else "top", fontsize=px(40), color=col)
     ax.set_xlim(-0.6, len(DOSES) - 0.4); ax.set_ylim(ylo, yhi)
     ax.set_xticks(range(len(DOSES))); ax.set_xticklabels(TICKS[a], fontsize=px(50)); ax.tick_params(length=0, pad=14, colors=INK)
     for s_ in ax.spines.values(): s_.set_visible(False)
@@ -123,31 +124,32 @@ for j, (a, _) in enumerate(ARMS):
 # zero line across both panels, ticks on the first
 zl = fig.add_axes([axs[0].get_position().x0, axs[0].get_position().y0, axs[1].get_position().x1 - axs[0].get_position().x0, axs[0].get_position().height], facecolor="none")
 zl.set_xlim(0, 1); zl.set_ylim(ylo, yhi); zl.axhline(0, color=INK, lw=4, zorder=0); zl.axis("off")
-TV = [-50, 0, 100, 300, 1000]
+TV = [-50, 0, 100, 300, 700]   # x0.5, x1, x2, x4, x8: evenly spaced on the log axis
 AX0 = PAD + CW + GAP; F = lambda x, y: (x / W, y / VH)   # px (from left, from bottom) -> figure coords
 YP = lambda v: axs[0].transData.transform((0, v))[1]       # data -> px from bottom
 for t in TV:
     y = math.log(1 + t / 100)
     if ylo < y < yhi: fig.text(*F(AX0 - 14, YP(y)), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
-fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.5)) / VH, YP(math.log(11)) / VH], color=INK, lw=3))
+fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.5)) / VH, YP(math.log(8)) / VH], color=INK, lw=3))
 LXp = AX0 - 200
-fig.text(*F(LXp, YP(math.log(6))), "report names the\nboosted paragraph\nmore often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=PURPLE, linespacing=1.1)
-fig.text(*F(LXp, YP(math.log(0.45))), "report names the\nboosted paragraph\nless often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=RED, linespacing=1.1)
+fig.text(*F(LXp, YP(math.log(6))), "report says the\nboosted paragraph\nmore often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
+fig.text(*F(AX0 - 14, YP(math.log(12))), "log scale", ha="right", va="bottom", fontsize=px(44), color=INK)
+fig.text(*F(LXp, YP(math.log(0.45))), "report says the\nboosted paragraph\nless often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
 TY = axs[0].get_position().y0 * VH - 58
 fig.text(*F(AX0 - 14, TY), "attention on\nboosted\nparagraph", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.1)
 KY = (YP(math.log(0.45)) + TY) / 2 - 10
 KY = YP(math.log(11)) - 20
 for j, (a, nm) in enumerate(ARMS):
     p0 = axs[j].get_position()
-    fig.text((p0.x0 + p0.x1) / 2 - (0.0 if j == 0 else 0.045), YP(math.log(11)) / VH, "boost " + nm.replace("reading the", "reading the\n"), ha="center", va="top", linespacing=1.1, fontsize=px(52), fontweight="bold", color=INK)
+    fig.text((p0.x0 + p0.x1) / 2 - (0.0 if j == 0 else 0.045), YP(math.log(11)) / VH, "boost " + nm.replace("reading the", "reading the\n"), ha="center", va="top", linespacing=1.1, fontsize=px(52), fontweight="bold", color=ACOL[a])
 ov = fig.add_axes([0, 0, 1, 1], facecolor="none"); ov.set_xlim(0, W); ov.set_ylim(0, VH); ov.axis("off")
-ov.scatter([PAD + 34], [KY + 26], s=330, color="#7A55C9", alpha=0.6, edgecolors="none"); ov.scatter([PAD + 34], [KY + 26], s=5, color="black")
+ov.scatter([PAD + 34], [KY + 26], s=330, color=INK, alpha=0.35, edgecolors="none")
 fig.text(*F(PAD + 64, KY + 26), "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
 VP = os.path.join(HERE, "privileged_violins.png"); fig.savefig(VP, dpi=200, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
 VIO = base64.b64encode(open(VP, "rb").read()).decode()
-cols = column(0, "no boost", "Qwen3-32B", "none") + column(1, "while answering", "attention to paragraph [P2] ×" + f"{MANIP['A']['10.0']['mean']:.1f}", "A") + column(2, "while reading the question", "attention to paragraph [P2] ×" + f"{MANIP['C']['10.0']['mean']:.1f}", "C")
+cols = column(0, "no boost", "Qwen3-32B", "none") + column(1, "while answering", "attention to paragraph [P2] ×" + f"{MANIP['A']['10.0']['mean']:.1f}", "A", ACOL["A"]) + column(2, "while reading the question", "attention to paragraph [P2] ×" + f"{MANIP['C']['10.0']['mean']:.1f}", "C", ACOL["C"])
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:18px {PAD}px 0;position:relative}}
