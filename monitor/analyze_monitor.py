@@ -104,9 +104,9 @@ def classifier(ids, setup, T, least):
     """5-fold CV within each family. Returns top-1 predictions and ranking scores per context."""
     pred, sc = {}, {}
     crng = np.random.default_rng(1)
-    for fam in FAMS:
-        fi = [i for i in ids if C[i]["family"] == fam]
-        if len(fi) < 5: continue
+    groups = [[i for i in ids if C[i]["family"] == fam] for fam in FAMS]
+    if min(len(g) for g in groups) < 10: groups = [list(ids)]  # only for tiny smoke runs
+    for fi in groups:
         X = np.stack([feats(i, setup) for i in fi])
         y = np.array([int(np.argmin(T[i]) if least else np.argmax(T[i])) for i in fi])
         Y = np.stack([np.log(T[i] / T[i].sum()) for i in fi])
@@ -133,6 +133,7 @@ def evaluate(setup, kind="norm", layers="band", fam=None):
     t, w = setup
     least = w == "least"
     ids = [i for i in IDS if (not t.startswith("fb") or i in H2) and (fam is None or C[i]["family"] == fam)]
+    if len(ids) < 5: return None
     T = {i: truth_vec(i, setup, kind, layers) for i in ids}
     cp, cs = classifier([i for i in IDS if (not t.startswith("fb") or i in H2)], setup, {i: truth_vec(i, setup, kind, layers) for i in IDS}, least)
     rows = {"self": ([], []), "reader": ([], []), "clf": ([], [])}
@@ -170,6 +171,7 @@ md.append("|---|---|---|---|---|---|---|---|---|---|---|---|---|---|")
 npass = 0
 for su in SETUPS:
     r = evaluate(su); ALL["|".join(su)] = r
+    if r is None: continue
     ok = all(r[f"self-{b}"][m][0.0025][0] > 0 for b in ["reader", "clf"] for m in ["top1", "rho"])
     npass += ok
     md.append(f"| {NAMES[su[0]]} | {WN[su[1]]} | {r['n']} | {P(r['self']['top1'])} | {P(r['reader']['top1'])} | {P(r['clf']['top1'])} | {Pd(r['self-reader']['top1'])} | {Pd(r['self-clf']['top1'])} | "
@@ -183,6 +185,7 @@ for kind, layers, title in [("mass", "band", "Secondary truth: total attention m
     md.append("|---|---|---|---|---|---|---|---|---|---|")
     for su in SETUPS:
         r = evaluate(su, kind, layers); ALL[f"{kind}-{layers}|" + "|".join(su)] = r
+        if r is None: continue
         md.append(f"| {NAMES[su[0]]} | {WN[su[1]]} | {P(r['self']['top1'])} | {P(r['reader']['top1'])} | {P(r['clf']['top1'])} | {Pd(r['self-reader']['top1'])} | {Pd(r['self-clf']['top1'])} | "
                   f"{P(r['self']['rho'], False)} | {Pd(r['self-reader']['rho'], False)} | {Pd(r['self-clf']['rho'], False)} |")
     md.append("")
@@ -194,6 +197,7 @@ for su in SETUPS:
     cells = []
     for fam in FAMS:
         r = evaluate(su, fam=fam); ALL[f"fam-{fam}|" + "|".join(su)] = r
+        if r is None: cells.append("–"); continue
         a = r["self-reader"]["top1"]; b = r["self-reader"]["rho"]
         cells.append(f"{100*a['mean']:+.0f} [{100*a[0.05][0]:+.0f}, {100*a[0.05][1]:+.0f}] / {b['mean']:+.2f} [{b[0.05][0]:+.2f}, {b[0.05][1]:+.2f}]")
     md.append(f"| {NAMES[su[0]]} | {WN[su[1]]} | " + " | ".join(cells) + " |")

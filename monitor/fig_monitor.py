@@ -14,7 +14,7 @@ GROUP = {"after": "Right after answering", "before": "Before answering", "later"
          "fb4": "Shown 4 true measurements", "fb16": "Shown 16 true measurements"}
 WN = {"most": "which most?", "least": "which least?", "rank": "rank them", "pct": "percent each", "rate": "rate 0 to 10", "free": "free text"}
 
-plt.rcParams.update({"font.family": "Helvetica", "font.size": 30, "text.color": INK, "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": INK})
+plt.rcParams.update({"font.family": ["Helvetica", "Arial", "DejaVu Sans"], "font.size": 30, "text.color": INK, "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": INK})
 fig, axes = plt.subplots(1, 2, figsize=(23, 21), sharey=True, gridspec_kw=dict(wspace=0.08))
 ys, labels, y = [], [], 0
 gaps = []
@@ -27,6 +27,7 @@ ys = np.array(ys)
 for ax, m, scale, xl in [(axes[0], "top1", 100, "Naming the most-attended paragraph:\nself-report minus same model reading the transcript (% points)"),
                           (axes[1], "rho", 1, "Ranking the four paragraphs:\nself-report minus transcript reader (rank correlation)")]:
     for yy, su in zip(ys, SETUPS):
+        if R.get("|".join(su)) is None: continue
         d = R["|".join(su)]["self-reader"][m]
         mu = d["mean"] * scale; lo, hi = [v * scale for v in d["0.05"]]
         col = PURPLE if mu > 0 else RED

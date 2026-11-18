@@ -359,11 +359,12 @@ def hooked(module, query, key, value, attention_mask, scaling, dropout=0.0, **kw
     return out.transpose(1, 2).contiguous(), None
 
 mq.eager_attention_forward = hooked
-model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16, attn_implementation="eager", device_map="cuda")
-model.eval()
-NL = model.config.num_hidden_layers
+if args.phase.startswith("hf"):
+    model = AutoModelForCausalLM.from_pretrained(args.model, dtype=torch.bfloat16, attn_implementation="eager", device_map="cuda")
+    model.eval()
+    NL = model.config.num_hidden_layers
+    log("model loaded", NL)
 BAND = list(range(21, 54))
-log("model loaded", NL)
 G = jload("gen1.json")
 
 @torch.no_grad()
