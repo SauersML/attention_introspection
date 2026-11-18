@@ -1,0 +1,17 @@
+# Attention control in Qwen3-32B: overnight exploration (18 Nov 2026), summary
+
+Eight serial experiments (E1–E8, details and CIs in NOTEBOOK.md, numbers in results/, figures in figures/). Two tasks: an unrelated sum after four labelled paragraphs (attention there is useless, the earlier studies' setting), and a question where two paragraphs give conflicting numbers (attention there decides the answer).
+
+1. **"Focus your attention on paragraph [Pj]" is a source selector.** When two paragraphs disagree on a number, it makes the model answer from the named one 94% of the time, against the true fact the model knows, nearly as strongly as "Answer using only paragraph [Pj]". "Completely ignore [Pj]" works the other way just as strongly. (figures/e4_conflicting_sources.png)
+
+2. **The attention boost the earlier studies measured doesn't cause that behaviour.** In the sum task six heads in layers 20–26 carry ~60% of the boost in attention to the named paragraph, and they read the paragraph's address in any form: the label digit, "the second paragraph", its topic, French or Chinese. Zeroing them leaves the conflict-task answer choice exactly unchanged. Residual patching shows why: for the first 42 of 64 layers, the only position that holds which paragraph was named is the digit token itself. Layers 42–54 then read the choice straight off that digit. (figures/e7_dissociation.png, figures/e8_where_the_choice_lives.png)
+
+3. **The instruction is executed late, by attention onto the specific answer token.** In layers 45–62 the position that predicts the answer attends up to ~6× more to the named paragraph's number than to the other copy's. "Ignore" works the same way. Yet it hardly changes attention to the paragraph as a whole, which is why it looked inert (−6%, mostly not specific) in the sum task. Block that late attention and the instruction is nearly powerless. Many heads share the job: the 15 most selective carry under a fifth of it. (figures/e6_late_selection.png)
+
+4. **What moves attention is what the model will have to process next, not the word "attention".** "After answering, summarize paragraph [Pk]" raises attention to it during the sum as much as "Focus your attention on [Pk]" (+36% vs +39%). "Memorize it, I'll ask later", "it's important" and "it has a typo" barely do (+6–9%). The same label in a rhyming couplet does 1/8 as much. Language doesn't matter at all. (figures/e3_what_moves_attention.png)
+
+5. **The instruction is a small nudge next to the task's own attention, and graded control barely exists.** When the question is about one paragraph, the question already puts 6.7× more attention there, and "focus" adds nothing. Pointing "focus" at a wrong paragraph moves 3% of that and doesn't change answers. "Split your attention X% / (100−X)%" is followed in the right direction whatever the naming order (per-prompt rank correlation 0.86), but 90/10 vs 10/90 changes the ratio by only 6%. Only 0% and 100% act, like ignore and focus. (figures/e5_graded_split.png)
+
+Caveats: one model; SQuAD paragraphs; the conflict items are numeric answers only (195 in the pool); late heads were picked on E6's items and tested on fresh ones (E7). The heads, layers and patching results are mechanism checks, not claims that the model has named units for this. The raw per-head tensors were on the pod and are gone; the summaries are in results/.
+
+Cost: pod hypha-prod-attnx (A100 80 GB, $2.19/h) ran 3.53 h in total, $7.72, including the previous agent's E1 (it was deleted at 07:50 PT).

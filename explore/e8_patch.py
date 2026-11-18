@@ -49,14 +49,15 @@ for n in range(N1):
         ids_d = encode(tok, [("user", para_doc(c, labels=True, instr=LINES[w].format(K=dst_k + 1), question=q).s)], {})[0]
         assert len(ids_s) == len(ids_d)
         diff = [i for i in range(len(ids_s)) if ids_s[i] != ids_d[i]]; dg = diff[0]
-        P_.update(grab=True, cache={}, L=None); model(torch.tensor([ids_s], device="cuda"), use_cache=False, logits_to_keep=1); P_["grab"] = False
+        P_.update(grab=True, cache={}, L=None)
+        with torch.no_grad(): model(torch.tensor([ids_s], device="cuda"), use_cache=False, logits_to_keep=1); P_["grab"] = False
         m_s = lp(ids_s, ta) - lp(ids_s, tb); m_d = lp(ids_d, ta) - lp(ids_d, tb)
         rec["res"][w] = dict(m_s=m_s, m_d=m_d, patch={})
         for nm, pos in (("digit", diff), ("after", list(range(dg, len(ids_s)))), ("last", [len(ids_s) - 1])):
             for L in LAYERS:
                 P_.update(L=L, pos=pos); m = lp(ids_d, ta) - lp(ids_d, tb); P_["L"] = None
                 rec["res"][w]["patch"][f"{nm}/{L}"] = m
-    R.append(rec)
+    R.append(rec); torch.cuda.empty_cache()
     if len(R) % 10 == 0: torch.save(R, f'{OUT}/e8.pt')
     if n % 10 == 0: log("ctx", n, {k: round((v - rec['res']['focus']['m_d']) / (rec['res']['focus']['m_s'] - rec['res']['focus']['m_d'] + 1e-9), 2) for k, v in rec["res"]["focus"]["patch"].items() if k.startswith("last") or k.startswith("digit")})
 torch.save(R, f"{OUT}/e8.pt"); log("done")
