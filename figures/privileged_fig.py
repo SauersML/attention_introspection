@@ -5,8 +5,8 @@ Arrows: answer -> [P2] and report question -> [P2]; the thick arrow marks where 
 Reply bars: the model's real next-token probabilities after the prefilled "P" (W1), for that prompt, in that condition.
 Bottom: violins, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for
 the other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as analyze_priv.py; y drawn on that log scale,
-ticks labelled as % change = exp(.) - 1 at x0.5, x1, x2, x4, x8 (evenly spaced). Big labels: exp(mean) - 1. Black box: 95% bootstrap CI
-of the mean (10,000 resamples), white line the mean. Dots coloured by arm only. p over the largest boost and wherever p >= 0.0001 (every other p < 0.0001): two-sided sign-flip test over prompts (200,000 flips). Bottom line: the other five setups at x10 (CI excludes 0 or not).
+ticks labelled as % change = exp(.) - 1 at x0.5, x1, x2, x4, x8 (evenly spaced). Big labels: exp(mean) - 1. Black line: the mean.
+95% bootstrap CI of the mean (10,000 resamples) printed, not drawn. Dots coloured by arm only. p over the largest boost and wherever p >= 0.0001 (every other p < 0.0001): two-sided sign-flip test over prompts (200,000 flips). Bottom line: the other five setups at x10 (CI excludes 0 or not).
 usage: privileged_fig.py   (writes figures/privileged.png)"""
 import json, glob, math, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
@@ -110,8 +110,7 @@ for j, (a, _) in enumerate(ARMS):
         ax.fill_betweenx(yy, i - dd, i + dd, color=col, alpha=0.16, lw=0); ax.plot(np.r_[i - dd, (i + dd)[::-1]], np.r_[yy, yy[::-1]], color=col, lw=2.5, alpha=0.7)
         xj = i + rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.38
         ax.scatter(xj, z, s=200, color=col, alpha=0.35, edgecolors="none", zorder=3)
-        ax.add_patch(matplotlib.patches.Rectangle((i - 0.17, st["lo"]), 0.34, st["hi"] - st["lo"], color=INK, zorder=6, lw=0))  # 95% CI
-        ax.plot([i - 0.17, i + 0.17], [st["mean"]] * 2, color="white", lw=3, zorder=7, solid_capstyle="butt")             # mean
+        ax.plot([i - 0.17, i + 0.17], [st["mean"]] * 2, color=INK, lw=3, zorder=7, solid_capstyle="butt")             # mean
         lab = neg(f"{pct(st['mean']):+.0f}%")
         yl = z.max() + 0.06 if up else z.min() - 0.06
         ax.text(i, yl, lab, ha="center", va="bottom" if up else "top", fontsize=px(58), fontweight="bold", color=col, zorder=7)
