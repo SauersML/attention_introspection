@@ -33,7 +33,7 @@ a.set_xlim(-0.6, len(CS) - 0.4); a.set_ylim(allz.min() - 14, allz.max() + 16)
 yt = [-25, 0, 25, 50, 75, 100]
 yt = [t for t in yt if allz.min() - 14 <= t <= allz.max() + 16]
 a.set_yticks(yt); a.set_yticklabels([MN(f"{t:+d}%") if t else "0%" for t in yt])
-a.set_ylabel("change in attention vs\nonly naming the paragraph", fontsize=80, labelpad=24)
+a.set_ylabel("change in attention vs\n“Note that one of the paragraphs is labelled [Pk].”", fontsize=62, labelpad=24)
 for s in ["top", "right"]: a.spines[s].set_visible(False)
 a.spines["left"].set_linewidth(2.5); a.spines["bottom"].set_linewidth(2.5); a.tick_params(width=3, length=14, labelsize=84); a.tick_params(axis="x", length=0, labelsize=48)
 fig.tight_layout(); fig.savefig(OUT + "dose.png", dpi=100, facecolor="white"); fig.savefig(OUT + "dose.jpg", dpi=100, facecolor="white")
