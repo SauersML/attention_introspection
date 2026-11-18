@@ -79,13 +79,13 @@ for p,name in enumerate(res):
     for bb in vv["bodies"]: bb.set_facecolor(col); bb.set_alpha(0.22); bb.set_edgecolor(col); bb.set_linewidth(2.5)
     xj=p*1.35+rng.uniform(-0.25,0.25,len(z)); a.scatter(xj,z,s=650,c=DIV(DN(z)),alpha=0.45,edgecolors="none",zorder=3); a.scatter(xj,z,s=6,color="black",zorder=4)
     a.plot([p*1.35,p*1.35],[r["lo"],r["hi"]],color=INK,lw=12,solid_capstyle="butt",zorder=5); a.plot([p*1.35-0.22,p*1.35+0.22],[r["mean"]]*2,color=INK,lw=6,zorder=6)
-    a.text(p*1.35,(z.max()+2) if r["mean"]>0 else (z.min()-2),f"{r['mean']:+.0f}%".replace("-","−"),fontsize=100,fontweight="bold",color=(PURPLE if r["mean"]>0 else RED),ha="center",va=("bottom" if r["mean"]>0 else "top"),zorder=7)
+    a.text(p*1.35,(z.max()+2) if r["mean"]>0 else (z.min()-2),(f"{r['mean']:+.0f}% attention".replace("-","−")),fontsize=100,fontweight="bold",color=(PURPLE if r["mean"]>0 else RED),ha="center",va=("bottom" if r["mean"]>0 else "top"),zorder=7)
 a.set_xticks([]); 
-a.set_ylim(allz.min()-34,allz.max()+22)
+a.set_ylim(allz.min()-46,allz.max()+40)
 for ax in (a,):
     ax.axhline(0,color=INK,lw=4,zorder=4)
     ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v,_: f"{v:+.0f}%".replace("-","\u2212") if v else "0%"))
     for s_ in ["top","right"]: ax.spines[s_].set_visible(False)
     ax.spines["left"].set_linewidth(3); ax.spines["bottom"].set_linewidth(3); ax.tick_params(width=4,length=16,labelsize=72)
-a.set_ylabel("change in\nattention",fontsize=70,labelpad=6); a.set_yticks([0,50]); a.set_xlim(-0.42,1.90)
-fig.tight_layout(pad=0.6); fig.savefig(OUT+"vhero.png",dpi=110,facecolor="white"); fig.savefig(OUT+"vhero.jpg",dpi=110,facecolor="white")
+a.set_yticks([]); a.spines["left"].set_visible(False); a.set_xlim(-0.66,2.01)
+a.spines["bottom"].set_visible(False); a.set_xticks([]); fig.subplots_adjust(left=0,right=1,top=1,bottom=0); fig.savefig(OUT+"vhero.png",dpi=110,facecolor="white"); fig.savefig(OUT+"vhero.jpg",dpi=110,facecolor="white")

@@ -58,7 +58,7 @@ VIO = _b.b64encode(open(os.path.join(HERE, "vhero.png"), "rb").read()).decode()
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px 26px 10px}}
-.cols{{display:flex;gap:36px;padding-left:300px}}
+.cols{{display:flex;gap:36px;padding-left:0}}
 .col{{flex:1;min-width:0;display:flex;flex-direction:column}}
 .cname{{font-size:76px;font-weight:800;margin:0 0 12px 4px;white-space:nowrap}}
 .ub{{flex:1;background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;display:flex;flex-direction:column;gap:8px}}
