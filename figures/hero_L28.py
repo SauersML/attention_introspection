@@ -83,7 +83,7 @@ def method_svg(w, h, cf, ci, rob):
             v = (vals[g][t] / vmax) ** 0.5; ey = ty - 6; cy = ty - 40 - 70 * v
             o.append(f'<path d="M{sx:.1f},{sy:.1f} C{sx - 30:.1f},{cy:.1f} {tx + 20:.1f},{cy:.1f} {tx:.1f},{ey:.1f}" fill="none" stroke="{(INK if g == 1 else "#B9BDC5")}" stroke-opacity="{(0.35 + 0.65 * v) if g == 1 else (0.15 + 0.45 * v):.2f}" stroke-width="{0.8 + 7 * v:.1f}" stroke-linecap="round"/>')
     cx = (bx + bw + w) / 2 + 4
-    for j, t in enumerate(["averaged over", "heads"]):
+    for j, t in enumerate(["averaged over", "heads and", "answer tokens"]):
         o.append(f'<text x="{cx + 6:.1f}" y="{ty - 20 + 46 * j:.1f}" font-size="{F - 6}" fill="{INK}" text-anchor="middle">{t}</text>')
     o.append(f'<line x1="24" x2="{w - 24:.0f}" y1="{ty + 92}" y2="{ty + 92}" stroke="#E4E5E9" stroke-width="3"/>')
     # ---- (b) bottom: per-layer curve
