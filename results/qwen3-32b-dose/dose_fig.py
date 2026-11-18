@@ -5,10 +5,13 @@ sys.path.insert(0, "/Users/user/connectome/islands/agents/resident-a/compute/fig
 MN = lambda t: t.replace("-", "\u2212")
 D = sys.argv[1]; OUT = sys.argv[2]
 R = json.load(open(D + "/dose_results.json"))
-LAY = 28   # one layer: the peak of the focus effect
+BAND = list(range(21, 54))   # the band every headline number uses
 DJ = json.load(open(D + "/dose.json")); BY = {(r["id"], r["cond"]): r for r in DJ}; IDS = sorted({r["id"] for r in DJ})
 def att(c, l): return np.array([BY[i, c]["att_mean"][l][BY[i, c]["k"]] for i in IDS])
-def zl(c, ctrl="1_mention", l=LAY): return 100 * (att(c, l) / att(ctrl, l) - 1)
+def attb(c): return np.array([np.mean([BY[i, c]["att_mean"][l][BY[i, c]["k"]] for l in BAND]) for i in IDS])
+def zl(c, ctrl="1_mention", l=None):
+    if l is None: return 100 * (attb(c) / attb(ctrl) - 1)
+    return 100 * (att(c, l) / att(ctrl, l) - 1)
 NL = len(DJ[0]["att_mean"])
 INK = pal.INK
 plt.rcParams.update({"font.family": "Helvetica", "font.size": 56, "text.color": INK, "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": INK, "axes.edgecolor": INK})
@@ -47,8 +50,10 @@ for cs_, pal_ in [(ups, UPC), (dns, DNC)]:
     for c, col in zip(cs_, pal_):
         ins.plot(range(NL), [zl(c, l=l).mean() for l in range(NL)], color=col, lw=5)
         LC[c] = col
-ins.axhline(0, color=INK, lw=2.5); ins.axvline(LAY, color=INK, lw=4, ls=(0, (5, 4)))
-ins.text(LAY + 1.5, ins.get_ylim()[1] * 0.92, f"layer {LAY}", fontsize=50, fontweight="bold", va="top")
+ins.axhline(0, color=INK, lw=2.5)
+yl = ins.get_ylim(); top = yl[1] + 0.06 * (yl[1] - yl[0]); ins.set_ylim(yl[0], yl[1] + 0.55 * (yl[1] - yl[0]))
+ins.plot([21, 21, 53, 53], [top - 0.04 * (yl[1] - yl[0]), top, top, top - 0.04 * (yl[1] - yl[0])], color=INK, lw=4, clip_on=False)
+ins.text(37, top + 0.03 * (yl[1] - yl[0]), "averaged across\nthese layers", fontsize=42, linespacing=1.0, fontweight="bold", ha="center", va="bottom")
 for t, (c, _) in zip(a.get_xticklabels(), CS): t.set_color(LC[c])
 ins.set_xticks([0, 63]); ins.set_yticks([]); ins.tick_params(labelsize=44, length=8, width=2.5)
 ins.set_xlabel("layer", fontsize=48, labelpad=-30)
