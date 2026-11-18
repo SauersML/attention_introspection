@@ -49,21 +49,7 @@ qline = EX["user"].split("\n\n")[-1]
 def short(s, n): return " ".join(s.split()[:n]) + " …"
 NW = [3, 3, 3, 2]
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
-def injected_robot(path):
-    """the robot under injection: eyes and mouth recoloured to a glowing purple ramp, a purple halo around them, a faint purple tint on the rest"""
-    from PIL import ImageFilter; import io
-    a = np.asarray(Image.open(path).convert("RGBA")).astype(float) / 255; r, g, b, al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
-    eye = (b > 0.7) & (g > 0.55) & (r < 0.6) & (al > 0.4)
-    t = np.clip((0.3 * r + 0.59 * g + 0.11 * b - 0.45) / 0.5, 0, 1)[..., None] ** 1.6
-    lo, hi = np.array([0x7B, 0x3F, 0xE4]) / 255, np.array([0xF6, 0xEE, 0xFF]) / 255
-    out = a.copy(); out[..., :3] = np.where(eye[..., None], lo * (1 - t) + hi * t, a[..., :3] * 0.85 + np.array([0x7B, 0x3F, 0xE4]) / 255 * 0.15)
-    m = Image.fromarray((eye * 255).astype(np.uint8)); im = Image.fromarray((out * 255).astype(np.uint8), "RGBA")
-    for rad, k in [(26, 2.2), (12, 2.4), (5, 1.6)]:
-        gl = np.asarray(m.filter(ImageFilter.GaussianBlur(rad))).astype(float) / 255
-        lay = np.zeros(a.shape); lay[..., :3] = np.array([0xB8, 0x86, 0xFF]) / 255; lay[..., 3] = np.clip(gl * k, 0, 1) * (al > 0.05)
-        im = Image.alpha_composite(im, Image.fromarray((lay * 255).astype(np.uint8), "RGBA"))
-    eo = np.zeros_like(out); eo[eye] = out[eye]; im = Image.alpha_composite(im, Image.fromarray((eo * 255).astype(np.uint8), "RGBA"))
-    buf = io.BytesIO(); im.save(buf, "PNG"); return base64.b64encode(buf.getvalue()).decode()
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from robot_injected import injected_robot
 robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
 DOSE = f'{MANIP[ARM][str(M)]["mean"]:.1f}'
 QTEXT = "Which paragraph did you attend to most while writing your answer? …"
@@ -160,9 +146,9 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <script>
 const ov=document.getElementById('ov');ov.setAttribute('width',document.body.scrollWidth);ov.setAttribute('height',document.body.scrollHeight);
 const R=e=>document.getElementById(e).getBoundingClientRect();
-// syringe: barrel tilted 28 deg up to the right so the dose reads left to right; needle tip into the injected robot's screen
+// syringe: barrel tilted 28 deg up to the right so the dose reads left to right; needle tip into the lower left of the injected robot's screen, clear of the eyes
 const rb=R('rob1'), syr=document.getElementById('syr'), A=30, SC=1.0;
-const tipx=rb.left+rb.width*0.36, tipy=rb.top+rb.height*0.50;
+const tipx=rb.left+rb.width*0.29, tipy=rb.top+rb.height*0.72;
 syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='380px 80px'; syr.style.transform=`rotate(${{A}}deg) scale(${{SC}})`;
 const inj=document.getElementById('inj'), r0=R('rob0'); inj.style.top=(r0.bottom+26)+'px';
 // wavy purple aura: layered rings, each rippled by turbulence and blurred

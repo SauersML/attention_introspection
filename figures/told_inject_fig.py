@@ -20,19 +20,7 @@ mult = {d: S["dose"][d]["attn_mass_ratio"][0] for d in DD}
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 W = 1500
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
-def injected_robot(path):
-    a = np.asarray(Image.open(path).convert("RGBA")).astype(float) / 255; r, g, b, al = a[..., 0], a[..., 1], a[..., 2], a[..., 3]
-    eye = (b > 0.7) & (g > 0.55) & (r < 0.6) & (al > 0.4)
-    t = np.clip((0.3 * r + 0.59 * g + 0.11 * b - 0.45) / 0.5, 0, 1)[..., None] ** 1.6
-    lo, hi = np.array([0x7B, 0x3F, 0xE4]) / 255, np.array([0xF6, 0xEE, 0xFF]) / 255
-    out = a.copy(); out[..., :3] = np.where(eye[..., None], lo * (1 - t) + hi * t, a[..., :3] * 0.85 + np.array([0x7B, 0x3F, 0xE4]) / 255 * 0.15)
-    m = Image.fromarray((eye * 255).astype(np.uint8)); im = Image.fromarray((out * 255).astype(np.uint8), "RGBA")
-    for rad, k in [(26, 2.2), (12, 2.4), (5, 1.6)]:
-        gl = np.asarray(m.filter(ImageFilter.GaussianBlur(rad))).astype(float) / 255
-        lay = np.zeros(a.shape); lay[..., :3] = np.array([0xB8, 0x86, 0xFF]) / 255; lay[..., 3] = np.clip(gl * k, 0, 1) * (al > 0.05)
-        im = Image.alpha_composite(im, Image.fromarray((lay * 255).astype(np.uint8), "RGBA"))
-    eo = np.zeros_like(out); eo[eye] = out[eye]; im = Image.alpha_composite(im, Image.fromarray((eo * 255).astype(np.uint8), "RGBA"))
-    buf = io.BytesIO(); im.save(buf, "PNG"); return base64.b64encode(buf.getvalue()).decode()
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from robot_injected import injected_robot
 robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
 def syringe(dose):
     o = [f'<path d="M380,80 L364,76 L364,84 Z" fill="{INK}"/>', f'<rect x="314" y="76" width="50" height="8" fill="{INK}"/>',
@@ -111,7 +99,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 const R=e=>document.getElementById(e).getBoundingClientRect(); const SW=document.body.scrollWidth, SH=document.body.scrollHeight;
 const ov=document.getElementById('ov');ov.setAttribute('width',SW);ov.setAttribute('height',SH);
 const rb=R('rob1'), syr=document.getElementById('syr');
-const tipx=rb.left+rb.width*0.30, tipy=rb.top+rb.height*0.55;
+const tipx=rb.left+rb.width*0.29, tipy=rb.top+rb.height*0.72;
 syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='380px 80px'; syr.style.transform='rotate(22deg)';
 const inj=document.getElementById('inj'); inj.style.top=(R('rq').top+4)+'px';
 const gl=document.getElementById('gl'); gl.setAttribute('width',SW); gl.setAttribute('height',SH);
