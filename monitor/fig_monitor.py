@@ -27,7 +27,7 @@ for su in SETUPS:
         heads.append((y, GROUP[su[0]])); y += 1.0
     ys.append(y); y += 1.0; prev = su[0]
 ys = np.array(ys)
-panels = [(axes[0], "top1", 100, "Naming the most-attended paragraph\nself minus reader (% points)"),
+panels = [(axes[0], "top1", 100, "Picking the right paragraph\nself minus reader (% points)"),
           (axes[1], "rho", 1, "Ranking the four paragraphs\nself minus reader (rank correlation)")]
 for ax, m, scale, xl in panels:
     for yy, su in zip(ys, SETUPS):
