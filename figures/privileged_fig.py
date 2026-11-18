@@ -2,7 +2,7 @@
 Top: one real prompt (context 28, labels [P1]..[P4] in order, text rebuilt by privileged_rebuild.py -> hero_question_example.json, as hero_question.py) in three copies with identical text:
 no boost; attention to paragraph [P2] x10 while the answer is written (arm A); x10 while the report question is read (arm C).
 Arrows: answer -> [P2] and report question -> [P2]; the thick arrow marks where the x10 boost is applied.
-Reply bars: the model's real next-token probabilities after the prefilled "P" (W1), for that prompt, in that condition.
+Reply bars (pair_bars.py): the model's real next-token probabilities after the prefilled "P" (W1), log y 0.1%-100%; grey = no boost, purple = that column's boost (no-boost column: grey only).
 Bottom: violins, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for
 the other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as analyze_priv.py; y drawn on that log scale,
 ticks labelled as % change = exp(.) - 1 at x0.5, x1, x2, x4, x8 (evenly spaced). Big labels: exp(mean) - 1. Black line: the mean.
@@ -15,6 +15,7 @@ from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, RED, INK, DIV, norm as dnorm
+from pair_bars import pair_bars
 import matplotlib.patheffects as pe
 ACOL = {"A": "#2B5FA8", "C": "#E07B24"}   # one colour per arm (the compared things)
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged/data/")
@@ -74,16 +75,6 @@ NW = [3, 3, 2, 2]
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
 QTEXT = "Which paragraph did you attend to most while writing your answer?"
 
-def bars(p):
-    w, h, bw = 300, 150, 52; o = []
-    for i, pos in enumerate(order):
-        x = 14 + i * 72; hh = 100 * p[pos]; c = AMB if pos == K else INK
-        o.append(f'<rect x="{x}" y="{112 - hh:.1f}" width="{bw}" height="{hh:.1f}" rx="5" fill="{c}"/>')
-        o.append(f'<text x="{x + bw / 2}" y="148" font-size="40" font-weight="700" text-anchor="middle" fill="{INK}">{i + 1}</text>')
-        if pos == K: o.append(f'<text x="{x + bw / 2}" y="{104 - hh:.1f}" font-size="40" font-weight="700" text-anchor="middle" fill="{INK}">{100 * p[pos]:.0f}%</text>')
-    o.append(f'<line x1="6" x2="{w - 6}" y1="112" y2="112" stroke="{INK}" stroke-width="3"/>')
-    return f'<svg width="{w}" height="{h}" viewBox="0 -10 {w} {h + 10}">{"".join(o)}</svg>'
-
 def column(i, title, sub, key, tcol=INK):
     pl = "".join(f'<div class="pl"><b class="{"k" if pos == K else "lb"}" {"id=p2c" + str(i) if pos == K else ""}>[P{EX["lab"][pos]}]</b> '
                  f'<span {"id=p2t" + str(i) if pos == K else ""}>{html.escape(short(EX["segs"][pos], NW[pos]))}</span></div>' for pos in range(4))
@@ -91,7 +82,7 @@ def column(i, title, sub, key, tcol=INK):
 <div class="ub">Here are four paragraphs.{pl}<div class="q">{html.escape(qline)}</div></div>
 <div class="mrow"><img class="rob" id="rob{i}" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
 <div class="ub2" id="rq{i}">{QTEXT} …</div>
-<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb bb"><span class="pp">P</span>{bars(probs[key])}</div></div></div>'''
+<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb bb"><span class="pp">P</span>{pair_bars(probs['none'], None if key == 'none' else probs[key], order, K, bw=30, gw=120, x0=116)}</div></div></div>'''
 
 # ---------------- violins ----------------
 VH = 1250; px = lambda v: v * 72 / 100   # px -> pt at dpi 100
@@ -162,7 +153,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .mrow{{display:flex;align-items:center;gap:12px;margin-top:12px}}
 .rob{{width:84px;height:84px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:28px;padding:8px 28px;font-size:60px;font-weight:700}}
-.bb{{display:flex;align-items:flex-end;gap:6px;padding:6px 18px 8px}} .pp{{font-size:60px;font-weight:700;margin-bottom:34px}}
+.bb{{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:8px 18px 8px}} .pp{{font-size:60px;font-weight:700;margin-left:10px}}
 .vio{{width:{W}px;display:block;margin-left:-{PAD}px}}
 #ov{{position:absolute;left:0;top:0;pointer-events:none}}
 </style></head><body><div class="cols">{cols}</div><img class="vio" src="data:image/png;base64,{VIO}">

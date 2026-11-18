@@ -15,6 +15,7 @@ from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE
+from pair_bars import pair_bars
 COL = "#E07B24"; AMB = "#F2B53A"; LIL = "#A574F2"
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
@@ -56,28 +57,6 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from robot_injec
 robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
 DOSE = f'{MANIP[ARM][str(M)]["mean"]:.1f}'
 QTEXT = "Which paragraph did you attend to most while writing your answer? …"
-
-def bars(p0, p1):
-    """paragraphs 1..4, each a pair: grey = no injection, purple = injection; log y from 0.1% to 100%"""
-    H, base, bw, gw, x0 = 210, 250, 44, 136, 116; o = []
-    Y = lambda v: base - H * (math.log10(max(v, 1e-3)) + 3) / 3
-    for t, lab in ((1.0, "100%"), (0.01, "1%"), (0.001, "0.1%")):
-        o.append(f'<text x="{x0 - 16}" y="{Y(t) + 13:.1f}" font-size="38" font-weight="700" text-anchor="end" fill="{INK}">{lab}</text>')
-    o.append(f'<line x1="{x0 - 6}" x2="{x0 - 6}" y1="{Y(1):.1f}" y2="{base}" stroke="{INK}" stroke-width="3"/>')
-    for i, pos in enumerate(order):
-        x = x0 + 8 + i * gw
-        for j, (pr, c) in enumerate(((p0, "#B8B8C0"), (p1, PURPLE))):
-            y = Y(pr[pos]); o.append(f'<rect x="{x + j * (bw + 4)}" y="{y:.1f}" width="{bw}" height="{base - y:.1f}" rx="5" fill="{c}"/>')
-        cx = x + bw + 2
-        if pos == K:
-            o.append(f'<rect x="{cx - 30}" y="{base + 10}" width="60" height="54" rx="10" fill="{AMB}"/>')
-            yt = Y(max(p0[pos], p1[pos])) - 14
-            o.append(f'<text x="{cx}" y="{yt - 46:.1f}" font-size="40" font-weight="800" text-anchor="middle" fill="{INK}">{100 * p0[pos]:.1f}% \u2192</text>')
-            o.append(f'<text x="{cx}" y="{yt:.1f}" font-size="40" font-weight="800" text-anchor="middle" fill="{PURPLE}">{100 * p1[pos]:.1f}%</text>')
-        o.append(f'<text x="{cx}" y="{base + 52}" font-size="40" font-weight="700" text-anchor="middle" fill="{INK}">{i + 1}</text>')
-    o.append(f'<line x1="{x0 - 6}" x2="{x0 + 4 * gw}" y1="{base}" y2="{base}" stroke="{INK}" stroke-width="3"/>')
-    w = x0 + 4 * gw + 10; h = base + 70
-    return f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}">{"".join(o)}</svg>'
 
 def syringe():
     """hand-drawn syringe, needle tip at the right end (x=380, y=80); drawn 380 x 160, rotated about the tip by the page so the barrel rises to the upper left and the dose reads left to right"""
@@ -154,7 +133,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <div class="ub">Here are four paragraphs.{pl}<div>{html.escape(qline)}</div></div>
 <div class="mrow"><img class="rob" id="rob0" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
 <div class="ub2" id="rq">{QTEXT}</div>
-<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb bb"><span class="pp" id="pp">P</span>{bars(prob0, prob)}</div></div>
+<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb bb"><span class="pp" id="pp">P</span>{pair_bars(prob0, prob, order, K)}</div></div>
 {syringe()}<div class="inj" id="inj">inject attention<br>into paragraph 2</div>
 <img class="vio" src="data:image/png;base64,{VIO}">
 <svg id="gl"></svg><svg id="ov"></svg>
