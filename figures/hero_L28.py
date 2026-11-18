@@ -69,18 +69,15 @@ def method_svg(w, h, cf, ci, rob):
     o.append(f'<rect x="{bx:.1f}" y="{by_:.1f}" width="{bw}" height="{bh}" rx="22" fill="#fff" stroke="#BFC3CB" stroke-width="3"/>')
     o.append(f'<text x="{bx + bw / 2:.1f}" y="{by_ + bh / 2 + 15:.1f}" font-size="44" font-weight="800" fill="{INK}" text-anchor="middle">{ANS["3_focus"]}</text>')
     sx, sy = bx + bw / 2, by_ - 4
-    hr = np.random.default_rng(3)   # schematic head-to-head variation (dose.json stores only the head mean)
-    for i, tx in enumerate(toks[K - 1]):
-        ey = ty - 8; cy = ty - 150 + 10 * i
-        for hh in range(5):
-            dc = hr.uniform(-12, 60); dx = hr.uniform(-22, 22); op = hr.uniform(0.12, 0.45); sw = hr.uniform(1.5, 6)
-            o.append(f'<path d="M{sx + dx:.1f},{sy:.1f} C{sx - 30 + dx:.1f},{cy + dc:.1f} {tx + 30:.1f},{cy + dc:.1f} {tx:.1f},{ey - 4:.1f}" fill="none" stroke="{INK}" stroke-opacity="{op:.2f}" stroke-width="{sw:.1f}"/>')
-    for i, tx in enumerate(toks[K - 1]):
-        ey = ty - 8; cy = ty - 150 + 10 * i
-        o.append(f'<path d="M{sx:.1f},{sy:.1f} C{sx - 30:.1f},{cy:.1f} {tx + 30:.1f},{cy:.1f} {tx:.1f},{ey:.1f}" fill="none" stroke="{INK}" stroke-width="3.5" marker-end="url(#ah)"/>')
+    ex = by[EX, "3_focus"]; att = np.array(ex["att_mean"])[28]   # real: example question, focus, layer 28, mean over heads
+    wts = att / att.max()
+    for g in range(4):   # one arrow per paragraph, width = its attention; the named paragraph in ink, the rest grey
+        tx = (toks[g][0] + toks[g][-1]) / 2; ey = ty - 8; cy = ty - 110 - 30 * (g == K - 1)
+        col = INK if g == K - 1 else "#A7ABB3"
+        o.append(f'<path d="M{sx:.1f},{sy:.1f} C{sx - 40:.1f},{cy:.1f} {tx + 40:.1f},{cy:.1f} {tx:.1f},{ey:.1f}" fill="none" stroke="{col}" stroke-width="{2 + 16 * wts[g]:.1f}" stroke-linecap="round"/>')
     cx = (bx + bw + w) / 2 + 4
-    for j, t in enumerate(["averaged over", "heads and", "answer tokens"]):
-        o.append(f'<text x="{cx:.1f}" y="{ty - 36 + 48 * j:.1f}" font-size="{F}" fill="{INK}" text-anchor="middle">{t}</text>')
+    for j, t in enumerate(["attention from", "the answer,", "averaged over", "heads and tokens"]):
+        o.append(f'<text x="{cx:.1f}" y="{ty - 70 + 44 * j:.1f}" font-size="{F}" fill="{INK}" text-anchor="middle">{t}</text>')
     o.append(f'<line x1="24" x2="{w - 24:.0f}" y1="{ty + 92}" y2="{ty + 92}" stroke="#E4E5E9" stroke-width="3"/>')
     # ---- (b) bottom: per-layer curve
     x0 = 160; x1 = w - 40; y0 = ty + 165; y1 = h - 84
@@ -193,13 +190,13 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .vio{{width:100%;display:block}}
 .cbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;padding:22px 26px;display:flex;flex-direction:column;justify-content:space-evenly}}
 .cub{{background:#1F8BFF;border-radius:26px;padding:14px 16px}}
-.cl1{{font-size:50px;font-weight:800;display:flex;align-items:center;gap:16px}} .cl2{{font-size:44px;font-weight:700;line-height:1.15}}
+.cl{{display:flex;flex-direction:column;gap:2px}} .cl1{{font-size:54px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap;line-height:1.15}} .cl2{{font-size:44px;font-weight:700;line-height:1.15}}
 .dot{{display:inline-block;width:40px;height:40px;border-radius:50%;background:{PURPLE};opacity:.75}}
-.cub .var{{color:{INK};font-size:44px}}
+.cub .var{{color:{INK};font-size:46px;white-space:nowrap}}
 .mbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;overflow:hidden}}
 </style></head><body><div class="cols">{"".join(cols)}</div><div class="vw"><img class="vio" src="data:image/png;base64,{VIO}">
   <div class="cbox" style="left:{CB['left']*sc:.0f}px;width:{(CB['right']-CB['left'])*sc:.0f}px;top:{CB['top']*sc:.0f}px;height:{(CB['bottom']-CB['top'])*sc:.0f}px">
-    <div class="cl1">one dot <span class="dot"></span> =</div><div class="cl2">% change compared to only mentioning the paragraph:</div>
+    <div class="cl"><div class="cl1">one dot <span class="dot"></span> = % change compared to</div><div class="cl1">only mentioning the paragraph:</div></div>
     <div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][0].format(k=K))}</div></div></div>
   <div class="mbox" style="left:{(VW + 36) / 2:.0f}px;width:{(VW - 36) / 2:.0f}px;top:{BOX['top']*FH*sc:.0f}px;height:{SVGH:.0f}px">{SVG}</div></div></body></html>'''
     hp = os.path.join(HERE, f"{out}_dose.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, f"{out}_dose_raw.png")
