@@ -1,4 +1,4 @@
-"""Hero column for the told-injection run (Qwen3-32B, 240 contexts; results/told_inject), largest boost only (multiplier 20, measured x9.9 attention mass).
+"""Hero column for the told-injection run (Qwen3-32B, 240 contexts; results/told_inject), multiplier 10 (measured x6.4 attention mass), to match hero_question.
 Qwen is told we can boost their attention onto one of four paragraphs on half the trials, then asked whether they notice and which one; reply prefilled "Yes, paragraph [P".
 Top: the told prompt, shortened (intro, four truncated paragraphs from context 101, with [P2] amber, the question), and Qwen's real next-token probabilities for 1-4
 after the prefill with [P2] boosted (boost on from "Trial 1" onward). Context 101 is a tie at the median of the per-context P2-boost effect.
@@ -18,7 +18,7 @@ COL = "#E07B24"; AMB = "#F2B53A"; LIL = "#A574F2"
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/told_inject/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
 CTX = json.load(open(os.path.join(HERE, "told_contexts.json")))
-M = 20.0; EXID, K = 101, 1
+M = 10.0; EXID, K = 101, 1
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 W = 1400; PAD = 26
 neg = lambda s: s.replace("-", "\u2212")
