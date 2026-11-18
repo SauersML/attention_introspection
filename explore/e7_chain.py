@@ -28,6 +28,7 @@ def lastpos_att(ids, spans, zero):
     model(torch.tensor([ids], device="cuda"), use_cache=False, logits_to_keep=1); S.update(rec=False, zero=None)
     return torch.stack([S["store"][L] for L in range(len(S["store"]))]).half()
 R = []
+N1 = min(N1, len(num)); log('items', len(num))
 for n in range(N1):
     t, P = num[n]; a = P["ans"]; a2 = alt(a)
     altP = dict(P, text=P["text"].replace(a, a2))
@@ -53,5 +54,6 @@ for n in range(N1):
             if ab in ("intact", "early6", "early_rand"):
                 rec["att"][f"{name}|{ab}"] = lastpos_att(ids, spans, z); rec["ntok"][name] = [y - x for x, y in spans]
     R.append(rec)
+    if len(R) % 10 == 0: torch.save(R, f'{OUT}/e7.pt')
     if n % 10 == 0: log("ctx", n, {k: round(v, 1) for k, v in rec["m"].items() if k.startswith("focus/alt")})
 torch.save(R, f"{OUT}/e7.pt"); log("done")
