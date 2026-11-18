@@ -197,13 +197,13 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .vio{{width:100%;display:block}}
 .cbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;padding:22px 26px;display:flex;flex-direction:column;justify-content:space-evenly}}
 .cub{{background:#1F8BFF;border-radius:26px;padding:14px 16px}}
-.cl{{display:flex;flex-direction:column;gap:2px}} .cl1{{font-size:46px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap;line-height:1.15}} .cl2{{font-size:44px;font-weight:700;line-height:1.15}}
-.dot{{display:inline-block;flex-shrink:0;width:40px;height:40px;border-radius:50%;background:{PURPLE};opacity:.75}}
+.cl{{display:flex;flex-direction:column;gap:2px}} .cl1.big{{font-size:61px}} .cl1{{font-size:46px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap;line-height:1.15}} .cl2{{font-size:44px;font-weight:700;line-height:1.15}}
+.dot{{display:inline-block;flex-shrink:0;width:46px;height:46px;border-radius:50%;background:{PURPLE};opacity:.75}}
 .cub .var{{color:{INK};font-size:46px;white-space:nowrap}}
 .mbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;overflow:hidden}}
 </style></head><body><div class="cols">{"".join(cols)}</div><div class="vw"><img class="vio" src="data:image/png;base64,{VIO}">
   <div class="cbox" style="left:{CB['left']*sc:.0f}px;width:{(CB['right']-CB['left'])*sc:.0f}px;top:{CB['top']*sc:.0f}px;height:{(CB['bottom']-CB['top'])*sc:.0f}px">
-    <div class="cl"><div class="cl1">one dot <span class="dot"></span> = % change (log scale)</div><div class="cl1">compared to only mentioning the paragraph:</div></div>
+    <div class="cl"><div class="cl1 big">one dot <span class="dot"></span> = % change (log scale)</div><div class="cl1">compared to only mentioning the paragraph:</div></div>
     <div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][0].format(k=K))}</div></div></div>
   <div class="mbox" style="left:{(VW + 36) / 2:.0f}px;width:{(VW - 36) / 2:.0f}px;top:{BOX['top']*FH*sc:.0f}px;height:{SVGH:.0f}px">{SVG}</div></div></body></html>'''
     hp = os.path.join(HERE, f"{out}_dose.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, f"{out}_dose_raw.png")
