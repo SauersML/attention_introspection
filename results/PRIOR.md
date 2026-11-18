@@ -36,3 +36,8 @@ Searched 18 Nov 2026 (Exa, DuckDuckGo, arXiv API, LessWrong). Only claims I read
 - (2) **New on attention, known as a pattern.** No prior attention self-report test found; the same-model transcript-reader null matches Singh/Linzen/Ravfogel 2605.26242 (input-only classifiers match self-reports) and the Binder 2410.13787 cross-prediction design.
 - (3) **New.** Closest: 2609.35108 (redirecting report-time head attention moves the report, same direction) and 2610.32109 (KV-cache edits move source reports). Neither boosts attention to content during answering, and neither finds an inverted shift.
 Caveats: searches can miss workshop papers and recent posts; I did not find a LessWrong/AF post on attention self-report. I did not read 2609.35108's appendix in full, only the abstract and method text.
+
+## Added from S's search (18 Nov 00:10), not yet read in full
+- Me, Myself, and π (arXiv 2603.20276, Mar 2026): introspective prompting changes attention (entropy up .53; patching attention patterns explains 23.9% of the logit shift). Prompt changes attention, not self-observed control.
+- Open-Weight Masked Introspection (arXiv 2608.20569, Aug 2026): attenuating attention-head outputs is not reliably detected by self-report across 8 models, vs sham. Head outputs, not attention probabilities.
+- In-Context Neurofeedback (Findings EMNLP 2026; arXiv 2609.00904): control vanishes when the target needs privileged access.
