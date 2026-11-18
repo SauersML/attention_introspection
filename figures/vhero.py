@@ -68,24 +68,24 @@ for m,name,cond in [("qwen3-32b","“focus your\nattention”","focus"),("qwen3-
     print(name,"n=%d meanSD=%.3f CI[%.3f,%.3f] above=%d (%.1f%%) d_z=%.3f sd_mention=%.3g"%(len(z),mm,lo,hi,res[name]["above"],100*res[name]["above"]/len(z),res[name]["dz"],x.std(ddof=1)))
 
 plt.rcParams.update({"font.size":56})
-fig,a=plt.subplots(figsize=(23,11)); b=None
+fig,a=plt.subplots(figsize=(23,8.2)); b=None
 cmap=colors.LinearSegmentedColormap.from_list("hy",["#BFD3EE","#5B8BD0","#2B4FA8","#4B2A8F","#2A0F4F"])
 allz=np.concatenate([res[n]["z"] for n in res]); vm=np.percentile(np.abs(allz),97); DN=dnorm(np.percentile(allz,1),vm)
 rng=np.random.default_rng(1)
 for p,name in enumerate(res):
     r=res[name]; z=r["z"]
-    vv=a.violinplot([z],positions=[p*1.35],widths=0.95,showextrema=False)
+    vv=a.violinplot([z],positions=[p*1.35],widths=0.7,showextrema=False)
     col=PURPLE if np.mean(z)>0 else RED
     for bb in vv["bodies"]: bb.set_facecolor(col); bb.set_alpha(0.22); bb.set_edgecolor(col); bb.set_linewidth(2.5)
-    xj=p*1.35+rng.uniform(-0.34,0.34,len(z)); a.scatter(xj,z,s=650,c=DIV(DN(z)),alpha=0.45,edgecolors="none",zorder=3); a.scatter(xj,z,s=6,color="black",zorder=4)
+    xj=p*1.35+rng.uniform(-0.25,0.25,len(z)); a.scatter(xj,z,s=650,c=DIV(DN(z)),alpha=0.45,edgecolors="none",zorder=3); a.scatter(xj,z,s=6,color="black",zorder=4)
     a.plot([p*1.35,p*1.35],[r["lo"],r["hi"]],color=INK,lw=12,solid_capstyle="butt",zorder=5); a.plot([p*1.35-0.22,p*1.35+0.22],[r["mean"]]*2,color=INK,lw=6,zorder=6)
-    a.text(p*1.35,(z.max()+2) if r["mean"]>0 else (z.min()-2),f"{r['mean']:+.0f}%".replace("-","−"),fontsize=90,fontweight="bold",color=(PURPLE if r["mean"]>0 else RED),ha="center",va=("bottom" if r["mean"]>0 else "top"),zorder=7)
-a.set_xticks([]); a.set_xlim(-0.68,2.03)
-a.set_ylim(allz.min()-17,allz.max()+16)
+    a.text(p*1.35,(z.max()+2) if r["mean"]>0 else (z.min()-2),f"{r['mean']:+.0f}%".replace("-","−"),fontsize=100,fontweight="bold",color=(PURPLE if r["mean"]>0 else RED),ha="center",va=("bottom" if r["mean"]>0 else "top"),zorder=7)
+a.set_xticks([]); 
+a.set_ylim(allz.min()-34,allz.max()+22)
 for ax in (a,):
     ax.axhline(0,color=INK,lw=4,zorder=4)
     ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v,_: f"{v:+.0f}%".replace("-","\u2212") if v else "0%"))
     for s_ in ["top","right"]: ax.spines[s_].set_visible(False)
     ax.spines["left"].set_linewidth(3); ax.spines["bottom"].set_linewidth(3); ax.tick_params(width=4,length=16,labelsize=72)
-a.set_ylabel("change in attention\nvs. only mentioned",fontsize=60,labelpad=10)
+a.set_ylabel("change in\nattention",fontsize=70,labelpad=6); a.set_yticks([0,50]); a.set_xlim(-0.42,1.90)
 fig.tight_layout(pad=0.6); fig.savefig(OUT+"vhero.png",dpi=110,facecolor="white"); fig.savefig(OUT+"vhero.jpg",dpi=110,facecolor="white")

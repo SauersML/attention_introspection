@@ -57,18 +57,18 @@ import base64 as _b
 VIO = _b.b64encode(open(os.path.join(HERE, "vhero.png"), "rb").read()).decode()
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:30px 30px 20px}}
-.cols{{display:flex;gap:40px;padding-left:330px}}
+body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px 26px 10px}}
+.cols{{display:flex;gap:36px;padding-left:300px}}
 .col{{flex:1;min-width:0;display:flex;flex-direction:column}}
-.cname{{font-size:58px;font-weight:800;margin:0 0 14px 4px;white-space:nowrap}}
-.ub{{flex:1;background:#1F8BFF;color:#fff;border-radius:34px;padding:24px 26px;font-size:40px;line-height:1.24;display:flex;flex-direction:column;gap:10px}}
+.cname{{font-size:76px;font-weight:800;margin:0 0 12px 4px;white-space:nowrap}}
+.ub{{flex:1;background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;display:flex;flex-direction:column;gap:8px}}
 .pl{{white-space:nowrap;overflow:hidden}}
 .var{{background:#fff;border-radius:16px;padding:10px 16px;font-weight:700;line-height:1.18}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
-.mrow{{display:flex;align-items:center;gap:16px;margin-top:20px}}
-.rob{{width:96px;height:96px}}
-.mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:12px 34px;font-size:56px;font-weight:700;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
-.vio{{width:100%;display:block;margin-top:10px}}
+.mrow{{display:flex;align-items:center;gap:16px;margin-top:12px}}
+.rob{{width:110px;height:110px}}
+.mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:12px 34px;font-size:70px;font-weight:700;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
+.vio{{width:100%;display:block;margin-top:0}}
 </style></head><body>
 <div class="cols">{"".join(cols)}</div>
 <img class="vio" src="data:image/png;base64,{VIO}">
