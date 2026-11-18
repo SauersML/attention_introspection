@@ -45,3 +45,28 @@ Per-head specific effect (layers 21–53, 2112 heads, mean over 150 prompts). Sp
 - Accuracy: none 0.73 [0.65, 0.79]; focus right 0.75; focus wrong 0.71 [0.64, 0.78]; no condition differs. Gold log-prob, focus minus mention: right −0.23 [−0.43, −0.03] (p = 0.03), wrong +0.20 [−0.06, +0.48]. Per prompt, the attention change on the answer paragraph does not predict the log-prob change (r = −0.01).
 **Surprises.** The instruction is a small additive nudge on top of task-driven attention, not a controller: it can't raise attention that the task already maxed, and pointing it elsewhere doesn't pull attention away from where the answer is. "Focus on the right paragraph" even slightly lowers the gold answer's log-prob (weak, p = 0.03).
 **Next.** A case where the instruction could matter: two paragraphs give *conflicting* answers to the same question. Does "focus on [Pj]" choose which source wins, and how does that compare with an explicit "answer using only [Pj]"? → E4 (after E3, already queued: which verbs drive the six heads, and is ablating them causal for unlabelled addressing).
+
+## E3 — Which instructions drive the six heads, and are they causal beyond digit labels? (05:15–05:40)
+**Why.** E1b: the six heads read the address of attention instructions in any form (ordinal, topic, French). Is that an "attend" reader, or a generic pointer to whatever paragraph the instruction is about? And is it causal when there is no label digit to copy?
+**Setup.** 150 contexts (seed 11), labelled paragraphs, unrelated sum, no-instruction answer teacher-forced. Eleven lines naming [Pk] with different verbs, all against the same mention line ("Note that one of the paragraphs is labelled [Pk]."). Ablation: zero the six heads' outputs (all positions) vs a random six from layers 20–26 (fresh per prompt), under label, unlabelled-ordinal and unlabelled-topic focus/mention. e3_verbs.py, a3.py → out/e3/a3.json.
+**Control.** Matched mention; random-six ablation.
+**Result** (specific boost to [Pk]; six-head attention to the instruction line, minus mention):
+
+| line | specific | six-head reading |
+|---|---|---|
+| Focus your attention on paragraph [Pk]. | +38.5% [35.5, 41.8] | +0.22 |
+| After answering, summarize paragraph [Pk]. | +36.3% [31.8, 41.3] | +0.32 |
+| Read paragraph [Pk] carefully. | +32.7% [29.4, 36.2] | +0.22 |
+| Pay attention to the label [Pk]. | +17.2% [15.7, 18.8] | +0.14 |
+| Paragraph [Pk] is the important one. | +8.6% [7.2, 10.0] | +0.05 |
+| Paragraph [Pk] contains a typo. | +8.5% [7.3, 9.9] | +0.05 |
+| Paragraph [Pk] was written by my friend. | +7.3% [5.8, 8.9] | +0.06 |
+| Memorize paragraph [Pk]; I will ask about it later. | +6.5% [4.9, 8.2] | +0.07 |
+| Do not think about paragraph [Pk]. | +4.9% [3.7, 6.1] | +0.02 |
+| Completely ignore paragraph [Pk]. | −6.2% [−7.2, −5.3] | −0.06 |
+| Skip paragraph [Pk]; it is irrelevant. | −6.5% [−7.3, −5.8] | −0.04 |
+
+Per prompt, pooled over the eleven lines, the six heads' extra reading of the instruction predicts the specific boost: r = 0.76.
+Ablation (specific boost, focus vs mention): label +38.5% → +14.0% [12.8, 15.3] with the six zeroed, +38.4% with random six; ordinal (no labels) +20.3% → +8.2% [7.2, 9.2] vs +20.5%; topic (no labels) +9.3% → +5.3% [4.5, 6.1] vs +9.2%. All six-vs-random p < 0.0001.
+**Surprises.** (1) A task the model is told to do *after* answering ("after answering, summarize [Pk]") moves attention during the answer as much as an explicit attention instruction, and drives the six heads hardest of all. "Memorize it, I'll ask later" — also about the future — barely does anything. So the boost tracks "what I'll have to *process* next", not the word "attention" and not "this matters". (2) The six heads are causal for the boost under ordinal and topic addressing too (≈60% and ≈43% of it), where there is no label digit to copy: they are the address reader for instruction-directed attention in general. (3) "Do not think about [Pk]" raises attention to it (white-bear effect, small), while "ignore"/"skip" lower it a little.
+**Next.** E4 (running): conflicting sources, does instructed attention choose the answer.
