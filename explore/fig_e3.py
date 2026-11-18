@@ -1,31 +1,40 @@
-import json, sys, matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
-d = json.load(open(sys.argv[1]))
-L = [("summarize_after", "After answering, summarize paragraph [P2]."), ("focus", "Focus your attention on paragraph [P2]."),
-     ("read", "Read paragraph [P2] carefully."), ("attend_label", "Pay attention to the label [P2]."),
-     ("important", "Paragraph [P2] is the important one."), ("typo", "Paragraph [P2] contains a typo."),
-     ("friend", "Paragraph [P2] was written by my friend."), ("memorize", "Memorize paragraph [P2]; I will ask about it later."),
-     ("dont_think", "Do not think about paragraph [P2]."), ("ignore", "Completely ignore paragraph [P2]."), ("skip", "Skip paragraph [P2]; it is irrelevant.")]
-plt.rcParams.update({"font.size": 17, "font.family": "DejaVu Sans"})
-fig, (a, b) = plt.subplots(1, 2, figsize=(20, 8.5), gridspec_kw=dict(width_ratios=[1.35, 1]))
-y = list(range(len(L)))[::-1]
-for yi, (k, s) in zip(y, L):
-    v = d[k]["specific"]; c = "#1f6feb" if v["pct"] > 0 else "#d1495b"
-    a.barh(yi, v["pct"], color=c, height=0.7); a.errorbar(v["pct"], yi, xerr=[[v["pct"] - v["lo"]], [v["hi"] - v["pct"]]], color="black", capsize=4, lw=1.5)
-    a.text(-1.5 if v["pct"] > 0 else 1.5, yi, s, ha="right" if v["pct"] > 0 else "left", va="center", fontsize=16)
-a.axvline(0, color="black", lw=1); a.set_yticks([]); a.set_xlim(-60, 45)
-a.set_xticks([-10, 0, 10, 20, 30, 40]); a.set_xticklabels(["−10%", "0", "+10%", "+20%", "+30%", "+40%"])
-a.set_title("Extra attention to the named paragraph while answering a sum", fontsize=19, loc="left")
-for s in ("top", "right", "left"): a.spines[s].set_visible(False)
-names = [("label", "Focus on [P2]"), ("ordinal", "Focus on the\nsecond paragraph"), ("topic", "Focus on the\nparagraph about X")]
-w = 0.26; cols = {"intact": "#1f6feb", "zero_rand": "#8ab4f8", "zero6": "#d1495b"}
-lab = {"intact": "intact", "zero_rand": "6 random heads off", "zero6": "the 6 address heads off"}
-for i, (k, s) in enumerate(names):
-    for j, cond in enumerate(("intact", "zero_rand", "zero6")):
-        v = d[f"abl/{k}"][cond]; x = i + (j - 1) * w
-        b.bar(x, v["pct"], width=w * 0.95, color=cols[cond]); b.errorbar(x, v["pct"], yerr=[[v["pct"] - v["lo"]], [v["hi"] - v["pct"]]], color="black", capsize=4, lw=1.5)
-        if i == 0: b.text(x, v["hi"] + 1, lab[cond], rotation=90, ha="center", va="bottom", fontsize=15, color=cols[cond])
-b.set_xticks(range(3)); b.set_xticklabels([s for _, s in names]); b.set_ylim(0, 62)
-b.set_yticks([0, 10, 20, 30, 40]); b.set_yticklabels(["0", "+10%", "+20%", "+30%", "+40%"])
-b.set_title("Switching off six heads in layers 20–26", fontsize=19, loc="left")
-for s in ("top", "right"): b.spines[s].set_visible(False)
-plt.tight_layout(); plt.savefig(sys.argv[2], dpi=110)
+# What moves attention: extra attention on the named paragraph while answering an unrelated sum, per instruction line,
+# against a line that only mentions the paragraph. Reads results/a3.json; the drawn prompt is the real first context
+# (results/sum_examples.json, rebuilt from SQuAD with the experiment's seed).
+import json, matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
+from matplotlib.patches import FancyBboxPatch
+d = json.load(open("results/a3.json")); sx = json.load(open("results/sum_examples.json"))[0]; k = sx["k"] + 1
+FS = 30; K = "#1D1D1F"; C = "#2B5FA8"
+plt.rcParams.update({"font.size": FS, "font.family": "DejaVu Sans", "text.color": K, "axes.labelcolor": K,
+                     "xtick.color": K, "ytick.color": K, "axes.edgecolor": K})
+P = f"[P{k}]"
+L = [("summarize_after", f"After answering, summarize paragraph {P}."), ("focus", f"Focus your attention on paragraph {P}."),
+     ("read", f"Read paragraph {P} carefully."), ("attend_label", f"Pay attention to the label {P}."),
+     ("important", f"Paragraph {P} is the important one."), ("typo", f"Paragraph {P} contains a typo."),
+     ("friend", f"Paragraph {P} was written by my friend."), ("memorize", f"Memorize paragraph {P}; I will ask about it later."),
+     ("dont_think", f"Do not think about paragraph {P}."), ("ignore", f"Completely ignore paragraph {P}."), ("skip", f"Skip paragraph {P}; it is irrelevant.")]
+fig = plt.figure(figsize=(21, 19))
+ap = fig.add_axes([0, 0.80, 1, 0.20]); ap.axis("off"); ap.set_xlim(0, 1); ap.set_ylim(0, 1)
+ap.add_patch(FancyBboxPatch((0.012, 0.04), 0.976, 0.92, boxstyle="round,pad=0,rounding_size=0.06", fc="#F4F4F6", ec="none"))
+def cut(s, n): return s if len(s) <= n else s[:n].rsplit(" ", 1)[0] + "…"
+paras = "   ".join(f"[P{i+1}] " + cut(p, 9) for i, p in enumerate(sx["paras"]))
+ap.text(0.035, 0.80, "Here are four paragraphs.   " + paras, va="center", fontsize=FS)
+ap.add_patch(FancyBboxPatch((0.03, 0.39), 0.94, 0.22, boxstyle="round,pad=0,rounding_size=0.03", fc="#FAF0E6", ec=K, lw=3, ls="--"))
+ap.text(0.045, 0.50, "one of the lines below", va="center", fontsize=FS, fontweight="bold")
+ap.text(0.31, 0.50, f"(zero: “Note that one of the paragraphs is labelled {P}.”)", va="center", fontsize=FS)
+ap.text(0.035, 0.20, f"Unrelated question: what is {sx['x']} + {sx['y']}? Answer with just the number.", va="center", fontsize=FS)
+ap.text(0.965, 0.80, "Qwen3-32B", ha="right", va="center", fontsize=FS, fontweight="bold")
+ax = fig.add_axes([0.505, 0.075, 0.475, 0.71])
+for i, (key, s) in enumerate(L):
+    v = d[key]["specific"]; y = len(L) - 1 - i
+    ax.barh(y, v["pct"], color=C, height=0.72)
+    ax.errorbar(v["pct"], y, xerr=[[v["pct"] - v["lo"]], [v["hi"] - v["pct"]]], color=K, capsize=7, lw=3, capthick=3)
+    ax.text(-8.5, y, s, ha="right", va="center", fontsize=FS)
+ax.axvline(0, color=K, lw=2.5)
+ax.set_yticks([]); ax.set_xlim(-8, 44); ax.set_ylim(-0.6, len(L) - 0.4)
+ax.set_xticks([0, 10, 20, 30, 40]); ax.set_xticklabels(["0", "+10%", "+20%", "+30%", "+40%"])
+ax.set_xlabel(f"extra attention on {P} while answering the sum")
+ax.tick_params(length=8, width=2)
+for s in ("top", "right", "left"): ax.spines[s].set_visible(False)
+ax.spines["bottom"].set_linewidth(2)
+plt.savefig("figures/e3_what_moves_attention.png", dpi=100)
