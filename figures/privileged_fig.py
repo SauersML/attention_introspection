@@ -127,26 +127,18 @@ for t in TV:
     if ylo < y < yhi: fig.text(*F(AX0 - 14, YP(y)), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
 fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.5)) / VH, YP(math.log(11)) / VH], color=INK, lw=3))
 LXp = AX0 - 200
-fig.text(*F(LXp, YP(math.log(6))), "reported\nmore often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=PURPLE, linespacing=1.1)
-fig.text(*F(LXp, YP(math.log(0.45))), "reported\nless often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=RED, linespacing=1.1)
-fig.text(*F(LXp, YP(math.log(1.9))), "change in the chance the\nreport says the boosted\nparagraph, relative to\nthe other paragraphs", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.15)
+fig.text(*F(LXp, YP(math.log(6))), "report says\n[P2] more often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=PURPLE, linespacing=1.1)
+fig.text(*F(LXp, YP(math.log(0.45))), "report says\n[P2] less often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=RED, linespacing=1.1)
 TY = axs[0].get_position().y0 * VH - 58
-fig.text(*F(AX0 - 14, TY), "attention to the\nboosted paragraph", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.1)
-OY = 70
-fig.text(*F(AX0 - 14, OY), "at ×10 in lists, code, document\nsections, sentences, dialogue:", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.15)
-for j, (a, _) in enumerate(ARMS):
-    sig = [s for s, _ in OTHER if OTH[a, s]["sig"] and (OTH[a, s]["mean"] > 0) == (ST[a, 10.0]["mean"] > 0)]
-    flat = [nm for s, nm in OTHER if not OTH[a, s]["sig"]]
-    word = "more" if ST[a, 10.0]["mean"] > 0 else "less"
-    txt = f"{len(sig)} of 5 also {word} often" + (f"\n({', '.join(flat)}: flat)" if flat else "")
-    p0 = axs[j].get_position()
-    fig.text((p0.x0 + p0.x1) / 2, OY / VH, txt, ha="center", va="center", fontsize=px(48), fontweight="bold", color=PURPLE if word == "more" else RED, linespacing=1.15)
+fig.text(*F(AX0 - 14, TY), "attention\nboost", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.1)
 KY = (YP(math.log(0.45)) + TY) / 2 - 10
 KY = YP(math.log(11)) - 20
+for j, (a, nm) in enumerate(ARMS):
+    p0 = axs[j].get_position()
+    fig.text((p0.x0 + p0.x1) / 2 - (0.0 if j == 0 else 0.045), YP(math.log(11)) / VH, "boost " + nm.replace("reading the", "reading the\n"), ha="center", va="top", linespacing=1.1, fontsize=px(52), fontweight="bold", color=INK)
 ov = fig.add_axes([0, 0, 1, 1], facecolor="none"); ov.set_xlim(0, W); ov.set_ylim(0, VH); ov.axis("off")
 ov.scatter([PAD + 34], [KY + 26], s=330, color="#7A55C9", alpha=0.6, edgecolors="none"); ov.scatter([PAD + 34], [KY + 26], s=5, color="black")
-fig.text(*F(PAD + 64, KY + 26), "= one prompt (100)", ha="left", va="center", fontsize=px(46), color=INK)
-fig.text(*F(PAD + 8, KY - 30), "each paragraph boosted in turn", ha="left", va="center", fontsize=px(40), color=INK)
+fig.text(*F(PAD + 64, KY + 26), "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
 VP = os.path.join(HERE, "privileged_violins.png"); fig.savefig(VP, dpi=200, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
