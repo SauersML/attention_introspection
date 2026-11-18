@@ -127,8 +127,8 @@ for t in TV:
     if ylo < y < yhi: fig.text(*F(AX0 - 14, YP(y)), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
 fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.5)) / VH, YP(math.log(11)) / VH], color=INK, lw=3))
 LXp = AX0 - 200
-fig.text(*F(LXp, YP(math.log(6))), "report says\n[P2] more often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=PURPLE, linespacing=1.1)
-fig.text(*F(LXp, YP(math.log(0.45))), "report says\n[P2] less often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=RED, linespacing=1.1)
+fig.text(*F(LXp, YP(math.log(6))), "report names the\nboosted paragraph\nmore often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=PURPLE, linespacing=1.1)
+fig.text(*F(LXp, YP(math.log(0.45))), "report names the\nboosted paragraph\nless often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=RED, linespacing=1.1)
 TY = axs[0].get_position().y0 * VH - 58
 fig.text(*F(AX0 - 14, TY), "attention\nboost", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.1)
 KY = (YP(math.log(0.45)) + TY) / 2 - 10
