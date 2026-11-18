@@ -9,7 +9,7 @@ plt.rcParams.update({"font.family": "Helvetica", "font.size": 60, "text.color": 
                      "xtick.color": INK, "ytick.color": INK, "axes.edgecolor": INK})
 sys.path.insert(0, OUT); from pal import DIV, norm
 M = np.array(R["ratio"]); P = 100 * (M - 1); vm = np.abs(P).max(); nm = norm(-vm*0.6, vm)
-fig = plt.figure(figsize=(18, 18.5)); a = fig.add_axes([0.19, 0.02, 0.77, 0.70])
+fig = plt.figure(figsize=(18, 16)); a = fig.add_axes([0.19, 0.02, 0.77, 0.81])
 a.imshow(P, cmap=DIV, norm=nm)
 for k in range(4):
     for m in range(4):
@@ -21,9 +21,7 @@ a.set_xticks(range(4)); a.set_xticklabels([f"P{i}" for i in range(1, 5)])
 a.set_yticks(range(4)); a.set_yticklabels([f"P{i}" for i in range(1, 5)])
 a.xaxis.tick_top(); a.xaxis.set_label_position("top")
 a.tick_params(length=0, pad=18)
-a.set_xlabel("paragraph where attention went", labelpad=28)
-a.set_ylabel("paragraph named in the instruction", labelpad=28)
+a.set_xlabel("change in attention", labelpad=28)
+a.set_ylabel("“focus your attention on . . .”", labelpad=28)
 for s in a.spines.values(): s.set_visible(False)
-fig.text(0.5, 0.955, "Qwen3-32B is told:\n“Focus your attention on paragraph [P?].”", ha="center", va="center", fontsize=46, linespacing=1.3)
-fig.text(0.5, 0.885, "change in attention vs no instruction", ha="center", va="center", fontsize=42)
 fig.savefig(OUT + "rotate.png", dpi=150, facecolor="white"); fig.savefig(OUT + "rotate.jpg", dpi=150, facecolor="white")
