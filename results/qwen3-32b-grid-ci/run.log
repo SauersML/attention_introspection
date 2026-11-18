@@ -1,0 +1,108 @@
+# CPU quota 35 of 35 CPUs: OMP_NUM_THREADS=35 MKL_NUM_THREADS=35 OPENBLAS_NUM_THREADS=35
+# NVIDIA A100-SXM4-80GB, 595.112.07, CUDA Version: 13.2
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Loading weights:   0%|          | 0/707 [00:00<?, ?it/s]Loading weights:   0%|          | 2/707 [00:00<01:11,  9.81it/s]Loading weights:   2%|▏         | 12/707 [00:00<00:15, 46.31it/s]Loading weights:   3%|▎         | 21/707 [00:00<00:11, 61.50it/s]Loading weights:   4%|▍         | 29/707 [00:00<00:10, 63.44it/s]Loading weights:   6%|▌         | 39/707 [00:00<00:09, 67.93it/s]Loading weights:   7%|▋         | 49/707 [00:00<00:09, 70.07it/s]Loading weights:   9%|▊         | 61/707 [00:00<00:08, 76.59it/s]Loading weights:  10%|█         | 72/707 [00:01<00:07, 83.24it/s]Loading weights:  12%|█▏        | 83/707 [00:01<00:07, 86.99it/s]Loading weights:  13%|█▎        | 93/707 [00:01<00:07, 87.71it/s]Loading weights:  15%|█▍        | 103/707 [00:01<00:07, 81.61it/s]Loading weights:  16%|█▌        | 114/707 [00:01<00:06, 86.14it/s]Loading weights:  17%|█▋        | 123/707 [00:01<00:06, 85.20it/s]Loading weights:  19%|█▊        | 132/707 [00:01<00:07, 75.17it/s]Loading weights:  20%|█▉        | 140/707 [00:01<00:08, 65.23it/s]Loading weights:  21%|██        | 148/707 [00:02<00:08, 64.61it/s]Loading weights:  22%|██▏       | 158/707 [00:02<00:07, 71.50it/s]Loading weights:  23%|██▎       | 166/707 [00:02<00:07, 69.84it/s]Loading weights:  25%|██▍       | 174/707 [00:02<00:07, 70.38it/s]Loading weights:  26%|██▌       | 182/707 [00:02<00:07, 67.29it/s]Loading weights:  27%|██▋       | 193/707 [00:02<00:06, 73.62it/s]Loading weights:  29%|██▊       | 203/707 [00:02<00:06, 78.28it/s]Loading weights:  30%|███       | 213/707 [00:02<00:06, 79.36it/s]Loading weights:  31%|███▏      | 222/707 [00:03<00:06, 75.94it/s]Loading weights:  33%|███▎      | 230/707 [00:03<00:07, 66.79it/s]Loading weights:  34%|███▎      | 237/707 [00:03<00:07, 61.42it/s]Loading weights:  35%|███▍      | 247/707 [00:03<00:06, 68.42it/s]Loading weights:  36%|███▋      | 257/707 [00:03<00:06, 71.49it/s]Loading weights:  37%|███▋      | 265/707 [00:03<00:06, 69.81it/s]Loading weights:  39%|███▊      | 273/707 [00:03<00:06, 65.98it/s]Loading weights:  40%|███▉      | 280/707 [00:03<00:06, 64.72it/s]Loading weights:  41%|████      | 290/707 [00:04<00:05, 70.72it/s]Loading weights:  42%|████▏     | 298/707 [00:04<00:05, 70.52it/s]Loading weights:  43%|████▎     | 306/707 [00:04<00:05, 68.22it/s]Loading weights:  44%|████▍     | 314/707 [00:04<00:05, 67.10it/s]Loading weights:  46%|████▌     | 324/707 [00:04<00:05, 75.40it/s]Loading weights:  47%|████▋     | 335/707 [00:04<00:04, 78.36it/s]Loading weights:  49%|████▉     | 346/707 [00:04<00:04, 79.01it/s]Loading weights:  50%|█████     | 357/707 [00:04<00:04, 80.36it/s]Loading weights:  52%|█████▏    | 368/707 [00:05<00:04, 81.03it/s]Loading weights:  54%|█████▎    | 379/707 [00:05<00:03, 82.25it/s]Loading weights:  55%|█████▌    | 390/707 [00:05<00:04, 78.05it/s]Loading weights:  57%|█████▋    | 402/707 [00:05<00:03, 80.41it/s]Loading weights:  58%|█████▊    | 413/707 [00:05<00:03, 81.52it/s]Loading weights:  60%|█████▉    | 424/707 [00:05<00:03, 81.29it/s]Loading weights:  62%|██████▏   | 435/707 [00:05<00:03, 82.18it/s]Loading weights:  63%|██████▎   | 446/707 [00:06<00:03, 82.57it/s]Loading weights:  65%|██████▍   | 457/707 [00:06<00:03, 82.95it/s]Loading weights:  66%|██████▌   | 467/707 [00:06<00:02, 84.40it/s]Loading weights:  67%|██████▋   | 476/707 [00:06<00:02, 82.17it/s]Loading weights:  69%|██████▊   | 485/707 [00:06<00:02, 79.86it/s]Loading weights:  70%|██████▉   | 493/707 [00:06<00:02, 75.36it/s]Loading weights:  71%|███████   | 501/707 [00:06<00:03, 67.32it/s]Loading weights:  72%|███████▏  | 511/707 [00:06<00:02, 73.20it/s]Loading weights:  74%|███████▎  | 521/707 [00:07<00:02, 79.94it/s]Loading weights:  75%|███████▌  | 532/707 [00:07<00:02, 83.10it/s]Loading weights:  77%|███████▋  | 541/707 [00:07<00:01, 84.72it/s]Loading weights:  78%|███████▊  | 550/707 [00:07<00:01, 86.06it/s]Loading weights:  79%|███████▉  | 559/707 [00:07<00:01, 84.74it/s]Loading weights:  80%|████████  | 568/707 [00:07<00:01, 82.19it/s]Loading weights:  82%|████████▏ | 577/707 [00:07<00:01, 84.16it/s]Loading weights:  83%|████████▎ | 588/707 [00:07<00:01, 89.90it/s]Loading weights:  85%|████████▍ | 599/707 [00:07<00:01, 90.17it/s]Loading weights:  86%|████████▋ | 610/707 [00:08<00:01, 87.74it/s]Loading weights:  88%|████████▊ | 621/707 [00:08<00:00, 89.21it/s]Loading weights:  89%|████████▉ | 631/707 [00:08<00:00, 86.05it/s]Loading weights:  91%|█████████ | 643/707 [00:08<00:00, 87.26it/s]Loading weights:  93%|█████████▎| 654/707 [00:08<00:00, 78.99it/s]Loading weights:  94%|█████████▍| 666/707 [00:08<00:00, 82.45it/s]Loading weights:  96%|█████████▌| 677/707 [00:08<00:00, 82.06it/s]Loading weights:  97%|█████████▋| 687/707 [00:08<00:00, 86.13it/s]Loading weights:  99%|█████████▊| 697/707 [00:09<00:00, 89.04it/s]Loading weights: 100%|██████████| 707/707 [00:09<00:00, 87.81it/s]Loading weights: 100%|██████████| 707/707 [00:09<00:00, 77.24it/s]
+10:19:43 model Qwen/Qwen3-32B band 21 53
+Generating train split:   0%|          | 0/87599 [00:00<?, ? examples/s]Generating train split:  95%|█████████▍| 83000/87599 [00:00<00:00, 820269.35 examples/s]Generating train split: 100%|██████████| 87599/87599 [00:00<00:00, 818462.54 examples/s]
+Generating validation split:   0%|          | 0/10570 [00:00<?, ? examples/s]Generating validation split: 100%|██████████| 10570/10570 [00:00<00:00, 720230.58 examples/s]
+10:20:06 ctx 0 '115' free same 13 / 13
+10:20:13 ctx 1 '88' free same 13 / 13
+10:20:22 ctx 2 '111' free same 13 / 13
+10:20:30 ctx 3 '100' free same 13 / 13
+10:20:37 ctx 4 '70' free same 13 / 13
+10:20:45 ctx 5 '123' free same 13 / 13
+10:20:52 ctx 6 '73' free same 13 / 13
+10:21:00 ctx 7 '115' free same 13 / 13
+10:21:09 ctx 8 '100' free same 13 / 13
+10:21:16 ctx 9 '65' free same 13 / 13
+10:21:24 ctx 10 '120' free same 13 / 13
+10:21:33 ctx 11 '154' free same 13 / 13
+10:21:41 ctx 12 '115' free same 13 / 13
+10:21:49 ctx 13 '117' free same 13 / 13
+10:21:57 ctx 14 '108' free same 13 / 13
+10:22:05 ctx 15 '30' free same 13 / 13
+10:22:13 ctx 16 '109' free same 13 / 13
+10:22:20 ctx 17 '26' free same 13 / 13
+10:22:27 ctx 18 '99' free same 13 / 13
+10:22:34 ctx 19 '75' free same 13 / 13
+10:22:43 ctx 20 '116' free same 13 / 13
+10:22:51 ctx 21 '111' free same 13 / 13
+10:22:59 ctx 22 '107' free same 13 / 13
+10:23:07 ctx 23 '105' free same 13 / 13
+10:23:16 ctx 24 '112' free same 13 / 13
+10:23:23 ctx 25 '86' free same 11 / 13
+10:23:31 ctx 26 '115' free same 13 / 13
+10:23:38 ctx 27 '33' free same 13 / 13
+10:23:45 ctx 28 '88' free same 13 / 13
+10:23:53 ctx 29 '91' free same 13 / 13
+10:24:00 ctx 30 '43' free same 13 / 13
+10:24:08 ctx 31 '150' free same 13 / 13
+10:24:16 ctx 32 '103' free same 13 / 13
+10:24:24 ctx 33 '62' free same 13 / 13
+10:24:31 ctx 34 '94' free same 13 / 13
+10:24:38 ctx 35 '78' free same 13 / 13
+10:24:47 ctx 36 '105' free same 13 / 13
+10:24:55 ctx 37 '156' free same 13 / 13
+10:25:03 ctx 38 '108' free same 13 / 13
+10:25:11 ctx 39 '140' free same 13 / 13
+10:25:20 ctx 40 '105' free same 13 / 13
+10:25:27 ctx 41 '97' free same 13 / 13
+10:25:34 ctx 42 '97' free same 13 / 13
+10:25:42 ctx 43 '112' free same 13 / 13
+10:25:50 ctx 44 '115' free same 13 / 13
+10:25:58 ctx 45 '137' free same 13 / 13
+10:26:06 ctx 46 '128' free same 13 / 13
+10:26:15 ctx 47 '111' free same 13 / 13
+10:26:22 ctx 48 '36' free same 13 / 13
+10:26:29 ctx 49 '62' free same 13 / 13
+10:26:38 ctx 50 '129' free same 13 / 13
+10:26:46 ctx 51 '130' free same 13 / 13
+10:26:53 ctx 52 '81' free same 13 / 13
+10:27:00 ctx 53 '79' free same 13 / 13
+10:27:08 ctx 54 '101' free same 13 / 13
+10:27:17 ctx 55 '101' free same 13 / 13
+10:27:24 ctx 56 '85' free same 13 / 13
+10:27:31 ctx 57 '51' free same 13 / 13
+10:27:39 ctx 58 '104' free same 13 / 13
+10:27:47 ctx 59 '101' free same 13 / 13
+10:27:56 ctx 60 '147' free same 13 / 13
+10:28:03 ctx 61 '52' free same 13 / 13
+10:28:10 ctx 62 '76' free same 13 / 13
+10:28:18 ctx 63 '91' free same 13 / 13
+10:28:25 ctx 64 '52' free same 13 / 13
+10:28:33 ctx 65 '127' free same 13 / 13
+10:28:40 ctx 66 '95' free same 13 / 13
+10:28:47 ctx 67 '85' free same 13 / 13
+10:28:55 ctx 68 '87' free same 13 / 13
+10:29:03 ctx 69 '110' free same 13 / 13
+10:29:11 ctx 70 '46' free same 13 / 13
+10:29:19 ctx 71 '86' free same 13 / 13
+10:29:27 ctx 72 '141' free same 13 / 13
+10:29:35 ctx 73 '117' free same 13 / 13
+10:29:42 ctx 74 '97' free same 13 / 13
+10:29:50 ctx 75 '131' free same 13 / 13
+10:29:58 ctx 76 '69' free same 13 / 13
+10:30:06 ctx 77 '108' free same 13 / 13
+10:30:14 ctx 78 '112' free same 13 / 13
+10:30:22 ctx 79 '65' free same 13 / 13
+10:30:30 ctx 80 '110' free same 13 / 13
+10:30:39 ctx 81 '150' free same 13 / 13
+10:30:46 ctx 82 '89' free same 3 / 13
+10:30:53 ctx 83 '69' free same 13 / 13
+10:31:01 ctx 84 '92' free same 13 / 13
+10:31:08 ctx 85 '96' free same 13 / 13
+10:31:16 ctx 86 '156' free same 13 / 13
+10:31:24 ctx 87 '133' free same 13 / 13
+10:31:31 ctx 88 '86' free same 13 / 13
+10:31:40 ctx 89 '104' free same 13 / 13
+10:31:49 ctx 90 '133' free same 13 / 13
+10:31:56 ctx 91 '99' free same 13 / 13
+10:32:03 ctx 92 '97' free same 13 / 13
+10:32:11 ctx 93 '99' free same 13 / 13
+10:32:18 ctx 94 '50' free same 13 / 13
+10:32:26 ctx 95 '110' free same 13 / 13
+10:32:35 ctx 96 '137' free same 13 / 13
+10:32:42 ctx 97 '82' free same 13 / 13
+10:32:49 ctx 98 '51' free same 13 / 13
+10:32:57 ctx 99 '106' free same 13 / 13
+10:32:59 done
