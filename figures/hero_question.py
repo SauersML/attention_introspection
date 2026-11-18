@@ -122,6 +122,8 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .ub2{{background:#1F8BFF;color:#fff;border-radius:32px;padding:16px 26px;font-size:50px;line-height:1.2;margin:4px 110px 0 680px}}
 .when{{font-size:50px;font-weight:800;text-align:right;margin:14px 110px 0 0}}
 .rot{{font-size:46px;font-weight:700;line-height:1.15;margin-left:auto;margin-right:110px;text-align:right}}
+#rq{{box-shadow:0 0 0 12px {AMB},0 0 34px 22px rgba(242,181,58,.55);margin-top:40px}}
+#pp{{background:{AMB};border-radius:14px;padding:0 10px;box-shadow:0 0 26px 12px rgba(242,181,58,.55)}}
 .pa{{font-size:46px;margin:6px 0 0 150px}}
 .mrow{{display:flex;align-items:center;gap:14px;margin-top:14px}}
 .rob{{width:110px;height:110px}}
@@ -136,9 +138,8 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 </style></head><body>
 <div class="ub">Here are four paragraphs.{pl}<div>{html.escape(qline)}</div></div>
 <div class="mrow"><img class="rob" id="rob0" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div><div class="rot">each paragraph is boosted in turn;<br>shown: paragraph 2</div></div>
-<div class="when">while Qwen reads this question:</div>
 <div class="ub2" id="rq">{QTEXT}</div>
-<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot}"><div class="mb bb"><span class="pp">P</span>{bars(prob)}</div></div>
+<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot}"><div class="mb bb"><span class="pp" id="pp">P</span>{bars(prob)}</div></div>
 <div class="pa">probability of each answer</div>
 {syringe()}<div class="inj" id="inj">inject</div><div class="dose" id="dose">attention onto<br>paragraph 2's text<br>layers 21–53</div>
 <img class="vio" src="data:image/png;base64,{VIO}">
@@ -146,11 +147,11 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <script>
 const ov=document.getElementById('ov');ov.setAttribute('width',document.body.scrollWidth);ov.setAttribute('height',document.body.scrollHeight);
 const R=e=>document.getElementById(e).getBoundingClientRect();
-// syringe: needle tip into the top right of the answering robot's head, barrel up to the right in the space left of the question
-const rb=R('rob1'), syr=document.getElementById('syr'), A=-74;
-const tipx=rb.left+rb.width-26, tipy=rb.top+22;
+// syringe: needle tip into the boosted span (the reply's "P"), barrel up to the right in the space left of the question
+const rb=R('pp'), syr=document.getElementById('syr'), A=-88;
+const tipx=rb.left+16, tipy=rb.top+10;
 syr.style.left=tipx+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='0px 80px'; syr.style.transform=`rotate(${{A}}deg)`;
-const inj=document.getElementById('inj'), sr=R('syr'); const r0=R('rob0'); inj.style.left='272px'; inj.style.top=(r0.bottom+30)+'px'; const ds=document.getElementById('dose'); ds.style.left='272px'; ds.style.top=(r0.bottom+108)+'px';
+const inj=document.getElementById('inj'), sr=R('syr'); const r0=R('rob0'); inj.style.left='292px'; inj.style.top=(r0.bottom+30)+'px'; const ds=document.getElementById('dose'); ds.style.left='292px'; ds.style.top=(r0.bottom+108)+'px';
 // report question -> [P2], thick: the boost acts on attention from the question tokens to [P2]
 const c=R('p2c'), t=R('p2t'), q=R('rq'); const yP=(c.top+c.bottom)/2;
 const xq=q.right+46, yq=(q.top+q.bottom)/2;
