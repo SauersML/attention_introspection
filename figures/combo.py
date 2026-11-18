@@ -2,7 +2,8 @@ import json, math, numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 R="/Users/user/connectome/islands/agents/resident-a/compute/attn_intro/"
 OUT="/Users/user/connectome/islands/agents/resident-a/compute/fig/attn_intro/"
-BLUE="#2B5FA8"; ORANGE="#E07B24"; INK="#1D1D1F"
+import sys; sys.path.insert(0,"/Users/user/connectome/islands/agents/resident-a/compute/fig/attn_intro"); from pal import PURPLE, RED, INK, DIV, norm as dnorm
+BLUE=PURPLE; ORANGE=RED
 plt.rcParams.update({"font.family":"Helvetica","font.size":30,"text.color":INK,"axes.labelcolor":INK,"xtick.color":INK,"ytick.color":INK,"axes.edgecolor":INK})
 def load(m):
     meta=json.load(open(R+m+"/meta.json")); A=json.load(open(R+m+"/A.json")); B=json.load(open(R+m+"/B.json"))
@@ -69,19 +70,23 @@ for m,name,cond in [("qwen3-32b","“focus your\nattention”","focus"),("qwen3-
 plt.rcParams.update({"font.size":56})
 fig,(a,b)=plt.subplots(1,2,figsize=(36,16),gridspec_kw=dict(width_ratios=[1.2,1.5]))
 cmap=colors.LinearSegmentedColormap.from_list("hy",["#BFD3EE","#5B8BD0","#2B4FA8","#4B2A8F","#2A0F4F"])
-allz=np.concatenate([res[n]["z"] for n in res]); vm=np.percentile(np.abs(allz),97); norm=colors.Normalize(vmin=0,vmax=vm)
+allz=np.concatenate([res[n]["z"] for n in res]); vm=np.percentile(np.abs(allz),97); DN=dnorm(-vm,vm)
 rng=np.random.default_rng(1)
 for p,name in enumerate(res):
     r=res[name]; z=r["z"]
     vv=a.violinplot([z],positions=[p*1.35],widths=0.95,showextrema=False)
-    for bb in vv["bodies"]: bb.set_facecolor(BLUE); bb.set_alpha(0.22); bb.set_edgecolor(BLUE); bb.set_linewidth(2.5)
-    xj=p*1.35+rng.uniform(-0.34,0.34,len(z)); a.scatter(xj,z,s=650,c=cmap(norm(np.abs(z))),alpha=0.45,edgecolors="none",zorder=3); a.scatter(xj,z,s=6,color="black",zorder=4)
+    col=PURPLE if np.mean(z)>0 else RED
+    for bb in vv["bodies"]: bb.set_facecolor(col); bb.set_alpha(0.22); bb.set_edgecolor(col); bb.set_linewidth(2.5)
+    xj=p*1.35+rng.uniform(-0.34,0.34,len(z)); a.scatter(xj,z,s=650,c=DIV(DN(z)),alpha=0.45,edgecolors="none",zorder=3); a.scatter(xj,z,s=6,color="black",zorder=4)
     a.plot([p*1.35,p*1.35],[r["lo"],r["hi"]],color=INK,lw=12,solid_capstyle="butt",zorder=5); a.plot([p*1.35-0.22,p*1.35+0.22],[r["mean"]]*2,color=INK,lw=6,zorder=6)
-    a.text(p*1.35,(z.max()+2) if r["mean"]>0 else (z.min()-2),f"{r['mean']:+.0f}%",fontsize=90,fontweight="bold",ha="center",va=("bottom" if r["mean"]>0 else "top"),zorder=7)
+    a.text(p*1.35,(z.max()+2) if r["mean"]>0 else (z.min()-2),f"{r['mean']:+.0f}%".replace("-","−"),fontsize=90,fontweight="bold",color=(PURPLE if r["mean"]>0 else RED),ha="center",va=("bottom" if r["mean"]>0 else "top"),zorder=7)
 a.set_xticks([0,1.35]); a.set_xticklabels(["“focus\nyour\nattention”","“do not\npay\nattention”"],fontsize=60,fontweight="bold",linespacing=1.1); a.set_xlim(-0.6,1.95)
 # layers panel, % change vs no instruction
 l=np.arange(len(lay)); m=100*(np.exp([t[0] for t in lay])-1); lo=100*(np.exp([t[1] for t in lay])-1); hi=100*(np.exp([t[2] for t in lay])-1)
-b.fill_between(l,lo,hi,color=BLUE,alpha=0.25,lw=0); b.plot(l,m,color=BLUE,lw=6)
+b.fill_between(l,lo,hi,where=m>=0,color=PURPLE,alpha=0.25,lw=0,interpolate=True); b.fill_between(l,lo,hi,where=m<0,color=RED,alpha=0.25,lw=0,interpolate=True)
+from matplotlib.collections import LineCollection
+xx=np.linspace(0,len(l)-1,2000); yy=np.interp(xx,l,m); seg=np.stack([np.c_[xx[:-1],yy[:-1]],np.c_[xx[1:],yy[1:]]],1)
+b.add_collection(LineCollection(seg,colors=[PURPLE if (y0+y1)>=0 else RED for y0,y1 in zip(yy[:-1],yy[1:])],linewidths=6,zorder=3))
 i=int(np.argmax(m)); b.text(i+1.6,m[i],f"{m[i]:+.0f}%",fontsize=84,color=BLUE,fontweight="bold",va="center")
 b.text(0.5,1.0,"uplift due to “focus your attention”",transform=b.transAxes,fontsize=54,color=BLUE,fontweight="bold",va="top",ha="center")
 b.set_xlim(-1,64); b.set_xticks([0,16,32,48,63]); b.set_xlabel("layer",fontsize=84,labelpad=8)
