@@ -105,8 +105,8 @@ dm = res["dose_means"]["A"]
 rules["R2_monotone_means"] = bool(all(np.diff(dm) * s1 > 0))
 wpass = [w for w in WS if excl(res["spec"][f"A|{w}|all|5.0"]) and sign(res["spec"][f"A|{w}|all|5.0"]) == s1]
 rules["R3"] = len(wpass) >= 4; rules["R3_wordings"] = wpass
-spass = [s for s in SETUPS if excl(res["spec"][f"A|W1|{s}|5.0"]) and sign(res["spec"][f"A|W1|{s}|5.0"]) == s1]
-sopp = [s for s in SETUPS if excl(res["spec"][f"A|W1|{s}|5.0"]) and sign(res["spec"][f"A|W1|{s}|5.0"]) != s1]
+spass = [s for s in SETUPS if f"A|W1|{s}|5.0" in res["spec"] and excl(res["spec"][f"A|W1|{s}|5.0"]) and sign(res["spec"][f"A|W1|{s}|5.0"]) == s1]
+sopp = [s for s in SETUPS if f"A|W1|{s}|5.0" in res["spec"] and excl(res["spec"][f"A|W1|{s}|5.0"]) and sign(res["spec"][f"A|W1|{s}|5.0"]) != s1]
 rules["R4"] = len(spass) >= 5; rules["R4_setups"] = spass; rules["setups_opposite_sign"] = sopp
 if not rules["R1"]: v = "No specific channel"
 elif rules["R0"] and s1 > 0 and rules["R2"] and rules["R3"] and rules["R4"]: v = "Privileged introspective channel"

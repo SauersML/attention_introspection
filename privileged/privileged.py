@@ -45,7 +45,7 @@ def hooked(module, query, key, value, attention_mask, scaling, dropout=0.0, **kw
         assert bool(qsel.any()), "bias set but no query of this call in its range"
         w = w + (qsel[:, None] & S["kmask"][None, :kl]).float() * S["bias"]
     p = torch.softmax(w, dim=-1)
-    if S["record"] and L in BAND:
+    if S["record"] and S["seg"] is not None and L in BAND:
         a = p[0].mean(0).mean(0)  # head mean, query mean -> [kl]
         seg = S["seg"][:kl]
         m = torch.zeros(S["nseg"] + 1, device=dev).index_add_(0, seg + 1, a)
@@ -322,7 +322,7 @@ def run_context(c, check=False):
     else: rec["correct"] = str(c["x"] + c["y"]) in atext
     # none: answer KV unmodified
     rec_on(segt, c["N"]); fwd(chunk, cache); rec["mass_none_ans"] = rec_off()
-    rec["none"], rec["mass_none_rep"] = reports(c, cache, A_end, SUF, ALL, record_w1=True)
+    rec["none"], rec["mass_none_rep"] = reports(c, cache, A_end, SUF, ALL, segt=segt, record_w1=True)
     if check:  # cached path vs one uncached forward over identical tokens
         full = ids + ans + SUF["W1"][1]
         lg = model(torch.tensor([full], device="cuda"), use_cache=False, logits_to_keep=1).logits[0]
