@@ -97,10 +97,6 @@ for j, c in enumerate(cols):
     fig.text(cx, 1 - 6 / VH, c["big"], ha="center", va="top", fontsize=89, fontweight="bold", color=PURPLE)
     fig.text(cx, 1 - 148 / VH, pstr(c["p"]), ha="center", va="top", fontsize=39, color=PURPLE)
     c["xj"] = xj
-# ring the example prompt's dot in each column
-for j, c in enumerate(cols):
-    v, xj = c["v"], c["xj"]; cand = np.where(np.isclose(v, c["ex"]))[0]; i = cand[np.argmin(np.abs(xj[cand]))]
-    AX[j].scatter([xj[i]], [c["vj"][i]], s=1100, facecolors="none", edgecolors=INK, linewidths=5, zorder=7)
 VP = os.path.join(HERE, "_v_inject.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
@@ -159,8 +155,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <div class="cols"><div class="ct" id="c1"><div class="cn">says \u201cYes\u201d</div><div class="cs">&nbsp;</div></div>
 <div class="ct" id="c2"><div class="cn">says the injected paragraph</div><div class="cs">of the {N2} \u201cYes\u201d replies</div></div></div>
 <div class="vw" id="vw"><img class="vio" src="data:image/png;base64,{VIO}">
-<div class="kbox" id="kb"><div class="kl">one dot <span class="dot"></span> = one prompt,</div><div class="kl2">injected into each paragraph in turn</div>
-<div class="kl"><span class="ring"></span> = the prompt above</div></div></div>
+<div class="kbox" id="kb"><div class="kl">one dot <span class="dot"></span> = one prompt,</div><div class="kl2">injected into each paragraph in turn</div></div></div>
 <svg id="gl"></svg><svg id="ov"></svg>
 <script>
 const R=e=>document.getElementById(e).getBoundingClientRect();
