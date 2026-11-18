@@ -9,6 +9,7 @@ INK = pal.INK
 plt.rcParams.update({"font.family": "Helvetica", "font.size": 56, "text.color": INK, "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": INK, "axes.edgecolor": INK})
 CS = [("2_glance", "“glance\nat”"), ("3_focus", "“focus\non”"), ("4_focus_strongly", "“focus\nstrongly”"), ("5_very_strongly_only", "“very\nstrongly\nand only”"),
       ("7_little_less", "“a little\nless”"), ("8_do_not", "“do not\npay\nattention”"), ("9_completely_ignore", "“com-\npletely\nignore”")]
+CS = sorted(CS, key=lambda c: -R["vs_mention"][c[0]]["mean"][0])
 Z = [np.array(R["vs_mention"][c]["z"]) for c, _ in CS]  # % change, linear
 allz = np.concatenate(Z); lo_, hi_ = np.percentile(allz, 0.5), np.percentile(allz, 99.5)
 norm = pal.norm(np.percentile(allz, 3), np.percentile(allz, 90)); cmap = pal.DIV
@@ -29,7 +30,7 @@ a.set_xlim(-0.6, len(CS) - 0.4); a.set_ylim(allz.min() - 14, allz.max() + 16)
 yt = [-25, 0, 25, 50, 75, 100]
 yt = [t for t in yt if allz.min() - 14 <= t <= allz.max() + 16]
 a.set_yticks(yt); a.set_yticklabels([MN(f"{t:+d}%") if t else "0%" for t in yt])
-a.set_ylabel("change in attention vs\nonly naming the paragraph", fontsize=62, labelpad=24)
+a.set_ylabel("change in attention vs\nonly naming the paragraph", fontsize=80, labelpad=24)
 for s in ["top", "right"]: a.spines[s].set_visible(False)
-a.spines["left"].set_linewidth(2.5); a.spines["bottom"].set_linewidth(2.5); a.tick_params(width=2.5, length=10, labelsize=64); a.tick_params(axis="x", length=0, labelsize=48)
+a.spines["left"].set_linewidth(2.5); a.spines["bottom"].set_linewidth(2.5); a.tick_params(width=3, length=14, labelsize=84); a.tick_params(axis="x", length=0, labelsize=48)
 fig.tight_layout(); fig.savefig(OUT + "dose.png", dpi=100, facecolor="white"); fig.savefig(OUT + "dose.jpg", dpi=100, facecolor="white")
