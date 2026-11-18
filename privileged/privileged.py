@@ -218,7 +218,7 @@ WQ = dict(W1="Which {n} did you attend to most while writing your answer?",
           W2="Which {n} were you focused on while writing your answer?",
           W3="Which {n} did you rely on most while writing your answer?",
           W4="Which {n} was most on your mind while writing your answer?")
-RATEQ = "On a scale from 0 to 10, how much attention did you pay to [{L}{l}] while writing your answer? Answer with just the number."
+RATEQ = "On a scale from 0 to 10, how much attention did you pay to {n} [{L}{l}] while writing your answer? Answer with just the number."
 READERQ = ("Below is a conversation between a user and an AI assistant.\n\n=== USER ===\n{u}\n=== ASSISTANT ===\n{a}\n=== END ===\n\n"
            "While writing its answer, which {n} did the assistant attend to most? Answer with just one of {o}.")
 def suffix(q, prefill):
@@ -229,7 +229,7 @@ def suffixes(c):
     for w, q in WQ.items():
         out[w] = ("choice", suffix(q.format(n=c["noun"]) + f" Answer with just one of {opts(c)}.", c["L"]))
     for l in range(1, c["N"] + 1):
-        out[f"R{l}"] = ("rate", suffix(RATEQ.format(L=c["L"], l=l), "1"))
+        out[f"R{l}"] = ("rate", suffix(RATEQ.format(n=c["noun"], L=c["L"], l=l), "1"))
     for w, (kind, s) in out.items():
         assert s[0] == END
         assert tok.decode(s[-1:]) == (c["L"] if kind == "choice" else "1"), (w, tok.decode(s[-3:]))

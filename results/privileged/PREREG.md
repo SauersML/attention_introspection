@@ -39,7 +39,7 @@ Check of the cached path: on the first 2 contexts of each shard, the cached no-i
   W3 "Which {noun} did you rely on most while writing your answer?"
   W4 "Which {noun} was most on your mind while writing your answer?"
   each followed by "Answer with just one of {options in shuffled order}."
-- Rating W5: for each label, "On a scale from 0 to 10, how much attention did you pay to [Xl] while writing your answer? Answer with just the number."; expected rating from the digit probabilities ("10" read as "1" followed by "0").
+- Rating W5: for each label, "On a scale from 0 to 10, how much attention did you pay to {noun} [Xl] while writing your answer? Answer with just the number." (e.g. "paragraph [P3]"; a label is never named bare. Changed before any result existed: the first launch, which had a bare "[P3]", was stopped while the model was still downloading.); expected rating from the digit probabilities ("10" read as "1" followed by "0").
 - Transcript reader: fresh pass, the same model given the user message and the answer as quoted text, asked W1 about "the assistant". The text is identical across conditions, so its shift is exactly 0 by construction; reported as the zero line.
 
 ## Measures
