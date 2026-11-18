@@ -7,7 +7,7 @@ def band(att,L): return np.array(att)[L].mean(0)
 def boot(x,NB=10000,seed=0):
     rng=np.random.default_rng(seed); s=x[rng.integers(0,len(x),(NB,len(x)))].mean(1); return x.mean(),np.percentile(s,2.5),np.percentile(s,97.5)
 res={}
-for m,name,cond in [("qwen3-32b","“While you\nanswer, focus\nyour attention\non [P3].”","focus"),("qwen3-32b","“While you\nanswer, do not\npay attention\nto [P3].”","ignore")]:
+for m,name,cond in [("qwen3-32b","“focus your\nattention”","focus"),("qwen3-32b","“do not pay\nattention”","ignore")]:
     meta=json.load(open(R+m+"/meta.json")); B=json.load(open(R+m+"/B.json")); L=meta["LAYERS"]
     by={c:{r["id"]:r for r in B if r["task"]=="arith" and r["cond"]==c} for c in [cond,"mention"]}
     ids=sorted(by[cond]); assert sorted(by["mention"])==ids
@@ -34,7 +34,7 @@ a.set_xticks([0,1]); a.set_xticklabels(list(res),fontsize=44,fontweight="bold",l
 a.set_xlim(-0.5,1.5); a.set_ylim(allz.min()-0.75,allz.max()+0.9)
 a.set_ylabel("attention change (SDs)",fontsize=84,labelpad=24)
 for s in ["top","right"]: a.spines[s].set_visible(False)
-a.spines["left"].set_linewidth(2.5); a.spines["bottom"].set_linewidth(2.5); a.tick_params(width=2.5,length=10,labelsize=72); a.tick_params(axis="x",labelsize=46)
+a.spines["left"].set_linewidth(2.5); a.spines["bottom"].set_linewidth(2.5); a.tick_params(width=2.5,length=10,labelsize=72); a.tick_params(axis="x",labelsize=62)
 ylo,yhi=a.get_ylim(); a.text(1.48,0.06,"no change",ha="right",va="bottom",fontsize=56,fontweight="bold")
 fig.tight_layout(); fig.savefig(OUT+"violin3.png",dpi=150,facecolor="white"); fig.savefig(OUT+"violin3.jpg",dpi=150,facecolor="white")
 print(a.get_ylim())
