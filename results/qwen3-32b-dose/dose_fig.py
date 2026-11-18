@@ -39,11 +39,17 @@ yt = [-50, 0, 100, 300, 700]
 yt = [t for t in yt if allz.min() - 0.35 <= np.log2(1 + t / 100) <= allz.max() + 0.45]
 a.set_yticks([np.log2(1 + t / 100) for t in yt]); a.set_yticklabels([MN(f"{t:+d}%") if t else "0%" for t in yt])
 a.set_ylabel("change in attention vs just\nmentioning the paragraph name (log scale)", fontsize=74, labelpad=24)
+LC = {}
 ins = a.inset_axes([0.60, 0.62, 0.39, 0.36])
-for c, col in [("3_focus", pal.PURPLE), ("9_completely_ignore", pal.RED)]:
-    ins.plot(range(NL), [zl(c, l=l).mean() for l in range(NL)], color=col, lw=6)
+UPC = ["#4C1D95", "#7C3AED", "#2563EB", "#0D9488"]; DNC = ["#EA580C", "#DC2626", "#7F1D1D"]
+ups = [c for c, _ in CS if zl(c).mean() > 0 and not c.startswith("7") and not c.startswith("8")]; dns = [c for c, _ in CS if c not in ups]
+for cs_, pal_ in [(ups, UPC), (dns, DNC)]:
+    for c, col in zip(cs_, pal_):
+        ins.plot(range(NL), [zl(c, l=l).mean() for l in range(NL)], color=col, lw=5)
+        LC[c] = col
 ins.axhline(0, color=INK, lw=2.5); ins.axvline(LAY, color=INK, lw=4, ls=(0, (5, 4)))
 ins.text(LAY + 1.5, ins.get_ylim()[1] * 0.92, f"layer {LAY}", fontsize=50, fontweight="bold", va="top")
+for t, (c, _) in zip(a.get_xticklabels(), CS): t.set_color(LC[c])
 ins.set_xticks([0, 63]); ins.set_yticks([]); ins.tick_params(labelsize=44, length=8, width=2.5)
 ins.set_xlabel("layer", fontsize=48, labelpad=-30)
 for s_ in ins.spines.values(): s_.set_linewidth(4); s_.set_color("black")
