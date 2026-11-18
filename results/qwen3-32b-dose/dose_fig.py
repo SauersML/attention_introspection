@@ -24,6 +24,9 @@ for p, ((c, lab), z) in enumerate(zip(CS, Z)):
     up = mp > 0
     a.text(p, (z.max() + 3) if up else (z.min() - 3), MN(f"{mp:+.0f}%"), fontsize=74, fontweight="bold", ha="center", va="bottom" if up else "top", zorder=7)
 a.axhline(0, color=INK, lw=4, zorder=4)
+nm = R["vs_mention"]["0_none"]["mean"][0]
+a.axhline(nm, color=INK, lw=5, ls=(0, (6, 5)), zorder=4)
+a.text(-0.45, nm - 1.5, MN(f"no instruction at all ({nm:+.0f}%)"), fontsize=60, fontweight="bold", ha="left", va="top", zorder=8)
 a.set_xticks(range(len(CS))); a.set_xticklabels([l for _, l in CS], fontsize=50, fontweight="bold", linespacing=1.05)
 for t, (c, _) in zip(a.get_xticklabels(), CS): t.set_color(pal.PURPLE if R["vs_mention"][c]["mean"][0] > 0 else pal.RED)
 a.set_xlim(-0.6, len(CS) - 0.4); a.set_ylim(allz.min() - 14, allz.max() + 16)
