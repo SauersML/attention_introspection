@@ -63,22 +63,22 @@ def bars(pr):
     return f'<svg width="{w}" height="{h}" viewBox="0 -10 {w} {h + 10}">{"".join(o)}</svg>'
 
 def syringe():
-    """hand-drawn syringe, needle tip at the left end (x=0, y=60); drawn 560 x 120, rotated about the tip by the page"""
+    """hand-drawn syringe, needle tip at the left end (x=0, y=80); drawn 380 x 160, rotated about the tip by the page"""
     o = []
-    o.append(f'<path d="M0,60 L18,57 L18,63 Z" fill="{INK}"/>')                                         # needle point
-    o.append(f'<rect x="18" y="57" width="122" height="6" fill="{INK}"/>')                             # needle
-    o.append(f'<path d="M140,52 L170,46 L170,74 L140,68 Z" fill="{INK}"/>')                            # hub
-    o.append(f'<rect x="170" y="28" width="250" height="64" rx="10" fill="#fff" stroke="{INK}" stroke-width="6"/>')   # barrel
-    o.append(f'<rect x="176" y="34" width="216" height="52" fill="{AMB}"/>')                            # fluid
-    o.append(f'<rect x="392" y="34" width="22" height="52" fill="{INK}"/>')                             # plunger seal
-    o.append(f'<rect x="420" y="14" width="16" height="92" rx="6" fill="{INK}"/>')                     # finger flange
-    o.append(f'<rect x="436" y="53" width="96" height="14" fill="{INK}"/>')                             # plunger rod
-    o.append(f'<rect x="532" y="34" width="22" height="52" rx="6" fill="{INK}"/>')                     # thumb rest
-    o.append(f'<text x="284" y="74" font-size="38" font-weight="800" text-anchor="middle" fill="{INK}">×{DOSE}</text>')
-    return f'<svg id="syr" width="560" height="120" viewBox="0 0 560 120">{"".join(o)}</svg>'
+    o.append(f'<path d="M0,80 L16,76 L16,84 Z" fill="{INK}"/>')                                         # needle point
+    o.append(f'<rect x="16" y="76" width="50" height="8" fill="{INK}"/>')                              # needle
+    o.append(f'<path d="M66,68 L88,58 L88,102 L66,92 Z" fill="{INK}"/>')                               # hub
+    o.append(f'<rect x="88" y="22" width="212" height="116" rx="14" fill="#fff" stroke="{INK}" stroke-width="7"/>')   # barrel
+    o.append(f'<rect x="95" y="29" width="176" height="102" fill="{AMB}"/>')                            # fluid
+    o.append(f'<rect x="271" y="29" width="22" height="102" fill="{INK}"/>')                            # plunger seal
+    o.append(f'<rect x="300" y="4" width="18" height="152" rx="7" fill="{INK}"/>')                     # finger flange
+    o.append(f'<rect x="318" y="71" width="36" height="18" fill="{INK}"/>')                             # plunger rod
+    o.append(f'<rect x="354" y="40" width="24" height="80" rx="7" fill="{INK}"/>')                     # thumb rest
+    o.append(f'<text x="183" y="108" font-size="82" font-weight="800" text-anchor="middle" fill="{INK}">\u00d7{DOSE}</text>')
+    return f'<svg id="syr" width="380" height="160" viewBox="0 0 380 160">{"".join(o)}</svg>'
 
 # ---------------- violin ----------------
-VH = 790; px = lambda v: v * 72 / 100
+VH = 670; px = lambda v: v * 72 / 100
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 fig = plt.figure(figsize=(W / 100, VH / 100), dpi=100)
 AXL, AXR = 540, W - 30
@@ -89,7 +89,7 @@ rng = np.random.default_rng(1); xj = rng.uniform(-1, 1, len(z)) * kde(z) / kde(y
 ax.scatter(xj, z, s=330, color=COL, alpha=0.38, edgecolors="none", zorder=3)
 ax.plot([-0.24, 0.24], [mu] * 2, color=INK, lw=5, zorder=7, solid_capstyle="butt")
 ax.axhline(0, color=INK, lw=4, zorder=0)
-ax.text(0.47, 0.02, "no injection", ha="left", va="bottom", fontsize=px(46), color=INK)
+ax.text(1.25, 0.02, "no injection", ha="right", va="bottom", fontsize=px(46), color=INK)
 ps = "p < 0.0001" if p < 1e-4 else f"p = {p:.2g}"
 ax.text(0.47, mu + 0.30, neg(f"{pct(mu):+.0f}%"), ha="left", va="bottom", fontsize=px(110), fontweight="bold", color=COL)
 ax.text(0.47, mu + 0.30, ps, ha="left", va="top", fontsize=px(50), color=COL)
@@ -103,23 +103,26 @@ for t in TV:
     if ylo < y < yhi: ov.text(AXL - 14, YP(y), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
 yt = [math.log(1 + t / 100) for t in TV if ylo < math.log(1 + t / 100) < yhi]
 ov.plot([AXL] * 2, [YP(min(yt)), YP(max(yt))], color=INK, lw=3)
-ov.text(AXL - 195, YP(math.log(3.3)), "report says\nthe boosted\nparagraph\nmore often\nthan the\nothers", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
-KX = ax.transData.transform((0.55, 0))[0]; KY = YP(-0.35)
+ov.text(AXL - 195, YP(math.log(2.6)), "change in\nhow often\nthe report\nsays the\nboosted\nparagraph,\nrelative to\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
+KX = ax.transData.transform((0.47, 0))[0]; KY = YP(-0.78)
 ov.scatter([KX], [KY], s=330, color=INK, alpha=0.38, edgecolors="none")
 ov.text(KX + 28, KY, "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
 VP = os.path.join(HERE, "hero_question_violin.png"); fig.savefig(VP, dpi=200, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
 VIO = base64.b64encode(open(VP, "rb").read()).decode()
-pl = "".join(f'<div class="pl"><b {"class=k id=p2c" if pos == K else ""}>[P{EX["lab"][pos]}]</b> '
-             f'<span {"id=p2t" if pos == K else ""}>{html.escape(short(EX["segs"][pos], NW[pos]))}</span></div>' for pos in range(4))
+pl = "".join(f'<div class="pl"><b {"id=p2c" if pos == K else ""}>[P{EX["lab"][pos]}]</b> '
+             f'<span {"class=k id=p2t" if pos == K else ""}>{html.escape(short(EX["segs"][pos], NW[pos]))}</span></div>' for pos in range(4))
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:22px {PAD}px 0;position:relative}}
 .ub{{background:#1F8BFF;color:#fff;border-radius:32px;padding:18px 26px;font-size:50px;line-height:1.2;margin:0 110px 0 130px}}
 .pl{{white-space:nowrap}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
-.ub2{{background:#1F8BFF;color:#fff;border-radius:32px;padding:16px 26px;font-size:50px;line-height:1.2;margin:16px 110px 0 520px}}
+.ub2{{background:#1F8BFF;color:#fff;border-radius:32px;padding:16px 26px;font-size:50px;line-height:1.2;margin:4px 110px 0 680px}}
+.when{{font-size:50px;font-weight:800;text-align:right;margin:14px 110px 0 0}}
+.rot{{font-size:46px;font-weight:700;line-height:1.15;margin-left:auto;margin-right:110px;text-align:right}}
+.pa{{font-size:46px;margin:6px 0 0 150px}}
 .mrow{{display:flex;align-items:center;gap:14px;margin-top:14px}}
 .rob{{width:110px;height:110px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:8px 32px;font-size:68px;font-weight:700}}
@@ -127,31 +130,32 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .who{{font-size:50px;font-weight:800;margin:0 0 10px 4px}}
 #syr{{position:absolute;transform-origin:0 0}}
 .inj{{position:absolute;font-size:64px;font-weight:800;color:{INK}}} .dose{{position:absolute;font-size:50px;font-weight:700;line-height:1.1;color:{INK}}}
-.dose{{position:absolute;font-size:50px;color:{INK};line-height:1.15}}
+.dose{{position:absolute;font-size:46px;font-weight:700;color:{INK};line-height:1.15}}
 .vio{{width:{W}px;display:block;margin:6px 0 0 -{PAD}px}}
 #ov{{position:absolute;left:0;top:0;pointer-events:none}}
 </style></head><body>
-<div class="who">Qwen3-32B</div>
 <div class="ub">Here are four paragraphs.{pl}<div>{html.escape(qline)}</div></div>
-<div class="mrow"><img class="rob" id="rob0" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
+<div class="mrow"><img class="rob" id="rob0" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div><div class="rot">each paragraph is boosted in turn;<br>shown: paragraph 2</div></div>
+<div class="when">while Qwen reads this question:</div>
 <div class="ub2" id="rq">{QTEXT}</div>
 <div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot}"><div class="mb bb"><span class="pp">P</span>{bars(prob)}</div></div>
-{syringe()}<div class="inj" id="inj">inject</div><div class="dose" id="dose">attention<br>to [P2]</div>
+<div class="pa">probability of each answer</div>
+{syringe()}<div class="inj" id="inj">inject</div><div class="dose" id="dose">attention onto<br>paragraph 2's text<br>layers 21–53</div>
 <img class="vio" src="data:image/png;base64,{VIO}">
 <svg id="ov"></svg>
 <script>
 const ov=document.getElementById('ov');ov.setAttribute('width',document.body.scrollWidth);ov.setAttribute('height',document.body.scrollHeight);
 const R=e=>document.getElementById(e).getBoundingClientRect();
 // syringe: needle tip into the top right of the answering robot's head, barrel up to the right in the space left of the question
-const rb=R('rob1'), syr=document.getElementById('syr'), A=-35;
+const rb=R('rob1'), syr=document.getElementById('syr'), A=-74;
 const tipx=rb.left+rb.width-26, tipy=rb.top+22;
-syr.style.left=tipx+'px'; syr.style.top=(tipy-60)+'px'; syr.style.transformOrigin='0px 60px'; syr.style.transform=`rotate(${{A}}deg)`;
-const inj=document.getElementById('inj'), sr=R('syr'); const r0=R('rob0'); inj.style.left='{PAD}px'; inj.style.top=(r0.bottom+12)+'px'; const ds=document.getElementById('dose'); ds.style.left='{PAD}px'; ds.style.top=(r0.bottom+90)+'px';
+syr.style.left=tipx+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='0px 80px'; syr.style.transform=`rotate(${{A}}deg)`;
+const inj=document.getElementById('inj'), sr=R('syr'); const r0=R('rob0'); inj.style.left='272px'; inj.style.top=(r0.bottom+30)+'px'; const ds=document.getElementById('dose'); ds.style.left='272px'; ds.style.top=(r0.bottom+108)+'px';
 // report question -> [P2], thick: the boost acts on attention from the question tokens to [P2]
 const c=R('p2c'), t=R('p2t'), q=R('rq'); const yP=(c.top+c.bottom)/2;
 const xq=q.right+46, yq=(q.top+q.bottom)/2;
 let s=`<defs><marker id="mT" markerUnits="userSpaceOnUse" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="38" markerHeight="38" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="{INK}"/></marker></defs>`;
-s+=`<path d="M${{q.right+2}},${{yq}} L${{xq-26}},${{yq}} Q${{xq}},${{yq}} ${{xq}},${{yq-26}} L${{xq}},${{yP+26}} Q${{xq}},${{yP}} ${{xq-26}},${{yP}} L${{t.right+16}},${{yP}}" fill="none" stroke="{INK}" stroke-width="16" marker-end="url(#mT)"/>`;
+s+=`<path d="M${{q.right+2}},${{yq}} L${{xq-26}},${{yq}} Q${{xq}},${{yq}} ${{xq}},${{yq-26}} L${{xq}},${{yP+26}} Q${{xq}},${{yP}} ${{xq-26}},${{yP}} L${{t.right+12}},${{yP}}" fill="none" stroke="{INK}" stroke-width="16" marker-end="url(#mT)"/>`;
 ov.innerHTML=s;
 </script></body></html>'''
 hp = os.path.join(HERE, "hero_question.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "hero_question_raw.png")
