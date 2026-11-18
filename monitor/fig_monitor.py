@@ -3,7 +3,7 @@ import json, sys, os
 import numpy as np
 import matplotlib; matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)) + "/../figures")
+sys.path[:0] = [os.path.dirname(os.path.abspath(__file__)), os.path.dirname(os.path.abspath(__file__)) + "/../figures"]
 from pal import PURPLE, RED, INK
 
 R = json.load(open(sys.argv[1]))
