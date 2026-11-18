@@ -136,10 +136,10 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .inj{{position:absolute;left:30px;font-size:66px;font-weight:800;line-height:1.12;color:{PURPLE}}}
 #gl{{position:absolute;left:0;top:0;z-index:-1;pointer-events:none}}
 #ov{{position:absolute;left:0;top:0;pointer-events:none}}
-.cols{{display:flex;gap:{GAP}px;margin-top:80px}}
+.cols{{display:flex;gap:{GAP}px;margin-top:150px}}
 .ct{{flex:1;min-width:0;text-align:center}}
-.cn{{font-size:76px;font-weight:800;line-height:1.05;white-space:nowrap}} .cs{{font-size:50px;font-weight:700;margin-top:6px}}
-.vw{{position:relative;margin-top:14px}}
+.cn{{display:inline-block;font-size:76px;font-weight:800;line-height:1.05;white-space:nowrap}}
+.vw{{position:relative;margin-top:34px}}
 .vio{{width:{VW}px;display:block}}
 .kbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;padding:18px 26px;display:flex;flex-direction:column;gap:10px}}
 .kl{{font-size:50px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap;line-height:1.1}} .kl2{{font-size:44px;font-weight:700;white-space:nowrap}}
@@ -151,8 +151,8 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <div class="inj" id="inj">inject attention<br>into paragraph 2</div>
 <div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb"><span class="part" id="ry">Yes</span>, <span class="part" id="rp">paragraph [P2]</span></div></div>
 {syringe()}
-<div class="cols"><div class="ct" id="c1"><div class="cn">says \u201cYes\u201d</div><div class="cs">&nbsp;</div></div>
-<div class="ct" id="c2"><div class="cn">says the injected paragraph</div><div class="cs">of the {N2} \u201cYes\u201d replies</div></div></div>
+<div class="cols"><div class="ct"><span class="cn" id="c1">says \u201cYes\u201d</span></div>
+<div class="ct"><span class="cn" id="c2">says the injected paragraph</span></div></div>
 <div class="vw" id="vw"><img class="vio" src="data:image/png;base64,{VIO}">
 <div class="kbox" id="kb"><div class="kl">one dot <span class="dot"></span> = one prompt,</div><div class="kl2">injected into each paragraph in turn</div></div></div>
 <svg id="gl"></svg><svg id="ov"></svg>
@@ -177,15 +177,24 @@ const aura=(r,rad)=>{{ const S=(d,st,col,op,f,fill)=>`<rect x="${{r.left-d}}" y=
  return S(8,0,'#B994FF',0.75,'haze',1)+S(50,5,'#C9A8FF',0.45,'w1')+S(32,7,'{LIL}',0.6,'w2')+S(15,9,'#7B3FE4',0.75,'w3')+S(2,8,'{PURPLE}',0.55,'w3'); }};
 g+=aura(rq0,34); const ro=R('rob1'); g+=aura({{left:ro.left+6,top:ro.top+10,width:ro.width-12,height:ro.height-16}},64);
 gl.innerHTML=g;
-// purple arrow: report question -> [P2] text
-const t=R('p2t'), q=R('rq'); const yP=(t.top+t.bottom)/2, xq=q.right+60, yq=(q.top+q.bottom)/2;
-let s=`<defs><marker id="mT" markerUnits="userSpaceOnUse" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="40" markerHeight="40" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="{PURPLE}"/></marker>
-<marker id="mK" markerUnits="userSpaceOnUse" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="34" markerHeight="34" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="{INK}"/></marker></defs>`;
-s+=`<path d="M${{q.right+2}},${{yq}} L${{xq-26}},${{yq}} Q${{xq}},${{yq}} ${{xq}},${{yq-26}} L${{xq}},${{yP+26}} Q${{xq}},${{yP}} ${{xq-26}},${{yP}} L${{t.right+14}},${{yP}}" fill="none" stroke="{PURPLE}" stroke-width="16" marker-end="url(#mT)"/>`;
-// black arrows: each marked part of the reply -> its column title
-for (const [a,b] of [['ry','c1'],['rp','c2']]) {{
- const ra=R(a), rc=R(b); const xa=(ra.left+ra.right)/2, ya=ra.bottom+14, xc=(rc.left+rc.right)/2, yc=rc.top-8;
- s+=`<path d="M${{xa}},${{ya}} C${{xa}},${{(ya+yc)/2}} ${{xc}},${{(ya+yc)/2}} ${{xc}},${{yc}}" fill="none" stroke="{INK}" stroke-width="7" marker-end="url(#mK)"/>`; }}
+// hand-shaped arrows: one cubic each, explicit control points; the head is drawn along the end tangent (last control -> tip)
+const SW=8;
+const arrow=(p0,c1,c2,tip,col)=>{{ const L=SW*3.3, H=SW*1.45; let ux=tip[0]-c2[0], uy=tip[1]-c2[1]; const n=Math.hypot(ux,uy); ux/=n; uy/=n;
+ const e=[tip[0]-L*ux, tip[1]-L*uy], b=[e[0]+1.5*ux, e[1]+1.5*uy];
+ return `<path d="M${{p0}} C${{c1}} ${{c2}} ${{e}}" fill="none" stroke="${{col}}" stroke-width="${{SW}}" stroke-linecap="round"/>`+
+  `<path d="M${{tip}} L${{b[0]-H*uy}},${{b[1]+H*ux}} L${{b[0]+H*uy}},${{b[1]-H*ux}} Z" fill="${{col}}"/>`; }};
+// purple: up out of the report question's top edge, one quarter-turn, into the right end of [P2]
+const t=R('p2t'), q=R('rq'); const P0=[q.left+260, q.top-6], T=[t.right+12, (t.top+t.bottom)/2];
+let s=arrow(P0, [P0[0], P0[1]-0.55*(P0[1]-T[1])], [T[0]+0.55*(P0[0]-T[0]), T[1]], T, '{PURPLE}');
+// black: from under each underlined part of the reply, a gentle bow down to its column title
+const ry=R('ry'), rp=R('rp'), c1=R('c1'), c2=R('c2');
+// quadratic control point Q (no inflection possible), written as the equivalent cubic
+const quad=(p0,Q,tip,col)=>arrow(p0,[p0[0]+2/3*(Q[0]-p0[0]),p0[1]+2/3*(Q[1]-p0[1])],[tip[0]+2/3*(Q[0]-tip[0]),tip[1]+2/3*(Q[1]-tip[1])],tip,col);
+const cx=r=>(r.left+r.right)/2;
+// mirror pair: each leaves its underline almost straight down and turns outward by about 40 degrees onto its title
+const yt=c1.top+4, ys=ry.bottom+16, dy=yt-ys;
+for (const [p0x,sg] of [[cx(ry),-1],[rp.left+0.78*rp.width,1]]) {{
+ const p0=[p0x,ys], tip=[p0x+sg*0.8*dy,yt]; s+=quad(p0,[p0x+sg*0.12*dy,ys+0.5*dy],tip,'{INK}'); }}
 document.getElementById('ov').innerHTML=s;
 </script></body></html>'''
 hp = os.path.join(HERE, "_hero_inject.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "_hero_inject_raw.png")
