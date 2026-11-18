@@ -9,7 +9,7 @@ from transformers import AutoTokenizer, AutoModelForCausalLM
 
 def log(*a): print(time.strftime("%H:%M:%S"), *a, flush=True)
 
-S = dict(rec=False, rows=None, spans=None, store={}, bias=None)
+S = dict(rec=False, rows=None, spans=None, store={}, bias=None, zero=None)
 
 def hooked(module, query, key, value, attention_mask, scaling, dropout=0.0, **kw):
     L = module.layer_idx
@@ -29,6 +29,8 @@ def hooked(module, query, key, value, attention_mask, scaling, dropout=0.0, **kw
         pr = p[:, :, S["rows"], :]
         S["store"][L] = torch.stack([pr[..., lo:hi].sum(-1).mean(-1) for (lo, hi) in S["spans"]], -1)[0].cpu()  # [H, nspans]
     o = torch.matmul(p.to(value.dtype), v)
+    if S["zero"] and L in S["zero"]:  # {layer: [heads]}: zero these heads' outputs at every position
+        o[:, S["zero"][L]] = 0
     return o.transpose(1, 2).contiguous(), None
 mq.eager_attention_forward = hooked
 
@@ -97,7 +99,7 @@ def para_doc(c, labels=True, instr="", instr_pos="before_q", question=None):
 
 @torch.no_grad()
 def generate(tok, model, ids, maxnew=20):
-    S.update(rec=False, bias=None)
+    S.update(rec=False, bias=None, zero=None)
     g = model.generate(torch.tensor([ids], device="cuda"), max_new_tokens=maxnew, do_sample=False, temperature=None, top_p=None, top_k=None, pad_token_id=tok.eos_token_id)
     a = g[0, len(ids):].tolist()
     end = tok.convert_tokens_to_ids("<|im_end|>")
@@ -105,12 +107,12 @@ def generate(tok, model, ids, maxnew=20):
     return a
 
 @torch.no_grad()
-def measure(model, ids, ans, spans, bias=None):
+def measure(model, ids, ans, spans, bias=None, zero=None):
     """Teacher-force ans after ids; return [NL, H, nspans] attention (sum over span tokens, mean over answer rows)."""
     L0 = len(ids)
-    S.update(rec=True, rows=list(range(L0, L0 + len(ans))), spans=spans, store={}, bias=bias)
+    S.update(rec=True, rows=list(range(L0, L0 + len(ans))), spans=spans, store={}, bias=bias, zero=zero)
     out = model(torch.tensor([ids + ans], device="cuda"), use_cache=False, logits_to_keep=len(ans) + 1)
-    S.update(rec=False, bias=None)
+    S.update(rec=False, bias=None, zero=None)
     NL = len(S["store"])
     lp = torch.log_softmax(out.logits[0, :-1].float(), -1)
     ans_lp = lp[torch.arange(len(ans)), torch.tensor(ans, device=lp.device)].sum().item()
