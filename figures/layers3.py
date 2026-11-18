@@ -32,7 +32,6 @@ yt = [-50, 0, 50, 100, 150, 200, 250]; a.set_yticks(yt); a.set_yticklabels([(f"{
 mf = np.array(out["3_focus"]["mean"]); i = int(np.argmax(mf))
 a.text(1, 255, "focus your\nattention", fontsize=64, color=PURPLE, fontweight="bold", va="top", linespacing=1.0)
 mi = np.array(out["9_completely_ignore"]["mean"])
-a.text(36, 150, "shaded: 95% CI", fontsize=48, color=INK, va="center")
 a.text(22, -32, "completely ignore", fontsize=64, color=RED, fontweight="bold", va="top")
 fig.tight_layout(pad=0.4); fig.savefig(os.path.join(HERE, "layers.png"), dpi=130, facecolor="white"); fig.savefig(os.path.join(HERE, "layers.jpg"), dpi=130, facecolor="white")
 for c in out: m = np.array(out[c]["mean"]); print(c, "max %+.1f @%d  min %+.1f @%d  band21-53 mean-of-layer-means %+.1f" % (m.max(), m.argmax(), m.min(), m.argmin(), m[21:54].mean()))
