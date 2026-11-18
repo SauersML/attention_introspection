@@ -81,7 +81,7 @@ body{{margin:0;background:#fff;font-family:Helvetica,Arial,sans-serif;color:{INK
 .cbh{{display:flex;align-items:center;justify-content:center;margin-top:44px;font-size:64px;font-weight:bold}}
 .hbar{{width:1500px;height:80px;border-radius:10px;margin:0 28px;background:linear-gradient(to right,{stops})}}
 </style></head><body><div class="wrap">{body}
-<div class="cbh"><span>{MINUS}{CLIP} SD</span><div class="hbar"></div><span>+{CLIP} SD</span><span style="margin-left:60px">change in attention vs just mentioning the paragraph name, scaled within each block</span></div>
+<div class="cbh"><span>{MINUS}{CLIP} SD</span><div class="hbar"></div><span>+{CLIP} SD</span><span style="margin-left:60px">change in attention at layer 28 vs just mentioning the paragraph name, scaled within each block</span></div>
 </div></body></html>"""
 open(OUT + "grid_ci_L28.html", "w").write(page)
 subprocess.run([CHROME, "--headless=new", "--hide-scrollbars", "--force-device-scale-factor=1", f"--window-size={W},9000",

@@ -22,11 +22,15 @@ We then tried a ladder of wordings, all measured against the mention line on the
 
 Is the boost really aimed at the paragraph that was named, or does any focus instruction just stir attention around? To check, we took 100 prompts and asked the model to focus on each of the four paragraphs in turn, keeping everything else fixed. The named paragraph gets the biggest boost in every row. Per prompt, the named paragraph gained the most of the four in 97% of cases (chance would be 25%). The boost spills onto neighbouring paragraphs, and it is smallest for P4, the paragraph right before the question.
 
-![Rotating the named paragraph rotates the boost: the diagonal is the largest change in every row](figures/rotate.png)
+![Rotating the named paragraph: under focus the named paragraph gains most in 98% of cases, under completely ignore it loses most in 82% (chance 25%)](figures/rotate2.png)
 
 The effect also isn't driven by a few tokens. Here is the change in attention for every token of all four paragraphs, in four example prompts chosen to be typical. When the prompt names a paragraph and asks to focus on it, nearly the whole paragraph turns purple (more attention); with "do not pay attention", the named paragraph looks like the others.
 
-![Per-token change in attention versus only mentioning the paragraph: focus lights up the whole named paragraph, do not pay attention does not](figures/grid.png)
+![Per-token change in attention at layer 28 versus only mentioning the paragraph: focus lights up the whole named paragraph, completely ignore dims it](figures/grid_ci_L28.png)
+
+Where the instruction sits matters. Placed once before the four paragraphs instead of just before the question, the same two lines do much less: focus raises attention by 16% and completely ignore lowers it by 6%, each against a mention line in the same place.
+
+![The same instructions placed before the paragraphs: focus +16%, completely ignore −6%](figures/hero_before.png)
 
 Where in the network does this happen? Layer by layer, the focus effect sits mostly between layers 24 and 48 and peaks at layer 28, where focus raises attention on the named paragraph by 242% over a mention. In layers 0–20 no instruction moves attention by more than 16%.
 
