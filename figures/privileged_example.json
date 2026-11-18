@@ -1,0 +1,32 @@
+{
+ "id": 1,
+ "setup": "par_arith",
+ "lab": [
+  2,
+  1,
+  3,
+  4
+ ],
+ "opt": [
+  3,
+  2,
+  1,
+  4
+ ],
+ "user": "Here are four paragraphs.\n\n[P2] In 2011, a report by the International Energy Agency found that solar energy technologies such as photovoltaics, solar hot water and concentrated solar power could provide a third of the world\u2019s energy by 2060 if politicians commit to limiting climate change. The energy from the sun could play a key role in de-carbonizing the global economy alongside improvements in energy efficiency and imposing costs on greenhouse gas emitters. \"The strength of solar is the incredible variety and flexibility of applications, from small scale to big scale\".\n\n[P1] From the 1980s, mainstream sensibilities were reasserted and serialization became less common as the number of comics magazines decreased and many comics began to be published directly as albums. Smaller publishers such as L'Association that published longer works in non-traditional formats by auteur-istic creators also became common. Since the 1990s, mergers resulted in fewer large publishers, while smaller publishers proliferated. Sales overall continued to grow despite the trend towards a shrinking print market.\n\n[P3] The city shares a 15-mile (24 km) border with Mexico that includes two border crossings. San Diego hosts the busiest international border crossing in the world, in the San Ysidro neighborhood at the San Ysidro Port of Entry. A second, primarily commercial border crossing operates in the Otay Mesa area; it is the largest commercial crossing on the California-Baja California border and handles the third-highest volume of trucks and dollar value of trade among all United States-Mexico land crossings.\n\n[P4] Francis Hutcheson, a moral philosopher, described the utilitarian and consequentialist principle that virtue is that which provides, in his words, \"the greatest happiness for the greatest numbers\". Much of what is incorporated in the scientific method (the nature of knowledge, evidence, experience, and causation) and some modern attitudes towards the relationship between science and religion were developed by his prot\u00e9g\u00e9s David Hume and Adam Smith. Hume became a major figure in the skeptical philosophical and empiricist traditions of philosophy.\n\nUnrelated question: what is 67 + 88? Answer with just the number.",
+ "ntok": [
+  106,
+  102,
+  101,
+  101
+ ],
+ "segs": [
+  "In 2011, a report by the International Energy Agency found that solar energy technologies such as photovoltaics, solar hot water and concentrated solar power could provide a third of the world\u2019s energy by 2060 if politicians commit to limiting climate change. The energy from the sun could play a key role in de-carbonizing the global economy alongside improvements in energy efficiency and imposing costs on greenhouse gas emitters. \"The strength of solar is the incredible variety and flexibility of applications, from small scale to big scale\".",
+  "From the 1980s, mainstream sensibilities were reasserted and serialization became less common as the number of comics magazines decreased and many comics began to be published directly as albums. Smaller publishers such as L'Association that published longer works in non-traditional formats by auteur-istic creators also became common. Since the 1990s, mergers resulted in fewer large publishers, while smaller publishers proliferated. Sales overall continued to grow despite the trend towards a shrinking print market.",
+  "The city shares a 15-mile (24 km) border with Mexico that includes two border crossings. San Diego hosts the busiest international border crossing in the world, in the San Ysidro neighborhood at the San Ysidro Port of Entry. A second, primarily commercial border crossing operates in the Otay Mesa area; it is the largest commercial crossing on the California-Baja California border and handles the third-highest volume of trucks and dollar value of trade among all United States-Mexico land crossings.",
+  "Francis Hutcheson, a moral philosopher, described the utilitarian and consequentialist principle that virtue is that which provides, in his words, \"the greatest happiness for the greatest numbers\". Much of what is incorporated in the scientific method (the nature of knowledge, evidence, experience, and causation) and some modern attitudes towards the relationship between science and religion were developed by his prot\u00e9g\u00e9s David Hume and Adam Smith. Hume became a major figure in the skeptical philosophical and empiricist traditions of philosophy."
+ ],
+ "q": null,
+ "gold": null,
+ "j": null
+}
