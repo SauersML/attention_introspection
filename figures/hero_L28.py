@@ -3,7 +3,7 @@ Two columns: 'Focus your attention on paragraph [Pk].' and 'Completely ignore pa
 Layer 28 only. Violins are drawn on a log-ratio scale (log2 of attention ratio, hidden y axis); the big labels and p stay on the mean % change.
 Method box (top right): answer tokens attending to the named paragraph, and the per-layer mean % change curve (as layers3.py, vs the same control) with layer 28 marked.
 Each violin: per-context % change in attention on the named paragraph (answer-token queries, band layers, mean over heads,
-same measure as dose_analyze.py) vs a control: the mention-only line (hero.png) or no instruction (hero_none.png).
+same measure as dose_analyze.py) vs the mention-only line (control box, bottom left). Method-box head arcs are a schematic: dose.json stores only the head mean.
 p: two-sided sign-flip test over contexts on the mean % change. Example bubble text: dose.json id 300 (real prompt)."""
 import json, base64, subprocess, os, html, sys
 import numpy as np, matplotlib
