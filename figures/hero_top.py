@@ -78,6 +78,7 @@ else:
     DOSE = f'{MANIP[ARM][str(M)]["mean"]:.1f}' if MANIP else f'{np.mean([np.mean([r["massC"][f"{k}|{M}"][k] / r["mass_none_rep"][k] for k in range(r["N"])]) for r in rs]):.1f}'
 
 mu = float(z.mean()); p = signflip(z); lo, hi = boot(z)
+BASE = 100 * float(np.mean([yes(r["none"]["text"]) for r in R])) if MODE == "told_yes" else 25.0   # no-injection rate: yes-rate, or 1 in 4 paragraphs
 ex_i = ids.index(EXID); rank = int((z < z[ex_i]).sum()) + 1; rank_hi = int((z <= z[ex_i]).sum())
 print(f"{MODE}: mean {mu:+.1f} points, 95% CI {lo:+.1f}..{hi:+.1f}, p={p:.2g}, n={len(z)}, median {np.median(z):+.0f}, attention x{DOSE}")
 print(f"example id {EXID}: value {z[ex_i]:+.0f} (median {np.median(z):+.0f}), rank {rank}-{rank_hi} of {len(z)} (ties), reply {REPLY!r}")
@@ -104,17 +105,17 @@ ov = fig.add_axes([0, 0, 1, 1], facecolor="none"); ov.set_xlim(0, W); ov.set_yli
 YP = lambda v: ax.transData.transform((0, v))[1]
 LX = ax.transData.transform((0.47, 0))[0]; Y0 = min(max(YP(0) + 215, YP(mu) + 60), VH - 115)   # big label in pixels, its p line clear of "no injection" on the zero line
 NIY = YP(0) + 3 if Y0 - 130 > YP(0) + 60 else YP(0) - 8   # "no injection" above the zero line, or below it when the label block is close
-ov.text(LX, Y0, neg(f"{mu:+.0f}"), ha="left", va="bottom", fontsize=px(110), fontweight="bold", color=COL)
-ov.text(LX, Y0, "points", ha="left", va="top", fontsize=px(60), fontweight="bold", color=COL)
+ov.text(LX, Y0, f"{BASE + mu:.0f}%", ha="left", va="bottom", fontsize=px(110), fontweight="bold", color=COL)
+ov.text(LX, Y0, f"from {BASE:.0f}%", ha="left", va="top", fontsize=px(56), fontweight="bold", color=COL)
 ov.text(LX, Y0 - 80, ps, ha="left", va="top", fontsize=px(50), color=COL)
 ov.text(AXR, NIY, "no injection", ha="right", va="bottom" if NIY > YP(0) else "top", fontsize=px(46), color=INK)
 TV = [t for t in range(-100, 101, 50 if z.min() < -50 else 25) if ylo < t < yhi]
-for t in TV: ov.text(AXL - 14, YP(t), neg(f"{t:+d}") if t else "0", ha="right", va="center", fontsize=px(46), color=INK)
+for t in TV: ov.text(AXL - 14, YP(t), neg(f"{t:+d}%") if t else "0", ha="right", va="center", fontsize=px(46), color=INK)
 ov.plot([AXL] * 2, [YP(min(TV)), YP(max(TV))], color=INK, lw=3)
 YL = {"told_yes": "change vs\nno injection\nin how often\nQwen says\nthey notice\na boost",
       "told": "change vs\nno injection\nin how often\nQwen\u2019s\nanswer is\nthe boosted\nparagraph",
       "question": "change vs\nno injection\nin how often\nQwen\u2019s\nanswer is\nthe boosted\nparagraph"}[MODE]
-ov.text(AXL - 120, VH / 2 + 6, YL, ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
+ov.text(AXL - 175, VH / 2 + 6, YL, ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
 KX = ax.transData.transform((0.47, 0))[0]; KY = YP(min(TV)) if min(TV) < -20 else YP(0) - 90
 ov.scatter([KX], [KY], s=240, color=COL, alpha=0.34, edgecolors="none")
 ov.text(KX + 26, KY, "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
