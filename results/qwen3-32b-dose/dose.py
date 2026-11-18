@@ -75,7 +75,10 @@ CONDS = {  # name: (line before the question (B's position), line before the par
     "7_little_less": ("Pay a little less attention to paragraph [P{k}].", "", ""),
     "8_do_not": ("Do not pay attention to paragraph [P{k}].", "", ""),
     "9_completely_ignore": ("Completely ignore paragraph [P{k}]. Do not look at it at all.", "", ""),
+    # length-matched mention: 16 tokens, like the completely-ignore line (the plain mention is 12); added 18 Nov after review
+    "1b_mention16": ("Note that one of the four paragraphs above is the one labelled [P{k}].", "", ""),
 }
+if os.environ.get("DOSE_CONDS"): CONDS = {k: v for k, v in CONDS.items() if k in os.environ["DOSE_CONDS"].split(",")}
 
 def build(c, cond):
     mid, pre, post = (s.format(k=c["k"] + 1) for s in CONDS[cond])

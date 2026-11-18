@@ -2,8 +2,11 @@
 Two columns: 'Focus your attention on paragraph [Pk].' and 'Completely ignore paragraph [Pk]. Do not look at it at all.'
 Layer 28 only. Violins are drawn on a log-ratio scale (log2 of attention ratio, hidden y axis); the big labels and p stay on the mean % change.
 Method box (top right): answer tokens attending to the named paragraph, and the per-layer mean % change curve (as layers3.py, vs the same control) with layer 28 marked.
-Each violin: per-context % change in attention on the named paragraph (answer-token queries, band layers, mean over heads,
-same measure as dose_analyze.py) vs the mention-only line (control box, bottom left). Method-box head arcs are a schematic: dose.json stores only the head mean.
+Each violin: per-context % change in attention on the named paragraph vs the mention-only line (control box, bottom left), at layer 28:
+attention weights averaged over heads, summed over the paragraph's tokens and divided by its token count, averaged over the query
+positions occupied by the forced answer tokens (dose.py "att_mean"; the last prompt token, which predicts the first answer token,
+is not in this average; it is stored separately as "att_first"). The paragraph span starts at its second token (the first one
+is merged with the space after the label). Method-box head arcs are a schematic: dose.json stores only the head mean.
 p: two-sided sign-flip test over contexts on the mean % change. Example bubble text: dose.json id 300 (real prompt)."""
 import json, base64, subprocess, os, html, sys
 import numpy as np, matplotlib
@@ -12,7 +15,7 @@ from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, RED, INK, DIV, norm as dnorm
-D = "/Users/user/connectome/islands/agents/resident-a/compute/attn_intro/qwen3-32b-dose/"
+D = os.path.join(os.path.dirname(HERE), "results", "qwen3-32b-dose") + "/"
 meta = json.load(open(D + "meta.json")); L = [28]
 R = json.load(open(D + "dose.json")); by = {(r["id"], r["cond"]): r for r in R}
 ids = sorted({r["id"] for r in R})

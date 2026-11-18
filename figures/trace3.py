@@ -1,9 +1,10 @@
-"""Steered vs unsteered: change in log-prob that Qwen3-32B names the boosted paragraph when asked where it attended.
+"""Steered vs unsteered: change in log-prob that Qwen3-32B names the boosted paragraph when asked where it attended,
+minus the mean change for the other paragraphs (the question paragraph excluded in QA). Arithmetic prompts, answers identical to no boost.
 Paired per question; p from a sign-flip permutation test (2,000,000 random flips, +1 correction), no distribution assumed."""
 import json, sys, numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
-R="/Users/user/connectome/islands/agents/resident-a/compute/attn_intro/qwen3-32b/"
-OUT="/Users/user/connectome/islands/agents/resident-a/compute/fig/attn_intro/"
+import os
+OUT=os.path.dirname(os.path.abspath(__file__))+"/"; R=os.path.join(OUT,"..","results","qwen3-32b")+"/"
 sys.path.insert(0,OUT); from pal import PURPLE, RED, INK, DIV, norm as dnorm
 plt.rcParams.update({"font.family":"Helvetica","font.size":60,"text.color":INK,"axes.labelcolor":INK,"xtick.color":INK,"ytick.color":INK,"axes.edgecolor":INK})
 A=json.load(open(R+"A.json")); A2=json.load(open(R+"A2.json")); byid={r["id"]:r for r in A}
@@ -33,7 +34,7 @@ for i,(lab,x,p) in enumerate(cols):
     a.text(i,x.min()-0.15,f"{m:+.2f}".replace("-","−")+f"\n{ps}",ha="center",va="top",fontsize=62,fontweight="bold",color=col,linespacing=1.15)
 a.axhline(0,color=INK,lw=4,zorder=2)
 a.set_xticks([0,1]); a.set_xticklabels([c[0] for c in cols],fontsize=62,fontweight="bold",linespacing=1.1)
-a.set_ylabel("change in log-prob of naming\nthe boosted paragraph",fontsize=56,labelpad=14)
+a.set_ylabel("change in log-prob of naming the boosted\nparagraph, minus the other paragraphs",fontsize=46,labelpad=14)
 a.set_ylim(allv.min()-1.6,allv.max()+0.3); a.set_xlim(-0.6,1.6)
 for s in ["top","right"]: a.spines[s].set_visible(False)
 a.spines["left"].set_linewidth(4); a.spines["bottom"].set_linewidth(4); a.tick_params(width=4,length=16,labelsize=60); a.tick_params(axis="x",length=0)

@@ -1,10 +1,10 @@
 """Figure for results/monitor/LOGPROB.md (Qwen3-32B, 300 prompts with four paragraphs).
 Top: one real prompt (id 173): the chat, the self-report question, the report's probabilities for P1..P4 (after the
-prefilled "P") beside the true attention (attention mass from answer tokens to each paragraph, averaged over layers 21-53,
-as percent of the four paragraphs' total). Bottom left: per-prompt Spearman between report score and true attention, asked
+prefilled "P") beside the true attention (the preregistered primary truth: attention from answer tokens to each paragraph,
+per token of the paragraph, averaged over heads and layers 21-53, as percent of the four values' total). Bottom left: per-prompt Spearman between report score and true attention, asked
 right after answering, self vs the same model reading the transcript; black bar = 95% bootstrap CI of the mean.
-Bottom right: held-out gain in within-prompt rank correlation from adding the self score to the reader's (logprob.py),
-dot + 95% bootstrap CI over prompts, grey band = 95% range of the shuffle null.
+Bottom right: held-out gain in within-prompt rank correlation from adding the self score to a model that already has the
+reader's scores for every wording asked at that timing, plus position and length (logprob.py "gain_all"), dot + 95% bootstrap CI over prompts.
 usage: monitor_logprob_fig.py results/monitor/logprob_results.json SHARD_DIR [SHARD_DIR ...]   (writes figures/monitor_logprob.png)"""
 import json, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
@@ -13,8 +13,10 @@ from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, INK
+ORANGE = "#E07B24"
 J = json.load(open(sys.argv[1])); DIRS = sys.argv[2:]
-RES, PP, IDS = J["res"], J["perprompt"], J["ids"]
+TR = "norm"  # preregistered primary truth
+RES, PP, IDS = J["res"][TR], J["perprompt"][TR], J["ids"]
 C, H, G = {}, {}, {}
 for d in DIRS:
     for c in json.load(open(os.path.join(d, "contexts.json"))): C[str(c["id"])] = c
@@ -25,7 +27,7 @@ px = lambda v: v * 72 / 100
 
 # ---------------- example prompt ----------------
 EX = "173"; c = C[EX]
-truth = np.array(H[EX]["truth"]["mass"])[21:54].mean(0); truth = truth / truth.sum()
+truth = np.array(H[EX]["truth"][TR])[21:54].mean(0); truth = truth / truth.sum()
 rep = np.array(H[EX]["rep"]["after|most|self"])
 r_ex = PP["after|most"]["self"][IDS.index(EX)]
 print("example", EX, "report", np.round(rep, 3), "truth", np.round(truth, 3), "rank corr", round(r_ex, 3))
@@ -67,10 +69,10 @@ plt.rcParams.update({"font.family": "Helvetica", "text.color": INK, "axes.edgeco
 fig = plt.figure(figsize=(W / 100, BH / 100), dpi=100)
 F = lambda x, y: (x / W, y / BH)
 # left: violins
-L0, LW, B0, BHh = 190, 720, 210, 1250
+L0, LW, B0, BHh = 190, 720, 300, 1160
 ax = fig.add_axes([L0 / W, B0 / BH, LW / W, BHh / BH])
 rng = np.random.default_rng(1)
-for j, (who, col, lab) in enumerate([("self", PURPLE, "self-report"), ("reader", INK, "same model\nreading the\ntranscript")]):
+for j, (who, col, lab) in enumerate([("self", PURPLE, "self-report"), ("reader", ORANGE, "same model\nreading the\ntranscript")]):
     z = np.array(PP["after|most"][who]); st = RES["after|most"][who]
     kde = gaussian_kde(z, bw_method=0.3); yy = np.linspace(-1.05, 1.05, 300); dd = kde(yy); dd = dd / dd.max() * 0.42
     ax.fill_betweenx(yy, j - dd, j + dd, color=col, alpha=0.12, lw=0); ax.plot(np.r_[j - dd, (j + dd)[::-1]], np.r_[yy, yy[::-1]], color=col, lw=2.5, alpha=0.6)
@@ -84,11 +86,11 @@ for j, (who, col, lab) in enumerate([("self", PURPLE, "self-report"), ("reader",
 ax.set_xlim(-0.55, 1.55); ax.set_ylim(-1.1, 1.1); ax.set_xticks([])
 ax.set_yticks([-1, 0, 1]); ax.set_yticklabels(["\u22121", "0", "1"], fontsize=px(46)); ax.tick_params(length=0, pad=10)
 for s_ in ["top", "right", "bottom"]: ax.spines[s_].set_visible(False)
-ax.spines["left"].set_linewidth(3); ax.axhline(0, color=INK, lw=1.5, alpha=0.4, zorder=0)
+ax.spines["left"].set_linewidth(3); ax.axhline(0, color=INK, lw=2, zorder=0)
 fig.text(*F(50, B0 + BHh / 2), "rank correlation with true attention", rotation=90, ha="center", va="center", fontsize=px(48))
 fig.text(*F(L0 + LW / 2, BH - 14), "asked right after answering", ha="center", va="top", fontsize=px(50), fontweight="bold")
 # right: gains
-R0, RW = 1560, 560
+R0, RW = 1560, 760
 ax2 = fig.add_axes([R0 / W, B0 / BH, RW / W, BHh / BH])
 ys = []; y = 0
 for n, (k, _) in enumerate(ROWS):
@@ -98,24 +100,19 @@ YMAX = y
 lab_tr = matplotlib.transforms.blended_transform_factory(fig.transFigure, ax2.transData)
 for n, (k, lab) in enumerate(ROWS):
     q = RES[k]; yv = YMAX - ys[n]
-    ax2.fill_between([q["null_lo"], q["null_hi"]], yv - 0.4, yv + 0.4, color="#D5D6DB", lw=0, zorder=1)
-    ax2.plot([q["gain"]["lo"], q["gain"]["hi"]], [yv, yv], color=PURPLE, lw=7, solid_capstyle="round", zorder=3)
-    ax2.scatter([q["gain"]["mean"]], [yv], s=520, color=PURPLE, zorder=4, edgecolors="white", linewidths=2)
+    ax2.plot([q["gain_all"]["lo"], q["gain_all"]["hi"]], [yv, yv], color=PURPLE, lw=7, solid_capstyle="round", zorder=3)
+    ax2.scatter([q["gain_all"]["mean"]], [yv], s=520, color=PURPLE, zorder=4, edgecolors="white", linewidths=2)
     ax2.text((R0 - 24) / W, yv, lab, transform=lab_tr, ha="right", va="center", fontsize=px(46))
-    pv = q["p"]; ptxt = "p < 0.005" if pv < 0.005 else f"p = {pv:.2f}"
-    ax2.text((R0 + RW + 16) / W, yv, ptxt, transform=lab_tr, ha="left", va="center", fontsize=px(44), color=INK)
 for n, g in GROUP.items():
     ax2.text((R0 - 24) / W, YMAX - ys[n] + 1, g, transform=lab_tr, ha="right", va="center", fontsize=px(48), fontweight="bold")
 ax2.axvline(0, color=INK, lw=3, zorder=2)
 ax2.set_ylim(0.45, YMAX + 0.6); ax2.set_yticks([])
-lo = min(RES[k]["gain"]["lo"] for k, _ in ROWS); hi = max(RES[k]["gain"]["hi"] for k, _ in ROWS)
+lo = min(RES[k]["gain_all"]["lo"] for k, _ in ROWS); hi = max(RES[k]["gain_all"]["hi"] for k, _ in ROWS)
 ax2.set_xlim(min(lo, -0.02) - 0.004, hi + 0.004)
-ax2.set_xticks([0, 0.05]); ax2.set_xticklabels(["0", "+0.05"], fontsize=px(46)); ax2.tick_params(length=8, width=3, pad=8)
+ax2.set_xticks([-0.02, 0, 0.02]); ax2.set_xticklabels(["\u22120.02", "0", "+0.02"], fontsize=px(46)); ax2.tick_params(length=8, width=3, pad=8)
 for s_ in ["top", "right", "left"]: ax2.spines[s_].set_visible(False)
 ax2.spines["bottom"].set_linewidth(3)
-q0 = RES["after|most"]; yv0 = YMAX - ys[0]
-ax2.text(q0["null_hi"] + 0.002, yv0 + 0.62, "shuffled", ha="left", va="center", fontsize=px(42), color=INK, zorder=5)
-fig.text(*F(R0 + RW / 2, 18), "rank correlation added by the self-report\nover the same model reading the transcript", ha="center", va="bottom", fontsize=px(46), linespacing=1.1)
+fig.text(*F(R0 + RW / 2, 18), "rank correlation the self-report adds over\nthe same model reading the transcript,\nasked every way at the same time", ha="center", va="bottom", fontsize=px(46), linespacing=1.1)
 VP = os.path.join(HERE, "monitor_logprob_bottom.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------

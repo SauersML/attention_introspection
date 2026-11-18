@@ -18,7 +18,11 @@ from pal import PURPLE, RED, INK, DIV, norm as dnorm
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
 EX = json.load(open(os.path.join(HERE, "privileged_example.json")))
-DOSES = [0.25, 0.5, 2.0, 5.0, 10.0]; TICK = ["×¼", "×½", "×2", "×5", "×10"]
+DOSES = [0.25, 0.5, 2.0, 5.0, 10.0]
+# tick = measured ratio of attention mass on the boosted part (boost / no boost, mean over prompts, results.json "manip"):
+# the boost adds log(m) to the pre-softmax scores, so a nominal m=10 gives about 6.5x the attention mass, m=5 about 3.9x
+MANIP = json.load(open(os.path.join(ROOT, "results/privileged/results.json")))["manip"]
+TICKS = {a: ["×" + (f"{MANIP[a][str(m)]['mean']:.2f}" if MANIP[a][str(m)]['mean'] < 1 else f"{MANIP[a][str(m)]['mean']:.1f}") for m in DOSES] for a in "AC"}
 PAR = ("par_arith", "par_qa"); OTHER = [("list", "lists"), ("code", "code"), ("document", "document sections"), ("sentences", "sentences"), ("dialogue", "dialogue")]
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 AMB = "#F2B53A"; W = 2410; PAD = 24; GAP = 28; CW = (W - 2 * PAD - 2 * GAP) // 3
@@ -71,7 +75,7 @@ QTEXT = "Which paragraph did you attend to most while writing your answer?"
 def bars(p):
     w, h, bw = 300, 150, 52; o = []
     for i, pos in enumerate(order):
-        x = 14 + i * 72; hh = 100 * p[pos]; c = AMB if pos == K else "#C9CCD3"
+        x = 14 + i * 72; hh = 100 * p[pos]; c = AMB if pos == K else INK
         o.append(f'<rect x="{x}" y="{112 - hh:.1f}" width="{bw}" height="{hh:.1f}" rx="5" fill="{c}"/>')
         o.append(f'<text x="{x + bw / 2}" y="148" font-size="40" font-weight="700" text-anchor="middle" fill="{INK}">{i + 1}</text>')
         if pos == K: o.append(f'<text x="{x + bw / 2}" y="{104 - hh:.1f}" font-size="40" font-weight="700" text-anchor="middle" fill="{INK}">{100 * p[pos]:.0f}%</text>')
@@ -111,9 +115,9 @@ for j, (a, _) in enumerate(ARMS):
         ax.text(i, yl, lab, ha="center", va="bottom" if up else "top", fontsize=px(58), fontweight="bold", color=col, zorder=7)
         if m == 10.0:
             assert st["p"] * 200001 < 1.5
-            ax.text(i, yl + (0.27 if up else -0.27), "p < 0.00001", ha="center", va="bottom" if up else "top", fontsize=px(40), color=col)
+            ax.text(i, yl + (0.27 if up else -0.27), "p < 0.00001", ha="center", va="bottom" if up else "top", fontsize=px(46), color=col)
     ax.set_xlim(-0.6, len(DOSES) - 0.4); ax.set_ylim(ylo, yhi)
-    ax.set_xticks(range(len(DOSES))); ax.set_xticklabels(TICK, fontsize=px(50)); ax.tick_params(length=0, pad=14, colors=INK)
+    ax.set_xticks(range(len(DOSES))); ax.set_xticklabels(TICKS[a], fontsize=px(50)); ax.tick_params(length=0, pad=14, colors=INK)
     for s_ in ax.spines.values(): s_.set_visible(False)
     ax.set_yticks([])
 # zero line across both panels, ticks on the first
@@ -127,10 +131,10 @@ for t in TV:
     if ylo < y < yhi: fig.text(*F(AX0 - 14, YP(y)), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
 fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.5)) / VH, YP(math.log(11)) / VH], color=INK, lw=3))
 LXp = AX0 - 200
-fig.text(*F(LXp, YP(math.log(6))), "report names the\nboosted paragraph\nmore often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=PURPLE, linespacing=1.1)
-fig.text(*F(LXp, YP(math.log(0.45))), "report names the\nboosted paragraph\nless often", ha="right", va="center", fontsize=px(52), fontweight="bold", color=RED, linespacing=1.1)
+fig.text(*F(LXp, YP(math.log(6))), "report names the\nboosted paragraph\nmore often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=PURPLE, linespacing=1.1)
+fig.text(*F(LXp, YP(math.log(0.45))), "report names the\nboosted paragraph\nless often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=RED, linespacing=1.1)
 TY = axs[0].get_position().y0 * VH - 58
-fig.text(*F(AX0 - 14, TY), "attention\nboost", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.1)
+fig.text(*F(AX0 - 14, TY), "attention on\nboosted\nparagraph", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.1)
 KY = (YP(math.log(0.45)) + TY) / 2 - 10
 KY = YP(math.log(11)) - 20
 for j, (a, nm) in enumerate(ARMS):
@@ -143,7 +147,7 @@ VP = os.path.join(HERE, "privileged_violins.png"); fig.savefig(VP, dpi=200, face
 
 # ---------------- page ----------------
 VIO = base64.b64encode(open(VP, "rb").read()).decode()
-cols = column(0, "no boost", "Qwen3-32B", "none") + column(1, "while answering", "attention to paragraph [P2] ×10", "A") + column(2, "while reading the question", "attention to paragraph [P2] ×10", "C")
+cols = column(0, "no boost", "Qwen3-32B", "none") + column(1, "while answering", "attention to paragraph [P2] ×" + f"{MANIP['A']['10.0']['mean']:.1f}", "A") + column(2, "while reading the question", "attention to paragraph [P2] ×" + f"{MANIP['C']['10.0']['mean']:.1f}", "C")
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:18px {PAD}px 0;position:relative}}

@@ -49,7 +49,7 @@ So stronger adverbs lower attention on Pk after "focus your attention on"; the o
 **Vs none:** naming Pk alone raises attention on it by 9.4%; every up-rung and "a little less"/"do not" stay above none; only "completely ignore" goes below none.
 
 ## Per layer (mean % change vs mention; dose_tables.md has every 4th layer, dose_results.json all 64)
-Effects sit at layers ~24–48 and peak at layer 28: focus +242%, glance +184%, focus strongly +192%, very strongly +112%, twice +1156%; completely ignore −25% at 28, −29% at 52. Layers 0–20 change ≤ ±16% in every condition.
+Effects sit at layers ~24–48 and peak at layer 28: focus +242%, glance +184%, focus strongly +192%, very strongly +112%, twice +1156%; completely ignore −25% at 28, −29% at 52. Layers 0–20 change ≤ ±16% in every condition except "twice" (up to +25%, layer 18).
 
 ## Reading
 - Instructed control is real and large in this wording (+38–47% for plain focus/glance over a matched mention, 100% of contexts), but it does not scale with how emphatic the words are: "strongly" and "very strongly and only … Ignore everything else" give less, not more. One untested guess: the word "Ignore" in rung 5 pulls in the suppressive direction (rung 9 shows "ignore" lowers attention).
@@ -59,3 +59,10 @@ Effects sit at layers ~24–48 and peak at layer 28: focus +242%, glance +184%, 
 
 ## Differences from B
 B used "While you answer, focus your attention on [Pk]." (bare label); here "Focus your attention on paragraph [Pk]." B's 32B arithmetic focus vs mention was +26% (geometric mean); here +47% (arithmetic mean of % change), different seed and wording, so not a like-for-like comparison.
+
+## Notes added 18 Nov (review)
+- Query positions. "Answer-token queries" (`att_mean`) are the positions occupied by the forced answer tokens, i.e. each answer token's own position, which predicts the next token (for a one-token answer, the end-of-turn token). The last prompt token, which predicts the first answer token, is stored separately (`att_first`, the "vs mention, first query" column). The headline numbers (README, hero figure) use `att_mean`. The two differ a lot: focus +47.3% vs +6.4%, very strongly and only +20.9% vs −6.2%. `monitor/monitor.py` instead averages over the predicting positions (last prompt token through the second-to-last answer token), and the privileged experiment over the last prompt token through the last answer token. The mean over predicting positions was not saved here.
+- Paragraph spans exclude the paragraph's first token: it is merged with the space after "[Pk]", and `tspan` keeps only tokens wholly inside the paragraph text.
+- "Do not pay attention" vs no instruction is +8.5% [+6.4, +10.6] (table above), not a decrease.
+- The completely-ignore line is 16 tokens and the mention line 12. A 16-token mention on the same 150 contexts is in `../qwen3-32b-mention16/` (completely ignore vs it: −16.4% [−17.3, −15.5] at layers 21–53, −30.1% at layer 28).
+

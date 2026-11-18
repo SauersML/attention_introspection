@@ -51,6 +51,8 @@ What would overturn "the model follows the instruction's meaning": the boost cou
 
 ## Sham null for A2
 
+**Correction (18 Nov, after review).** The sham below cannot test Pk-specificity: the header/question tokens it boosts are the same whichever paragraph is the target k, and k is random, so its expected Pk-specific shift is zero by construction; its −0.04 says nothing about specificity. Its one use is the overall-disturbance row (a non-specific boost disturbs the report as much). The real control is the label-token sham below ("Label-token sham").
+
 ### Question
 In A2, boosting attention on a paragraph Pk (b=2 on the pre-softmax scores of Pk's keys) lowered the report's probability of naming Pk. Is that specific to Pk, or does any attention boost disturb the report this way?
 
@@ -76,3 +78,20 @@ Paired difference boost − sham in the Pk-specific shift: −0.50 [−0.78, −
 The negative shift is specific to the boosted paragraph. A sham boost on non-paragraph text that adds about 4× more attention mass, and disturbs the report's distribution at least as much overall, produces no Pk-specific shift (CI includes 0), and the difference from the Pk boost excludes 0. So the report does carry a trace of which paragraph was boosted, and that trace pushes the report away from the boosted paragraph, not toward it.
 
 What would overturn this: a sham that touched paragraph-like content (e.g. the [Pk] label tokens) might also produce a Pk-specific shift; this sham touched no paragraph and no label. Null: the sham itself is the null; its shift is −0.04 [−0.27, +0.16].
+
+## Label-token sham (18 Nov)
+
+Code `sham_label.py` (rotate.py's setup verbatim, then this loop), `shamlabel_run.sh`, `sham_label_analyze.py`; data `SHAMLABEL.json`, `shamlabel_run.log`; numbers `sham_label_results.json`. Pod run hypha-prod-attnshamlabelb (A100, $0.52).
+
+Same 100 contexts (seed 2), same b and query range as the sham above. Conditions: none; boost on Pk's body tokens (b=2, a rerun of the boost above); the same b=2, and b=4, on the label tokens "[Pk]" of the same paragraph only (4 tokens; no body token, asserted). This control depends on k exactly as the body boost does.
+
+| | body boost b=2 | label boost b=2 | label boost b=4 |
+|---|---|---|---|
+| attention on Pk's body, ratio to no boost (answer queries, layers 21–53) | 4.89× | 0.94× | 0.79× |
+| attention on Pk's label, ratio to no boost | 0.88× | 6.10× | 25.0× |
+| Pk-specific shift in log P(report) | **−0.54 [−0.73, −0.37]** | **+0.13 [+0.03, +0.22]** | **+0.43 [+0.23, +0.64]** |
+| answers identical to no boost | 99 of 100 | 99 of 100 | 99 of 100 |
+
+Body − label (b=2), paired: −0.67 [−0.91, −0.42].
+
+Reading: the rerun reproduces the body boost (−0.54). Boosting attention on the same paragraph's label moves the report the other way, toward naming Pk, and more at the larger bias. So the inverted trace is tied to attention on the paragraph's text, not to any perturbation located at paragraph k. The body boost also lowers attention on the label (0.88×); since label attention pushes the report toward Pk, part of the inverted trace may run through the label. Not tested.

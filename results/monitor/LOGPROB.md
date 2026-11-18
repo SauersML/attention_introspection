@@ -1,67 +1,40 @@
 # Does Qwen3-32B's report of its own attention carry anything a transcript reader lacks?
 
-![Qwen3-32B, 300 prompts: the self-report's rank correlation with true attention (0.61) is about the same as the same model reading the transcript (0.59); adding the self-report to the reader adds at most a few hundredths of rank correlation, largest when asked one turn later with a 0–10 rating](../../figures/monitor_logprob.png)
+![Qwen3-32B, 300 prompts: asked right after answering, the self-report's rank correlation with true attention (0.42) is no better than the same model reading the transcript (0.43); added to a reader asked every way at the same time, the self-report adds nothing in any way of asking](../../figures/monitor_logprob.png)
+
+## Answer
+
+No. On the preregistered measure the self-report is no better than the same model reading the transcript, the preregistered pass rule fails (0 of 20 setups pass), and once the reader is asked every wording we asked the self, the self-report adds nothing measurable to it, in any of the 13 ways of asking.
 
 ## The story
 
 Qwen3-32B answers a question about four paragraphs. Then we ask where its attention went ("Which paragraph did you attend to most while writing your answer?", a 0–10 rating per paragraph, "which least?", or a free description), and read the probabilities of its answer instead of its sampled answer. We compare that report with the true attention of its answer tokens to each paragraph, and with the same model asked the same question about the conversation given to it as quoted text (the transcript reader).
 
-1. **The self-report tracks true attention about as well as the transcript reader does.** Asked right after answering, the per-prompt rank correlation between report and true attention is 0.61 for the self-report and 0.59 for the reader; the difference has a confidence interval that includes zero. Most of what the self-report "knows" is what anyone reading the conversation could guess (the paragraph the question points to, the paragraph the answer quotes).
-2. **There is a small signal on top of the reader, and it is real but tiny.** Adding the self-report's scores to a model that already has the reader's scores, paragraph position and length raises the held-out rank correlation by about 0.01–0.02 for most ways of asking, and by 0.04 when the model is asked one turn later with 0–10 ratings. Shuffling the self-report across prompts never gives this much (p < 0.005), so the extra information is specific to the prompt. But in all but one setting the gain's confidence interval over prompts includes zero: the effect is consistent in sign, not large on any single prompt.
-3. **Showing the model examples of its true attention makes its self-report worse, not better.** After 4 or 16 earlier conversations with their measured attention, the reader improves (0.63) while the self-report drops (0.47 for "which most?", 0.22 and 0.16 for 0–10 ratings), and the self-specific gain disappears (p = 0.74, 0.04, 1.00, 0.61). The examples seem to make the self-report copy the examples' pattern instead of consulting anything about this answer.
+1. **Preregistered primary truth: the self-report is no better than the reader.** True attention as preregistered (`PREREG.md`, "Truth (primary)") is attention per token of the paragraph (attention mass divided by its token count), from the answer queries, averaged over heads and layers 21–53. Asked right after answering, the per-prompt rank correlation with it is 0.419 for the self-report and 0.432 for the reader (self − reader −0.013 [−0.042, +0.014]). In no way of asking is the self-report above the reader with a CI clear of zero; after true examples it is below.
+2. **Preregistered pass rule: FAIL.** The rule (self above both the reader and a transcript classifier, on top-1 accuracy and on rank correlation, Bonferroni over 20 setups) passes in 0 of 20 setups. The classifier on transcript features beats the self-report everywhere (right after, "which most": rank correlation 0.765 vs 0.419; top-1 81% vs 56%). Full tables: `prereg_tables.md` (from `monitor/analyze_monitor.py`).
+3. **The self-report adds nothing to a reader asked every way.** We fit, with held-out prompts, a model predicting each paragraph's true-attention rank from the reader's scores for every wording asked at that timing (for example, right after: which most, rating, which least, free), plus paragraph position and length, then add the self-report's scores. The self-report's gain is between −0.006 and +0.013 in all 13 ways of asking, every CI includes zero. Adding a second reader wording to a one-wording reader helps more (typically +0.01 to +0.09) than adding the self-report does (−0.002 to +0.023): the self-report behaves like one more noisy reading of the transcript.
+4. **Secondary truth, total attention mass (post hoc).** With total mass (not divided by length) the self-report and reader both correlate better (0.615 and 0.592 right after), and again the self-report adds nothing to the all-wordings reader right after answering (−0.005 to −0.001 for the four wordings, CIs over zero). One setting has a gain with a CI clear of zero: the 0–10 rating asked one turn later, +0.028 [+0.006, +0.049]. That is one of 26 gains (13 ways × 2 truths), picked after seeing them, on the secondary truth, and the same setting under the primary truth gives +0.013 [−0.005, +0.031]; we do not read it as a private signal.
+5. **Showing the model examples of its true attention makes its self-report worse.** After 4 or 16 earlier conversations with their measured attention, the reader stays at 0.44–0.45 while the self-report drops (0.40 and 0.38 for "which most?", 0.18 and 0.17 for 0–10 ratings, primary truth). The examples showed length-normalised attention, the same quantity as the primary truth, so the drop is not a mismatch between what the examples taught and what we score. The examples come from other prompts of the same family and shard; a prompt's own label is never in its own prompt, but labels of held-out prompts can appear as examples in training-fold prompts.
+
+## Why the earlier version claimed a "small private signal", and why that was wrong
+
+An earlier version of this page added the self-report to a reader asked only the same wording, scored against total mass, and compared the gain with self-reports shuffled across prompts. The shuffle is the wrong null for a private channel: shuffling each paragraph slot independently breaks the within-prompt structure and every link to the transcript, so any second reading of the transcript, private or not, beats it. The right comparison is a second reader wording, which has no private access by construction. It adds as much as or more than the self-report does, and with all reader wordings in the base the self-report's gain disappears. The shuffle counts are still in `logprob_tables.md`, labelled as a marginal control only, with p = (b + 1)/201.
 
 ## Method
 
-- Data: `hypha-prod-mon{0,1,2}/out/hf1.json` and `hf2.json` (feedback reads), 300 prompts in five families of 60 (results/monitor/PREREG.md describes the prompts, wordings and reader).
-- True attention per paragraph: attention mass from the answer tokens to the paragraph's tokens (averaged over heads), averaged over layers 21–53. With thinking, the final answer's attention (`truth_think.final`). The feedback rows ask right after answering, so their truth is the normal answer's.
+- Data: `hypha-prod-mon{0,1,2}/out/hf1.json` and `hf2.json` (feedback reads), 300 prompts in five families of 60 (`PREREG.md` describes the prompts, wordings and reader).
+- Answer queries: the query positions that predict each generated answer token, from the last prompt token on (`monitor.py`).
+- Truths: "norm" (primary, preregistered) = attention per token of the paragraph; "mass" (secondary) = total attention mass. Both averaged over heads and layers 21–53. With thinking, the final answer's attention (`truth_think.final`). The feedback rows ask right after answering, so their truth is the normal answer's.
 - Report score per paragraph: log probability of the label for "which most?" and the free answer (the free description parsed by the same model), minus log probability for "which least?", the expected 0–10 rating for ratings. Reader scores are built the same way.
 - (1) Per prompt, Spearman correlation of the four report scores with the four true attention values; mean over prompts with a 10,000-resample bootstrap CI.
-- (2) Self-specific gain: within each prompt, report scores and true attention are turned into ranks and z-scored. A linear model predicts the true-attention rank of each paragraph from the reader's rank, paragraph position (one-hot) and log token count (centred within the prompt); a second model adds the self-report's rank. Both are fitted with 10-fold cross-validation grouped by prompt; the held-out predictions give a within-prompt Spearman per prompt, and the gain is its mean difference. Because one 10-fold split moves the gain by about ±0.01 (the size of the effect), the split is redrawn 10 times and per-prompt results averaged. CI: 200 bootstrap resamples of prompts. Null: the self-report's ranks shuffled across prompts within each paragraph slot (200 shuffles, each with the same 10 splits); p = share of shuffles with a gain at least the observed one.
-- Code: `monitor/logprob.py` (numbers, writes results/monitor/logprob_results.json and prints the tables below), `figures/monitor_logprob_fig.py` (figure). Example prompt in the figure: id 173 (rank correlation 0.80, a typical value).
+- (2) Gain: within each prompt, scores and true attention become ranks, z-scored. A linear model predicts the true-attention rank from the reader's ranks for every wording asked at that timing (after: most, rate, least, free; before, one turn later, after 4 or 16 examples: most, rate; with thinking: most only), paragraph position (one-hot) and log token count; a second model adds the self-report's rank. 10-fold cross-validation grouped by prompt, the split redrawn 10 times and per-prompt results averaged (one split moves the gain by about ±0.01). CI: 2,000 bootstrap resamples of prompts. Alternative null: the gain from adding a different reader wording instead of the self-report to the one-wording reader.
+- Code: `monitor/logprob.py` (writes `logprob_results.json`, prints `logprob_tables.md`), `figures/monitor_logprob_fig.py`. Example prompt in the figure: id 173 (rank correlation 0.40 under the primary truth, a typical value).
 
-## (1) Rank correlation with true attention, mean over 300 prompts [95% CI]
+## Tables
 
-| way of asking | self-report | same model reading the transcript | self − reader |
-|---|---|---|---|
-| most attended, asked right after | 0.615 [0.578, 0.651] | 0.592 [0.552, 0.632] | +0.023 [-0.003, +0.050] |
-| most attended, asked before answering | 0.587 [0.548, 0.627] | 0.567 [0.528, 0.605] | +0.020 [-0.007, +0.047] |
-| most attended, asked one turn later | 0.427 [0.373, 0.481] | 0.449 [0.395, 0.500] | -0.022 [-0.069, +0.024] |
-| most attended, with thinking | 0.484 [0.432, 0.534] | 0.475 [0.423, 0.527] | +0.009 [-0.023, +0.040] |
-| most attended, after 4 true examples | 0.467 [0.414, 0.519] | 0.628 [0.591, 0.665] | -0.161 [-0.214, -0.108] |
-| most attended, after 16 true examples | 0.447 [0.395, 0.498] | 0.618 [0.579, 0.656] | -0.170 [-0.225, -0.116] |
-| 0–10 rating, asked right after | 0.583 [0.542, 0.623] | 0.615 [0.576, 0.651] | -0.032 [-0.071, +0.007] |
-| 0–10 rating, asked before answering | 0.563 [0.519, 0.605] | 0.594 [0.552, 0.635] | -0.031 [-0.056, -0.007] |
-| 0–10 rating, asked one turn later | 0.420 [0.364, 0.474] | 0.427 [0.371, 0.481] | -0.007 [-0.063, +0.050] |
-| 0–10 rating, after 4 true examples | 0.222 [0.159, 0.285] | 0.596 [0.556, 0.634] | -0.374 [-0.442, -0.308] |
-| 0–10 rating, after 16 true examples | 0.158 [0.097, 0.219] | 0.597 [0.558, 0.636] | -0.439 [-0.510, -0.369] |
-| least attended, asked right after | 0.477 [0.426, 0.529] | 0.492 [0.440, 0.542] | -0.015 [-0.051, +0.023] |
-| free answer, asked right after | 0.498 [0.450, 0.546] | 0.496 [0.444, 0.546] | +0.002 [-0.039, +0.044] |
+All numbers, both truths: `logprob_tables.md`. Preregistered tables with the pass rule: `prereg_tables.md`.
 
-## (2) What the self-report adds over the transcript reader (held-out within-prompt rank correlation)
+## Caveats
 
-| way of asking | base (reader + position + length) | + self-report | gain [95% CI] | shuffle null 95th pct | p |
-|---|---|---|---|---|---|
-| most attended, asked right after | 0.690 | 0.699 | +0.009 [-0.007, +0.028] | +0.002 | < 0.005 |
-| most attended, asked before answering | 0.670 | 0.675 | +0.005 [-0.014, +0.023] | +0.003 | 0.030 |
-| most attended, asked one turn later | 0.615 | 0.635 | +0.020 [-0.000, +0.039] | +0.003 | < 0.005 |
-| most attended, with thinking | 0.590 | 0.602 | +0.013 [-0.006, +0.032] | +0.002 | < 0.005 |
-| most attended, after 4 true examples | 0.699 | 0.697 | -0.001 [-0.015, +0.016] | +0.004 | 0.740 |
-| most attended, after 16 true examples | 0.674 | 0.678 | +0.003 [-0.010, +0.016] | +0.003 | 0.040 |
-| 0–10 rating, asked right after | 0.687 | 0.690 | +0.003 [-0.016, +0.023] | +0.003 | 0.050 |
-| 0–10 rating, asked before answering | 0.664 | 0.664 | -0.000 [-0.009, +0.007] | +0.002 | 0.405 |
-| 0–10 rating, asked one turn later | 0.624 | 0.664 | +0.040 [+0.013, +0.068] | +0.005 | < 0.005 |
-| 0–10 rating, after 4 true examples | 0.692 | 0.686 | -0.006 [-0.017, +0.003] | +0.003 | 1.000 |
-| 0–10 rating, after 16 true examples | 0.687 | 0.686 | -0.001 [-0.010, +0.006] | +0.003 | 0.615 |
-| least attended, asked right after | 0.602 | 0.618 | +0.016 [-0.004, +0.037] | +0.006 | < 0.005 |
-| free answer, asked right after | 0.662 | 0.680 | +0.018 [-0.006, +0.039] | +0.002 | < 0.005 |
-
-## Reading the null and the CI together
-
-The two answer different questions. The shuffle null asks whether the self-report carries prompt-specific information beyond the reader: a gain this large never came from shuffled self-reports (p < 0.005 in 6 of 13 settings). The bootstrap CI asks how large and how consistent the gain is across prompts: it includes zero in 12 of 13 settings, because the gain is a sum of many prompts where the self-report changes nothing and a few where it helps or hurts. The honest summary is "a real but very small private signal", largest (+0.04) one turn after the answer with 0–10 ratings.
-
-## Checks and caveats
-
-- What would overturn point 2: the gain depending on one fold split. A single split moves it by ±0.01, so every number here is the mean over 10 splits, and the null uses the same 10 splits.
-- True attention here is total attention mass. With the preregistered length-normalised attention (mass divided by token count) both self and reader correlate less (0.42 and 0.43 asked right after, most attended) and the self-report is again no better than the reader in any setting; after true examples the self-report again falls below the reader (0.40 vs 0.44 and 0.38 vs 0.45 for most attended; 0.18 vs 0.45 and 0.17 vs 0.44 for ratings).
-- The feedback examples showed length-normalised percentages, while the main truth here is total mass; the self-report drop after examples appears under both truths.
 - Rank correlations over four paragraphs take few distinct values, hence the bands of dots in the figure.
+- The base with every reader wording has more features than the self-report adds; the second-reader comparison has the same fit budget as the self-report and is the cleaner control.

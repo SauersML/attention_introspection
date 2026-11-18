@@ -7,7 +7,7 @@ import numpy as np
 from scipy.stats import rankdata
 
 OUT = sys.argv[1]; DIRS = sys.argv[2:]
-BAND = list(range(21, 54)); NB = 10000; NBG = 200; NPERM = 200; NFOLD = 10; NSPLIT = 10
+BAND = list(range(21, 54)); NB = 10000; NBG = 2000; NPERM = 200; NFOLD = 10; NSPLIT = 10
 SETUPS = ["after|most", "after|least", "after|rate", "before|most", "before|rate", "later|most", "later|rate", "think|most", "after|free",
           "fb4|most", "fb16|most", "fb4|rate", "fb16|rate"]  # fb: asked right after, once 4 or 16 true attention measurements of other prompts were shown
 H, C = {}, {}
@@ -18,9 +18,13 @@ for d in DIRS:
 IDS = sorted(H, key=int)
 print("prompts", len(IDS))
 
-def truth(i, s):
+# truth: "norm" = attention per token of the paragraph (mass / token count), the preregistered primary truth
+# (PREREG.md); "mass" = total attention mass, secondary. Both: answer queries, mean over heads, layers 21-53.
+# The feedback examples (fb4, fb16) showed the model its length-normalised ("norm") attention.
+TRUTHS = ["norm", "mass"]
+def truth(i, s, tr):
     r = H[i]["truth_think"]["final"] if s.startswith("think") else H[i]["truth"]
-    return np.array(r["mass"], float)[BAND].mean(0)
+    return np.array(r[tr], float)[BAND].mean(0)
 def score(i, s, who):
     v = np.array(H[i]["rep"][f"{s}|{who}"], float)
     w = s.split("|")[1]
@@ -53,7 +57,9 @@ def fit_cv(X, Y, FOLD):
         P[~tr] = np.c_[X[~tr].reshape(-1, X.shape[2]), np.ones((~tr).sum() * 4)].reshape((~tr).sum(), 4, -1) @ w
     return P
 def gain_per_prompt(R, S, LN, Y):
-    base = np.concatenate([R[..., None], np.broadcast_to(POS[:, 1:], (len(Y), 4, 3)), LN[..., None]], 2)
+    """R: prompts x 4 x k reader features (k reader wordings), S: prompts x 4 added feature"""
+    if R.ndim == 2: R = R[..., None]
+    base = np.concatenate([R, np.broadcast_to(POS[:, 1:], (len(Y), 4, 3)), LN[..., None]], 2)
     full = np.concatenate([base, S[..., None]], 2)
     rb, rf = np.zeros(len(Y)), np.zeros(len(Y))
     for FOLD in SPLITS:
@@ -61,31 +67,43 @@ def gain_per_prompt(R, S, LN, Y):
         rb += np.array([spear(Pb[n], Y[n]) for n in range(len(Y))]) / NSPLIT; rf += np.array([spear(Pf[n], Y[n]) for n in range(len(Y))]) / NSPLIT
     return rf - rb, rb, rf
 
-RES, PER = {}, {}
-for s in SETUPS:
-    T = np.stack([truth(i, s) for i in IDS])
-    Sr = np.stack([score(i, s, "self") for i in IDS]); Rr = np.stack([score(i, s, "reader") for i in IDS])
-    rs = np.array([spear(Sr[n], T[n]) for n in range(len(IDS))]); rr = np.array([spear(Rr[n], T[n]) for n in range(len(IDS))])
-    Y = np.stack([zr(t) for t in T]); S = np.stack([zr(v) for v in Sr]); R = np.stack([zr(v) for v in Rr])
-    LN = np.log(np.stack([H[i]["ntok"] for i in IDS]).astype(float)); LN = LN - LN.mean(1, keepdims=True)  # log length, within prompt
-    g, rb, rf = gain_per_prompt(R, S, LN, Y)
-    gb = boot(g, NBG)
-    prng = np.random.default_rng(4); nul = []
-    for _ in range(NPERM):
-        Sp = S.copy()
-        for k in range(4): Sp[:, k] = S[prng.permutation(len(IDS)), k]
-        nul.append(float(gain_per_prompt(R, Sp, LN, Y)[0].mean()))
-    nul = np.array(nul)
-    RES[s] = dict(n=len(IDS), self=boot(rs), reader=boot(rr), self_minus_reader=boot(rs - rr), base=float(rb.mean()), full=float(rf.mean()),
-                  gain=gb, null_mean=float(nul.mean()), null_95=float(np.percentile(nul, 95)), null_lo=float(np.percentile(nul, 2.5)),
-                  null_hi=float(np.percentile(nul, 97.5)), p=float(np.mean(nul >= g.mean())), null_n=NPERM,
-                  null=nul.tolist())
-    PER[s] = dict(self=rs.tolist(), reader=rr.tolist(), gain=g.tolist())
-    q = RES[s]
-    print(f"{s:12s} self {q['self']['mean']:.3f} [{q['self']['lo']:.3f},{q['self']['hi']:.3f}] reader {q['reader']['mean']:.3f} "
-          f"[{q['reader']['lo']:.3f},{q['reader']['hi']:.3f}] base {q['base']:.3f} gain {gb['mean']:+.3f} [{gb['lo']:+.3f},{gb['hi']:+.3f}] "
-          f"null95 {q['null_95']:.3f} p {q['p']:.3f}", flush=True)
-json.dump(dict(res=RES, perprompt=PER, ids=IDS), open(OUT, "w"))
+WORDS = {t: [w for w in ["most", "rate", "least", "free"] if f"{t}|{w}" in SETUPS] for t in ["after", "before", "later", "think", "fb4", "fb16"]}
+LN = np.log(np.stack([H[i]["ntok"] for i in IDS]).astype(float)); LN = LN - LN.mean(1, keepdims=True)  # log length, within prompt
+RD = {s: np.stack([zr(score(i, s, "reader")) for i in IDS]) for s in SETUPS}
+SF = {s: np.stack([zr(score(i, s, "self")) for i in IDS]) for s in SETUPS}
+RES, PER = {tr: {} for tr in TRUTHS}, {tr: {} for tr in TRUTHS}
+for tr in TRUTHS:
+    for s in SETUPS:
+        t = s.split("|")[0]; others = [f"{t}|{v}" for v in WORDS[t] if f"{t}|{v}" != s]
+        T = np.stack([truth(i, s, tr) for i in IDS])
+        Sr = np.stack([score(i, s, "self") for i in IDS]); Rr = np.stack([score(i, s, "reader") for i in IDS])
+        rs = np.array([spear(Sr[n], T[n]) for n in range(len(IDS))]); rr = np.array([spear(Rr[n], T[n]) for n in range(len(IDS))])
+        Y = np.stack([zr(x) for x in T]); S, R = SF[s], RD[s]
+        # (a) the control: base = the reader asked EVERY wording at this timing (+ position + length); does the self-report add anything?
+        Rall = np.stack([R] + [RD[o] for o in others], 2)
+        g_all, rb_all, rf_all = gain_per_prompt(Rall, S, LN, Y)
+        # (b) alternative null: what a second reader wording adds over the single same-wording reader, beside what the self-report adds
+        g1, rb1, rf1 = gain_per_prompt(R, S, LN, Y)
+        g2 = {o: gain_per_prompt(R, RD[o], LN, Y)[0] for o in others}
+        # (c) marginal control only (not a test of private access): self ranks shuffled across prompts within each slot
+        prng = np.random.default_rng(4); nul = []
+        for _ in range(NPERM):
+            Sp = S.copy()
+            for k in range(4): Sp[:, k] = S[prng.permutation(len(IDS)), k]
+            nul.append(float(gain_per_prompt(R, Sp, LN, Y)[0].mean()))
+        nul = np.array(nul); b = int(np.sum(nul >= g1.mean()))
+        RES[tr][s] = dict(n=len(IDS), self=boot(rs), reader=boot(rr), self_minus_reader=boot(rs - rr),
+                          base_all=float(rb_all.mean()), full_all=float(rf_all.mean()), gain_all=boot(g_all, NBG), base_wordings=[s] + others,
+                          base=float(rb1.mean()), full=float(rf1.mean()), gain=boot(g1, NBG),
+                          second_reader={o: boot(v, NBG) for o, v in g2.items()},
+                          self_minus_second_reader={o: boot(g1 - v, NBG) for o, v in g2.items()},
+                          shuffle_exceed=b, shuffle_n=NPERM, shuffle_p=(b + 1) / (NPERM + 1), shuffle_95=float(np.percentile(nul, 95)))
+        PER[tr][s] = dict(self=rs.tolist(), reader=rr.tolist(), gain=g1.tolist(), gain_all=g_all.tolist())
+        q = RES[tr][s]
+        print(f"{tr} {s:12s} self {q['self']['mean']:.3f} reader {q['reader']['mean']:.3f} gain_all {q['gain_all']['mean']:+.4f} "
+              f"[{q['gain_all']['lo']:+.4f},{q['gain_all']['hi']:+.4f}] gain1 {q['gain']['mean']:+.4f} 2nd-reader "
+              + " ".join(f"{o}:{v['mean']:+.4f}" for o, v in q['second_reader'].items()) + f" shuffle {b}/{NPERM}", flush=True)
+json.dump(dict(res=RES, perprompt=PER, ids=IDS, note="truth norm = preregistered primary (per-token attention); mass = secondary, post hoc"), open(OUT, "w"))
 
 # markdown tables for results/monitor/LOGPROB.md
 NAME = {"after|most": "most attended, asked right after", "before|most": "most attended, asked before answering", "later|most": "most attended, asked one turn later",
@@ -93,11 +111,16 @@ NAME = {"after|most": "most attended, asked right after", "before|most": "most a
         "after|rate": "0–10 rating, asked right after", "before|rate": "0–10 rating, asked before answering", "later|rate": "0–10 rating, asked one turn later",
         "fb4|rate": "0–10 rating, after 4 true examples", "fb16|rate": "0–10 rating, after 16 true examples",
         "after|least": "least attended, asked right after", "after|free": "free answer, asked right after"}
-ORDER = [k for k in NAME if k in RES]
+SHORT = {"most": "most", "rate": "rating", "least": "least", "free": "free"}
 ci = lambda d: f"{d['mean']:.3f} [{d['lo']:.3f}, {d['hi']:.3f}]"
 cs = lambda d: f"{d['mean']:+.3f} [{d['lo']:+.3f}, {d['hi']:+.3f}]"
-pp = lambda p: f"< {1 / NPERM:.3f}" if p == 0 else f"{p:.3f}"
-print("\n| way of asking | self-report | same model reading the transcript | self − reader |\n|---|---|---|---|")
-for k in ORDER: q = RES[k]; print(f"| {NAME[k]} | {ci(q['self'])} | {ci(q['reader'])} | {cs(q['self_minus_reader'])} |")
-print("\n| way of asking | base (reader + position + length) | + self-report | gain [95% CI] | shuffle null 95th pct | p |\n|---|---|---|---|---|---|")
-for k in ORDER: q = RES[k]; print(f"| {NAME[k]} | {q['base']:.3f} | {q['full']:.3f} | {cs(q['gain'])} | {q['null_95']:+.3f} | {pp(q['p'])} |")
+for tr in TRUTHS:
+    R_ = RES[tr]; ORDER = [k for k in NAME if k in R_]
+    print(f"\n### Truth: {tr}\n\n| way of asking | self-report | same model reading the transcript | self − reader |\n|---|---|---|---|")
+    for k in ORDER: q = R_[k]; print(f"| {NAME[k]} | {ci(q['self'])} | {ci(q['reader'])} | {cs(q['self_minus_reader'])} |")
+    print("\n| way of asking | base: reader, every wording at this timing (+ position, length) | + self-report | self gain [95% CI] | base: reader, same wording | self gain over it | gain from a second reader wording instead |\n|---|---|---|---|---|---|---|")
+    for k in ORDER:
+        q = R_[k]; sec = ", ".join(f"{SHORT[o.split('|')[1]]} {v['mean']:+.3f}" for o, v in q['second_reader'].items()) or "none asked"
+        print(f"| {NAME[k]} | {q['base_all']:.3f} | {q['full_all']:.3f} | {cs(q['gain_all'])} | {q['base']:.3f} | {cs(q['gain'])} | {sec} |")
+    print("\n| way of asking | shuffled self-reports at least as large (of 200) | p = (b+1)/201 |\n|---|---|---|")
+    for k in ORDER: q = R_[k]; print(f"| {NAME[k]} | {q['shuffle_exceed']} | {q['shuffle_p']:.3f} |")
