@@ -18,9 +18,8 @@ matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-from pal import INK, PURPLE, DIV
+from pal import INK, PURPLE, pct_colour
 from robot_injected import injected_robot
-from matplotlib import colors
 AMB = "#F2B53A"; LIL = "#A574F2"; W = 2300; PAD = 26
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 ROOT = os.path.dirname(HERE)
@@ -70,7 +69,6 @@ TOPH = 226                  # band for the big label and p above each column
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 px = lambda v: v * 72 / 100
 fig = plt.figure(figsize=(VW / 100, VH / 100), dpi=100)
-DN = colors.TwoSlopeNorm(vmin=-1, vcenter=0, vmax=1)
 cols = [dict(v=B.mean(1), base=y0, blab=f"no injection {100*y0:.0f}%", big=f"{100*rel1:+.0f}%", p=p1, ex=EX1),
         dict(v=(nc / np.maximum(ny, 1))[ny > 0], base=0.25, blab="chance 25%", big=f"{100*rel2:+.0f}%", p=p2, ex=EX2)]
 AX = []
@@ -84,8 +82,9 @@ for j, c in enumerate(cols):
     ax.fill_betweenx(ys, -hw, hw, color=PURPLE, alpha=0.22, lw=0, zorder=1)
     ax.plot(np.r_[hw, -hw[::-1], hw[:1]], np.r_[ys, ys[::-1], ys[:1]], color=PURPLE, lw=2.5, zorder=1)
     xj = g.uniform(-0.9, 0.9, len(v)) * np.interp(v, ys, hw)
+    col = pct_colour(v / c["base"])   # per prompt: its rate / the dashed baseline (rate 0 -> darkest red)
     v = np.clip(v + g.uniform(-0.03, 0.03, len(v)), 0, 1); c["vj"] = v   # small vertical jitter: values are discrete
-    ax.scatter(xj, v, s=635, color=PURPLE, alpha=0.45, edgecolors="none", zorder=3)
+    ax.scatter(xj, v, s=635, c=col, alpha=0.45, edgecolors="none", zorder=3); ax.scatter(xj, v, s=5, color="black", zorder=4)
     ie = int(np.argmin(np.abs(v - c["ex"]) + np.abs(xj) * 1e-3)) if j == 0 else None
     ax.axhline(c["base"], color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
     ax.text(0.98, c["base"] + 0.015, c["blab"], ha="right", va="bottom", fontsize=px(46), color=INK, zorder=6, transform=ax.get_yaxis_transform())
