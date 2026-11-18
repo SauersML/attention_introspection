@@ -70,7 +70,7 @@ for m,name,cond in [("qwen3-32b","“focus your\nattention”","focus"),("qwen3-
 plt.rcParams.update({"font.size":56})
 fig,(a,b)=plt.subplots(1,2,figsize=(36,16),gridspec_kw=dict(width_ratios=[1.2,1.5]))
 cmap=colors.LinearSegmentedColormap.from_list("hy",["#BFD3EE","#5B8BD0","#2B4FA8","#4B2A8F","#2A0F4F"])
-allz=np.concatenate([res[n]["z"] for n in res]); vm=np.percentile(np.abs(allz),97); DN=dnorm(-vm,vm)
+allz=np.concatenate([res[n]["z"] for n in res]); vm=np.percentile(np.abs(allz),97); DN=dnorm(np.percentile(allz,1),vm)
 rng=np.random.default_rng(1)
 for p,name in enumerate(res):
     r=res[name]; z=r["z"]
@@ -93,7 +93,7 @@ b.set_xlim(-1,64); b.set_xticks([0,16,32,48,63]); b.set_xlabel("layer",fontsize=
 a.set_ylim(allz.min()-17,allz.max()+16); b.set_ylim(min(lo.min(),0)-12,hi.max()+22)
 for ax in (a,b):
     ax.axhline(0,color=INK,lw=4,zorder=4)
-    ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v,_: f"{v:+.0f}%" if v else "0%"))
+    ax.yaxis.set_major_formatter(matplotlib.ticker.FuncFormatter(lambda v,_: f"{v:+.0f}%".replace("-","\u2212") if v else "0%"))
     for s_ in ["top","right"]: ax.spines[s_].set_visible(False)
     ax.spines["left"].set_linewidth(3); ax.spines["bottom"].set_linewidth(3); ax.tick_params(width=4,length=16,labelsize=72)
 a.set_ylabel("change in attention",fontsize=84,labelpad=10); b.set_ylabel("change in attention",fontsize=84,labelpad=10)
