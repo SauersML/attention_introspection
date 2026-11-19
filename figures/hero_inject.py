@@ -90,8 +90,8 @@ for j, c in enumerate(cols):
     ax.axhline(c["base"], color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
     blab = c["blab"] if CW > 1000 else c["blab"].replace("injection ", "injection\n")   # narrow: two lines, clear of the violin
     ax.text(0.98, c["base"] + 0.015, blab, ha="right", va="bottom", fontsize=px(62), color=INK, zorder=6, transform=ax.get_yaxis_transform())
-    for t in (0, 0.5, 1):
-        ax.text(0.01, t, f"{100*t:.0f}%", ha="left", va="center", fontsize=px(62), fontweight="bold", color=INK, transform=ax.get_yaxis_transform())
+    for t in (0, 0.5, 1) if j == 0 else ():   # one shared y axis: labels on the left column only
+        ax.text(0.01, t, f"{100*t:.0f}%", ha="left", va="center", fontsize=px(80), fontweight="bold", color=INK, transform=ax.get_yaxis_transform())
     ax.set_xlim(-1, 1); ax.set_ylim(-0.04, 1.04); ax.set_xticks([]); ax.set_yticks([])
     for s_ in ax.spines.values(): s_.set_visible(False)
     cx = (x0 + CW / 2) / VW
@@ -230,8 +230,8 @@ const quad=(p0,Q,tip,col)=>arrow(p0,[p0[0]+2/3*(Q[0]-p0[0]),p0[1]+2/3*(Q[1]-p0[1
 const cx=r=>(r.left+r.right)/2;
 // mirror pair: each leaves its underline almost straight down and turns outward by about 40 degrees onto its title
 const yt=c1.top-12, ys=ry.bottom, dy=yt-ys;
-for (const [p0x,tx] of [[cx(ry),cx(c1)],[cx(rp),cx(c2)]]) {{   // each ends at the middle of its column title
- const p0=[p0x,ys], tip=[tx,yt]; s+=quad(p0,[p0x,ys+0.55*dy],tip,'{INK}').replace('stroke-linecap="round"','stroke-linecap="butt"'); }}  // flat start, flush with the underline
+for (const [p0x,tx] of [[cx(ry),cx(c1)],[cx(rp),cx(c2)]]) {{   // hand-curved: leaves straight down, lands straight down on the middle of its title
+ const p0=[p0x,ys], tip=[tx,yt]; s+=arrow(p0,[p0x,ys+0.55*dy],[tx,yt-0.55*dy],tip,'{INK}').replace('stroke-linecap="round"','stroke-linecap="butt"'); }}  // flat start, flush with the underline
 document.getElementById('ov').innerHTML=s;
 </script></body></html>'''
 hp = os.path.join(HERE, "_hero_inject.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "_hero_inject_raw.png")

@@ -89,28 +89,29 @@ def method_svg(w, h, cf, ci, rob):
             o.append(f'<path d="M{sx:.1f},{sy:.1f} C{sx - 30:.1f},{cy:.1f} {tx + 20:.1f},{cy:.1f} {tx:.1f},{ey:.1f}" fill="none" stroke="{(INK if g == 1 else "#B9BDC5")}" stroke-opacity="{(0.35 + 0.65 * v) if g == 1 else (0.15 + 0.45 * v):.2f}" stroke-width="{0.8 + 7 * v:.1f}" stroke-linecap="round"/>')
     cx = (bx + bw + w) / 2 + 4; dy = 0
     if NARROW:   # no room right of the answer: one line under the paragraph labels
-        dy = 52; o.append(f'<text x="{w / 2:.1f}" y="{ty + sq + 100:.1f}" font-size="{F - 6}" fill="{INK}" text-anchor="middle">averaged over heads and answer tokens</text>')
+        dy = 64; o.append(f'<text x="{w / 2:.1f}" y="{ty + sq + 106:.1f}" font-size="{F + 6}" fill="{INK}" text-anchor="middle">averaged over heads and answer tokens</text>')
     else:
         for j, t in enumerate(["averaged over", "heads and", "answer tokens"]):
-            o.append(f'<text x="{cx + 6:.1f}" y="{ty - 20 + 46 * j:.1f}" font-size="{F - 6}" fill="{INK}" text-anchor="middle">{t}</text>')
+            o.append(f'<text x="{cx + 6:.1f}" y="{ty - 20 + 52 * j:.1f}" font-size="{F + 6}" fill="{INK}" text-anchor="middle">{t}</text>')
     o.append(f'<line x1="24" x2="{w - 24:.0f}" y1="{ty + 92 + dy}" y2="{ty + 92 + dy}" stroke="#E4E5E9" stroke-width="3"/>')
     # ---- (b) bottom: per-layer curve
-    TF = F + 14   # axis numbers and "layer": as large as the curve label
-    x0 = 230; x1 = w - 40; y0 = ty + 165 + dy; y1 = h - 110
+    TF = F + 14; TY = F + 30   # y-axis % larger   # axis numbers and "layer": as large as the curve label
+    x0 = 270; x1 = w - 40; y0 = ty + 165 + dy; y1 = h - 110
     lo = min(cf.min(), ci.min()) - 8; hi = max(cf.max(), ci.max())
     X = lambda l: x0 + (x1 - x0) * l / (len(cf) - 1); Y = lambda v: y1 - (y1 - y0) * (v - lo) / (hi - lo)
     o.append(f'<line x1="{x0}" x2="{x1}" y1="{Y(0):.1f}" y2="{Y(0):.1f}" stroke="{INK}" stroke-width="2.5"/>')
     for v in [0, 200]:
-        o.append(f'<text x="{x0 - 12}" y="{Y(v) + 18:.1f}" font-size="{TF}" font-weight="700" fill="{INK}" text-anchor="end">{("+%d%%" % v) if v else "0%"}</text>')
+        o.append(f'<text x="{x0 - 12}" y="{Y(v) + 24:.1f}" font-size="{TY}" font-weight="700" fill="{INK}" text-anchor="end">{("+%d%%" % v) if v else "0%"}</text>')
     for v in [0, 63]:
         o.append(f'<text x="{X(v):.1f}" y="{y1 + 72:.1f}" font-size="{TF}" font-weight="700" fill="{INK}" text-anchor="middle">{v}</text>')
-    o.append(f'<text x="{X(46):.1f}" y="{y1 + 72:.1f}" font-size="{TF}" font-weight="700" fill="{INK}" text-anchor="middle">layer</text>')
+    o.append(f'<text x="{X(31.5):.1f}" y="{y1 + 72:.1f}" font-size="{TF}" font-weight="700" fill="{INK}" text-anchor="middle">layer</text>')
     o.append(f'<line x1="{X(28):.1f}" x2="{X(28):.1f}" y1="{y0 - 34}" y2="{y1 + 8}" stroke="{INK}" stroke-width="3" stroke-dasharray="8 6"/>')
     for cv, col in [(cf, PURPLE), (ci, RED)]:
         pts = " ".join(f"{X(l):.1f},{Y(v):.1f}" for l, v in enumerate(cv))
         o.append(f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="5" stroke-linejoin="round"/>')
         o.append(f'<circle cx="{X(28):.1f}" cy="{Y(cv[28]):.1f}" r="11" fill="{col}" stroke="#fff" stroke-width="3"/>')
-    LF = F + 12
+    LF = F + 12   # shrinks only if the label would run past the box's right edge
+    LF = min(LF, int((w - 16 - X(28) - 22) / (0.56 * len("violins below:"))))
     for j, t in enumerate(["violins below:", "layer 28"]):
         o.append(f'<text x="{X(28) + 22:.1f}" y="{y0 - 6 + (LF + 8) * j:.1f}" font-size="{LF}" font-weight="700" fill="{INK}" text-anchor="start">{t}</text>')
     defs = f'<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{INK}"/></marker></defs>'
