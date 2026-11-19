@@ -11,72 +11,69 @@
 
 ![](figures/told_pair.jpg)
 
-3. The push happens only while Qwen reads the question "which paragraph did you attend to most?", not while they answer.
 
-![](figures/hero_question.png)
-
-4. Four of these side by side in one picture.
+3. Four of these side by side in one picture.
 
 ![](figures/hero4.png)
 
-5. The push happens either while Qwen answers or while they read the "which did you attend to" question, and we compare the two (paragraphs).
+4. The push happens either while Qwen answers or while they read the "which did you attend to" question, and we compare the two (paragraphs).
 
 ![](figures/privileged.png)
 
-6. The same with lists of single words instead of paragraphs.
+5. The same with lists of single words instead of paragraphs.
 
 ![](figures/privileged_words.png)
 
-7. Those two combined in one figure.
+6. Those two combined in one figure.
 
 ![](figures/privileged_both.png)
 
-8. The push happens while Qwen answers, and we ask about it later, on three kinds of lists.
+7. The push happens while Qwen answers, and we ask about it later, on three kinds of lists.
 
 ![](figures/trace3.jpg)
 
-9. Qwen rates how much they attended to each paragraph, and another model guesses the same thing from only the text; we compare the two.
+8. Qwen rates how much they attended to each paragraph, and another model guesses the same thing from only the text; we compare the two.
 
 ![](figures/monitor_logprob.png)
 
-10. The noticing test with word lists: Qwen never says yes, and the figure shows which word they pick when made to name one.
+9. The noticing test with word lists: Qwen never says yes, and the figure shows which word they pick when made to name one.
 
 ![](figures/words_told.png)
 
 ## Can Qwen control their attention when told to?
 
-11. "Focus on paragraph k" or "ignore paragraph k" vs just mentioning it: attention change at layer 28.
+10. "Focus on paragraph k" or "ignore paragraph k" vs just mentioning it: attention change at layer 28.
 
 ![](figures/hero_L28.jpg)
 
-12. The same, but with the instruction placed before the paragraphs instead of after.
+11. The same, but with the instruction placed before the paragraphs instead of after.
 
 ![](figures/hero_before.jpg)
 
-13. The same, compared against no instruction at all instead of just a mention.
+12. The same, compared against no instruction at all instead of just a mention.
 
 ![](figures/hero_none.jpg)
 
-14. Just mentioning a paragraph vs saying nothing.
+13. Just mentioning a paragraph vs saying nothing.
 
 ![](figures/v_mention_vs_none.jpg)
 
-15. Many wordings, from mild ("pay a little more attention") to strong ("completely ignore").
+14. Many wordings, from mild ("pay a little more attention") to strong ("completely ignore").
 
 ![](figures/dose_full.jpg)
 
-16. Telling Qwen to focus on each paragraph in turn, and seeing which paragraph's attention goes up.
+15. Telling Qwen to focus on each paragraph in turn, and seeing which paragraph's attention goes up.
 
 ![](figures/rotate2.jpg)
 
-17. Attention to every paragraph at layer 28, for each "focus" instruction.
+16. Attention to every paragraph at layer 28, for each "focus" instruction.
 
 ![](figures/grid_focus_L28.png)
 
-18. How the effect changes across all 64 layers.
+17. How the effect changes across all 64 layers.
 
 ![](figures/layers.jpg)
 
-19. Focus and ignore on lists of single words.
+18. Focus and ignore on lists of single words.
 
 ![](figures/words_control.png)
