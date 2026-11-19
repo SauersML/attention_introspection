@@ -1,7 +1,6 @@
-"""told_pair_layers.png: told_pair.png plus, left of the syringe under the purple label, the per-layer inset of dose.png redrawn from the same
-data (results/qwen3-32b-dose/dose_results.json per_layer_vs_mention; curves, colours and bracket style as dose_fig.py): each focus/ignore wording's
-per-layer change in attention to the named paragraph over all 64 layers, the band 21-53 (= meta.json BAND) bracketed and labelled "attention
-boosted in these layers (all heads)", titled "where focus instructions move attention, per layer" (why that band was boosted).
+"""told_pair_layers.png: told_pair.png plus a layer strip left of the syringe, under the purple label: all 64 layers of Qwen3-32B as cells,
+the boosted band (meta.json BAND, layers 21-53) filled purple, with a bracket over the band in the style of the dose.png inset bracket (dose_fig.py,
+commit 4a6570f) labelled "attention boosted in these layers (all heads)". A method diagram, not data: the told-injection run saved no per-layer readouts.
 Everything else as told_pair.py, whose docstring follows.
 
 One wide figure for the told-injection run (Qwen3-32B, 240 contexts; results/told_inject), merging hero_told.py and hero_told_yes.py on request
@@ -82,33 +81,19 @@ reply = f'<span class="part" id="ry">Yes</span>, paragraph [P<span class="part" 
 titles = (f'<div class="cols"><div class="ct" style="flex:none;width:{PW - LM:.0f}px;margin-left:{LM}px"><span class="cn" id="c1">how often Qwen\u2019s reply<br>starts with \u201cYes\u201d</span></div>'
           f'<div class="ct" style="flex:none;width:{PW - LM:.0f}px;margin-left:{GAP + LM:.0f}px"><span class="cn" id="c2">how often Qwen\u2019s top answer is<br>the boosted paragraph\u2019s number</span></div></div>')
 HTML = dr.page(W, bubble, "Do you notice your attention being boosted onto one of the paragraphs? If so, which one?", reply, titles, VP, VW, f"{MASSES[M]:.1f}", inj="boost attention<br>toward paragraph 2", arrows=(("ry", "c1"), ("rn", "c2")), tipdrop=-2, inj_px=105, inj_near=(-18, -60))
-HTML = HTML.replace("</style>", ".ub{margin-right:700px;font-size:62px}#rq{margin-left:1500px;margin-right:500px;font-size:62px}.mrow{margin-left:1250px}.mb{font-size:96px}.cn{font-size:86px}.inj{font-size:72px}.cols{margin-top:470px}</style>", 1)
-# ---------------- per-layer inset: the dose.png inset (dose_fig.py) redrawn from the same file, left of the syringe ----------------
-# each focus/ignore wording's per-layer attention change (per_layer_vs_mention), the 21-53 band bracketed: why these layers were boosted
-DR = json.load(open(os.path.join(ROOT, "results/qwen3-32b-dose/dose_results.json"))); DVM = DR["vs_mention"]; PL = DR["per_layer_vs_mention"]
-B0, B1 = DR["layers"]; assert [B0, B1] == [META["BAND"][0], META["BAND"][-1]] and META["BAND"] == list(range(B0, B1 + 1))
-CS = sorted(["2_glance", "3_focus", "4_focus_strongly", "5_very_strongly_only", "7_little_less", "8_do_not", "9_completely_ignore"], key=lambda c: -DVM[c]["mean"][0])
-UPC = ["#4C1D95", "#7C3AED", "#2563EB", "#0D9488"]; DNC = ["#EA580C", "#DC2626", "#7F1D1D"]   # dose_fig.py's colours, same assignment rule
-ups = [c for c in CS if DVM[c]["mean"][0] > 5]; dns = [c for c in CS if c not in ups]; COL = {**dict(zip(ups, UPC)), **dict(zip(dns, DNC))}
-FS = 48; IW, IH = 1040, 760
-f2 = plt.figure(figsize=(IW / 100, IH / 100), dpi=100); ins = f2.add_axes([0.02, 0.115, 0.96, 0.68])
-NL = len(PL["3_focus"]); assert NL == META["NL"] == 64
-for c in CS: ins.plot(range(NL), PL[c], color=COL[c], lw=5)
-ins.axhline(0, color=INK, lw=2.5)
-yl = ins.get_ylim(); span = yl[1] - yl[0]; top = yl[1] + 0.06 * span; ins.set_ylim(yl[0] - 0.16 * span, yl[1] + 0.62 * span)
-ins.plot([B0, B0, B1, B1], [top - 0.05 * span, top, top, top - 0.05 * span], color=INK, lw=4)
-ins.text((B0 + B1) / 2, top + 0.04 * span, "attention boosted in\nthese layers (all heads)", fontsize=FS, linespacing=1.0, fontweight="bold", ha="center", va="bottom")
-pk = int(np.argmax(PL[ups[0]])); ins.text(pk + 2.5, PL[ups[0]][pk], "focus", fontsize=FS, fontweight="bold", color=COL["3_focus"], ha="left", va="top")
-ins.text(1, -0.04 * span, "ignore", fontsize=FS, fontweight="bold", color=COL[dns[-2]], ha="left", va="top")
-ins.set_xticks([0, NL - 1]); ins.set_yticks([]); ins.tick_params(labelsize=FS, length=8, width=2.5, pad=4)
-ins.set_xlabel("layer", fontsize=FS, labelpad=-44)
-for s_ in ins.spines.values(): s_.set_linewidth(3.5); s_.set_color(INK)
-f2.text(0.5, 0.995, "where focus instructions\nmove attention, per layer", fontsize=54, fontweight="heavy", ha="center", va="top", linespacing=1.0)
-IP = os.path.join(HERE, "_i_told_pair_layers.png"); f2.savefig(IP, dpi=100, facecolor="white"); plt.close(f2)
-import base64
-IMG = base64.b64encode(open(IP, "rb").read()).decode()
-INS = f'<img id="lay" src="data:image/png;base64,{IMG}" style="position:absolute;left:{PAD}px;top:0;width:{IW}px">'
-JS = "<script>setTimeout(()=>{const i=document.getElementById('inj').getBoundingClientRect(),l=document.getElementById('lay');l.style.top=(i.bottom+window.scrollY+INSGAP)+'px';},800);</script>"
-HTML = HTML.replace("</body>", INS + JS.replace("INSGAP", "40") + "</body>", 1)
+HTML = HTML.replace("</style>", ".ub{margin-right:700px;font-size:62px}#rq{margin-left:1500px;margin-right:500px;font-size:62px}.mrow{margin-left:1250px}.mb{font-size:96px}.cn{font-size:86px}.inj{font-size:72px}.cols{margin-top:250px}</style>", 1)
+# ---------------- layer strip (method diagram: which layers the boost was added in) ----------------
+NL, BAND = META["NL"], META["BAND"]; B0, B1 = BAND[0], BAND[-1]; assert BAND == list(range(B0, B1 + 1)) and NL == 64
+SW, CWL, SH, X0 = 1000, 1000 / 64, 150, 0
+cells = "".join(f'<rect x="{X0 + l * CWL:.2f}" y="0" width="{CWL - 2:.2f}" height="{SH}" rx="2" fill="{PURPLE if B0 <= l <= B1 else "#E4E4EA"}"/>' for l in range(NL))
+bx0, bx1 = X0 + B0 * CWL, X0 + (B1 + 1) * CWL - 2
+STRIP = (f'<div id="lay" style="position:absolute;top:0;left:{PAD}px;width:{SW}px;text-align:center">'
+         f'<div style="font-size:72px;font-weight:800;line-height:1.08">attention boosted in<br>these layers (all heads)</div>'
+         f'<svg width="{SW}" height="62" style="display:block;margin-top:10px"><path d="M{bx0:.1f} 58 V14 H{bx1:.1f} V58" fill="none" stroke="{INK}" stroke-width="7"/></svg>'
+         f'<svg width="{SW}" height="{SH}" style="display:block">{cells}</svg>'
+         f'<div style="display:flex;justify-content:space-between;font-size:72px;margin-top:6px"><span>0</span><span>layer</span><span>63</span></div></div>')
+# placed under the purple "boost attention" label, left of the syringe, once the page has laid out
+JS = "<script>setTimeout(()=>{const i=document.getElementById('inj').getBoundingClientRect(),l=document.getElementById('lay');l.style.top=(i.bottom+window.scrollY+60)+'px';},800);</script>"
+HTML = HTML.replace("</body>", STRIP + JS + "</body>", 1)
 dr.render(HTML, HERE, "told_pair_layers", W, jpg=True, keep="--keep" in sys.argv)
-if "--keep" not in sys.argv: os.remove(VP); os.remove(IP)
+if "--keep" not in sys.argv: os.remove(VP)
