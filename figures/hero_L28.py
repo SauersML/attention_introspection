@@ -41,9 +41,11 @@ qline = u.split("\n\n")[5].split("\n")[1]
 LINE = {c: meta["conds"][c][0].format(k=K) for c, _, _ in CONDS}
 for c in LINE: assert LINE[c] in ex[c]["user"] and qline in ex[c]["user"]
 
-def short(p, n=3): return " ".join(p.split()[:n]) + " …"
+def short(p, n=3): return " ".join(p.split()[:n]) + ("\u00a0…" if NARROW else " …")   # narrow: the ellipsis never wraps alone
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
-AMB = "#F2B53A"; W = 2300
+OPT = dict(a[2:].split("=", 1) for a in sys.argv[1:] if a.startswith("--") and "=" in a)
+AMB = "#F2B53A"; W = int(OPT.get("W", 2300))   # --W=1600 --VH=15: narrower, taller version (hero_L28_tall) for hero_pair
+NARROW = W < 2300; VHIN = float(OPT.get("VH", 11.5))   # violin panel height, inches at 110 dpi
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 numbers = {}
@@ -67,7 +69,7 @@ def method_svg(w, h, cf, ci, rob):
     gr = sorted(GG, key=p2share)[len(GG) // 2]   # a typical question: median P2 share
     vals = chunks(gr)
     vmax = max(max(v) for v in vals)
-    ty = 150; sq = 15; gp = 3; gg = 20; x = 24; toks = []
+    ty = 150; sq = 15; gp = 3; gg = 8 if NARROW else 20; x = 12 if NARROW else 24; toks = []
     for g in range(4):
         xs = []
         for t in range(NCH):
@@ -77,7 +79,7 @@ def method_svg(w, h, cf, ci, rob):
         lab_col = INK if g == 1 else "#8A8F99"
         o.append(f'<text x="{(xs[0] + xs[-1]) / 2:.1f}" y="{ty + sq + 48:.1f}" font-size="{F - 4}" font-weight="700" fill="{lab_col}" text-anchor="middle">P{g+1}</text>')
         x += gg - gp
-    bx = x + 14; bw = 118; bh = 64; by_ = ty + sq / 2 - bh / 2
+    bx = x + (6 if NARROW else 14); bw = 118; bh = 64; by_ = ty + sq / 2 - bh / 2
     o.append(f'<rect x="{bx:.1f}" y="{by_:.1f}" width="{bw}" height="{bh}" rx="22" fill="#fff" stroke="#BFC3CB" stroke-width="3"/>')
     o.append(f'<text x="{bx + bw / 2:.1f}" y="{by_ + bh / 2 + 15:.1f}" font-size="44" font-weight="800" fill="{INK}" text-anchor="middle">{ANS["3_focus"]}</text>')
     sx, sy = bx + bw / 2, by_ - 4
@@ -85,12 +87,15 @@ def method_svg(w, h, cf, ci, rob):
         for t, tx in enumerate(toks[g]):
             v = (vals[g][t] / vmax) ** 0.5; ey = ty - 6; cy = ty - 40 - 70 * v
             o.append(f'<path d="M{sx:.1f},{sy:.1f} C{sx - 30:.1f},{cy:.1f} {tx + 20:.1f},{cy:.1f} {tx:.1f},{ey:.1f}" fill="none" stroke="{(INK if g == 1 else "#B9BDC5")}" stroke-opacity="{(0.35 + 0.65 * v) if g == 1 else (0.15 + 0.45 * v):.2f}" stroke-width="{0.8 + 7 * v:.1f}" stroke-linecap="round"/>')
-    cx = (bx + bw + w) / 2 + 4
-    for j, t in enumerate(["averaged over", "heads and", "answer tokens"]):
-        o.append(f'<text x="{cx + 6:.1f}" y="{ty - 20 + 46 * j:.1f}" font-size="{F - 6}" fill="{INK}" text-anchor="middle">{t}</text>')
-    o.append(f'<line x1="24" x2="{w - 24:.0f}" y1="{ty + 92}" y2="{ty + 92}" stroke="#E4E5E9" stroke-width="3"/>')
+    cx = (bx + bw + w) / 2 + 4; dy = 0
+    if NARROW:   # no room right of the answer: one line under the paragraph labels
+        dy = 52; o.append(f'<text x="{w / 2:.1f}" y="{ty + sq + 100:.1f}" font-size="{F - 6}" fill="{INK}" text-anchor="middle">averaged over heads and answer tokens</text>')
+    else:
+        for j, t in enumerate(["averaged over", "heads and", "answer tokens"]):
+            o.append(f'<text x="{cx + 6:.1f}" y="{ty - 20 + 46 * j:.1f}" font-size="{F - 6}" fill="{INK}" text-anchor="middle">{t}</text>')
+    o.append(f'<line x1="24" x2="{w - 24:.0f}" y1="{ty + 92 + dy}" y2="{ty + 92 + dy}" stroke="#E4E5E9" stroke-width="3"/>')
     # ---- (b) bottom: per-layer curve
-    x0 = 160; x1 = w - 40; y0 = ty + 165; y1 = h - 84
+    x0 = 160; x1 = w - 40; y0 = ty + 165 + dy; y1 = h - 84
     lo = min(cf.min(), ci.min()) - 8; hi = max(cf.max(), ci.max())
     X = lambda l: x0 + (x1 - x0) * l / (len(cf) - 1); Y = lambda v: y1 - (y1 - y0) * (v - lo) / (hi - lo)
     o.append(f'<line x1="{x0}" x2="{x1}" y1="{Y(0):.1f}" y2="{Y(0):.1f}" stroke="{INK}" stroke-width="2.5"/>')
@@ -104,7 +109,7 @@ def method_svg(w, h, cf, ci, rob):
         pts = " ".join(f"{X(l):.1f},{Y(v):.1f}" for l, v in enumerate(cv))
         o.append(f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="5" stroke-linejoin="round"/>')
         o.append(f'<circle cx="{X(28):.1f}" cy="{Y(cv[28]):.1f}" r="11" fill="{col}" stroke="#fff" stroke-width="3"/>')
-    for j, t in enumerate(["violins below:", "layer 28 (the peak)"]):
+    for j, t in enumerate(["violins below:"] + (["layer 28", "(the peak)"] if NARROW else ["layer 28 (the peak)"])):
         o.append(f'<text x="{X(28) + 22:.1f}" y="{y0 - 6 + 46 * j:.1f}" font-size="{F}" font-weight="700" fill="{INK}" text-anchor="start">{t}</text>')
     defs = f'<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{INK}"/></marker></defs>'
     return f'<svg width="{w:.0f}" height="{h:.0f}" viewBox="0 0 {w:.0f} {h:.0f}" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue,Helvetica,Arial,sans-serif">{defs}{"".join(o)}</svg>'
@@ -123,7 +128,7 @@ def ctrl_svg(w):
     o.append(f'<text x="{dx:.0f}" y="{base + 50}" font-size="{F}" fill="{INK}" text-anchor="middle">one dot</text>')
     return f'<svg width="{w:.0f}" height="{h}" viewBox="0 0 {w:.0f} {h}" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue,Helvetica,Arial,sans-serif">{"".join(o)}</svg>'
 
-for ctrl, ctag, out in [("1_mention", "mention", "hero_L28")]:
+for ctrl, ctag, out in [("1_mention", "mention", "hero_L28_tall" if NARROW else "hero_L28")]:
     res = []
     for c, name, col in CONDS:
         z = 100 * (M[c] / M[ctrl] - 1)
@@ -131,8 +136,8 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28")]:
         res.append(dict(c=c, z=np.log2(M[c] / M[ctrl]), mean=z.mean(), p=p, nf=nf, above=float((z > 0).mean())))
         numbers[(ctag, c)] = (round(z.mean(), 1), p, nf, round(100 * (z > 0).mean()))
     # ---------- violins
-    fig, a = plt.subplots(figsize=(23, 11.5)); fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
-    allz = np.concatenate([r["z"] for r in res])
+    fig, a = plt.subplots(figsize=(23 * (W - 52) / 2248, VHIN)); fig.subplots_adjust(left=0, right=1, top=1, bottom=0)
+    allz = np.concatenate([r["z"] for r in res])   # figure width scales with the page, so text keeps its size
     rng = np.random.default_rng(1); X = [0, 1.35]; texts = []
     for x0, r in zip(X, res):
         z = r["z"]; up = r["mean"] > 0; colr = PURPLE if up else RED
@@ -140,7 +145,7 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28")]:
         for bb in vv["bodies"]: bb.set_facecolor(colr); bb.set_alpha(0.22); bb.set_edgecolor(colr); bb.set_linewidth(2.5)
         xj = x0 + rng.uniform(-0.25, 0.25, len(z))
         a.scatter(xj, z, s=650, c=pct_colour(2.0 ** z), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
-        eff = f"{r['mean']:+.0f}% attention".replace("-", "\u2212")
+        eff = f"{r['mean']:+.0f}%{chr(10) if NARROW else ' '}attention".replace("-", "\u2212")
         pt = "p < 0.00001" if r["p"] * (r["nf"] + 1) < 1.5 else f"p = {r['p']:.1g}"
         assert r["p"] * (r["nf"] + 1) >= 1.5 or 1 / (r["nf"] + 1) < 1e-5
         r["eff"], r["pt"] = eff, pt
@@ -149,7 +154,7 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28")]:
             texts.append(a.annotate(eff, (x0, z.max()), xytext=(0, 90), textcoords="offset points", fontsize=100, fontweight="bold", color=colr, ha="center", va="bottom"))
         else:    # effect below the dots, p under the effect
             texts.append(a.annotate(eff, (x0, z.min()), xytext=(0, -26), textcoords="offset points", fontsize=100, fontweight="bold", color=colr, ha="center", va="top"))
-            texts.append(a.annotate(pt, (x0, z.min()), xytext=(0, -138), textcoords="offset points", fontsize=44, color=colr, ha="center", va="top"))
+            texts.append(a.annotate(pt, (x0, z.min()), xytext=(0, -138 - 100 * eff.count(chr(10))), textcoords="offset points", fontsize=44, color=colr, ha="center", va="top"))
     a.axhline(0, color=INK, lw=4, zorder=4)
     a.set_xlim(-0.66, 2.01); a.set_xticks([]); a.set_yticks([])
     for s_ in a.spines.values(): s_.set_visible(False)
@@ -183,14 +188,15 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28")]:
     <div class="var" style="color:{col}">{html.escape(LINE[c])}</div>
     <div>{html.escape(qline).replace(" + ", "&nbsp;+&nbsp;")}</div></div>
   <div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb">{ANS[c]}</div></div></div>''')
+    WS = "normal" if NARROW else "nowrap"
     HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px 26px 10px}}
 .cols{{display:flex;gap:36px}}
 .col{{flex:1;min-width:0;display:flex;flex-direction:column}}
-.cname{{font-size:76px;font-weight:800;margin:0 0 12px 4px;white-space:nowrap}}
+.cname{{font-size:76px;font-weight:800;margin:0 0 12px 4px;white-space:{WS}{";line-height:1.05" if NARROW else ""}}}
 .ub{{flex:1;background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;display:flex;flex-direction:column;gap:8px}}
-.pl{{white-space:nowrap;overflow:hidden}}
+.pl{{white-space:{WS};overflow:hidden}}
 .var{{background:#fff;border-radius:16px;padding:10px 16px;font-weight:700;line-height:1.18}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
 .mrow{{display:flex;align-items:center;gap:16px;margin-top:12px}}
@@ -200,13 +206,14 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .vio{{width:100%;display:block}}
 .cbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;padding:22px 26px;display:flex;flex-direction:column;justify-content:space-evenly}}
 .cub{{background:#1F8BFF;border-radius:26px;padding:14px 16px}}
-.cl{{display:flex;flex-direction:column;gap:2px}} .cl1.big{{font-size:61px}} .cl1{{font-size:46px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap;line-height:1.15}} .cl2{{font-size:44px;font-weight:700;line-height:1.15}}
+.cl{{display:flex;flex-direction:column;gap:2px}} .cl1.big{{font-size:61px}} .cl1{{font-size:46px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:{WS};line-height:1.15}} .cl2{{font-size:44px;font-weight:700;line-height:1.15}}
 .dot{{display:inline-block;flex-shrink:0;width:46px;height:46px;border-radius:50%;background:{PURPLE};opacity:.75}}
-.cub .var{{color:{INK};font-size:46px;white-space:nowrap}}
+.cl1.nw{{display:block}} .cl1.nw .dot{{vertical-align:middle;margin:0 6px}}
+.cub .var{{color:{INK};font-size:46px;white-space:{WS}}}
 .mbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;overflow:hidden}}
 </style></head><body><div class="cols">{"".join(cols)}</div><div class="vw"><img class="vio" src="data:image/png;base64,{VIO}">
   <div class="cbox" style="left:{CB['left']*sc:.0f}px;width:{(CB['right']-CB['left'])*sc:.0f}px;top:{CB['top']*sc:.0f}px;height:{(CB['bottom']-CB['top'])*sc:.0f}px">
-    <div class="cl"><div class="cl1 big">one dot <span class="dot"></span> = % change (log scale)</div><div class="cl1">compared to only mentioning the paragraph:</div></div>
+    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}">one dot <span class="dot"></span> = % change (log{"&nbsp;" if NARROW else " "}scale)</div><div class="cl1{" nw" if NARROW else ""}">compared to only mentioning the paragraph:</div></div>
     <div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][0].format(k=K))}</div></div></div>
   <div class="mbox" style="left:{(VW + 36) / 2:.0f}px;width:{(VW - 36) / 2:.0f}px;top:{BOX['top']*FH*sc:.0f}px;height:{SVGH:.0f}px">{SVG}</div></div></body></html>'''
     hp = os.path.join(HERE, f"{out}_dose.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, f"{out}_dose_raw.png")

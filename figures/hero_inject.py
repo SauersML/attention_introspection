@@ -10,7 +10,7 @@ Column 2, says the injected paragraph: among boosted trials whose greedy reply i
   dots = prompts with at least one "Yes". Dashed line: chance 25%. Big label: pooled share / 0.25 - 1.
   p: one-sided bootstrap over prompts (clustered; 20,000 resamples) that the pooled share exceeds 25%.
 CIs (printed only): bootstrap over prompts, 20,000 resamples. Ringed dot: context 101 (the prompt drawn on top).
-usage: OMP_NUM_THREADS=2 nice -n 19 python3 hero_inject.py [DATA_DIR [OUT_NAME]] [--keep]
+usage: OMP_NUM_THREADS=2 nice -n 19 python3 hero_inject.py [DATA_DIR [OUT_NAME]] [--keep] [--W=1600 --VH=1300]  (narrow: default OUT_NAME hero_inject_tall)
   DATA_DIR (default results/told_inject/data): recs_*.jsonl + meta.json in the told_inject format; OUT_NAME (default hero_inject) -> figures/OUT_NAME.png/.jpg"""
 import json, glob, os, sys, html, base64, subprocess, re
 import numpy as np, matplotlib
@@ -20,12 +20,13 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE, pct_colour
 from robot_injected import injected_robot
-AMB = "#F2B53A"; LIL = "#A574F2"; W = 2300; PAD = 26
+OPT = dict(a[2:].split("=", 1) for a in sys.argv[1:] if a.startswith("--") and "=" in a)
+AMB = "#F2B53A"; LIL = "#A574F2"; W = int(OPT.get("W", 2300)); PAD = 26   # --W=1600 --VH=... : the narrower, taller version for hero_pair
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 ROOT = os.path.dirname(HERE)
 ARGS = [a for a in sys.argv[1:] if not a.startswith("--")]
 D = os.path.join(os.path.abspath(ARGS[0]) if ARGS else os.path.join(ROOT, "results/told_inject/data"), "")
-OUT = ARGS[1] if len(ARGS) > 1 else "hero_inject"
+OUT = ARGS[1] if len(ARGS) > 1 else ("hero_inject" if W == 2300 else "hero_inject_tall")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"]); assert len(R) == 240
 META = json.load(open(D + "meta.json")); CTX = json.load(open(os.path.join(HERE, "told_contexts.json")))
 M = "20.0"; EXID, K = 101, 1
@@ -64,7 +65,7 @@ print("example 101:", EXTXT, "| no injection:", rec["none"]["text"], "| dots", E
 pstr = lambda p: "p < 0.0001" if p < 1e-4 else f"p = {p:.1g}"
 
 # ---------------- dot columns ----------------
-VW = W - 2 * PAD; GAP = 36; CW = (VW - GAP) / 2; VH = 1010
+VW = W - 2 * PAD; GAP = 36; CW = (VW - GAP) / 2; VH = int(OPT.get("VH", 1010))
 TOPH = 226                  # band for the big label and p above each column
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 px = lambda v: v * 72 / 100
@@ -87,7 +88,8 @@ for j, c in enumerate(cols):
     ax.scatter(xj, v, s=635, c=col, alpha=0.45, edgecolors="none", zorder=3); ax.scatter(xj, v, s=5, color="black", zorder=4)
     ie = int(np.argmin(np.abs(v - c["ex"]) + np.abs(xj) * 1e-3)) if j == 0 else None
     ax.axhline(c["base"], color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
-    ax.text(0.98, c["base"] + 0.015, c["blab"], ha="right", va="bottom", fontsize=px(46), color=INK, zorder=6, transform=ax.get_yaxis_transform())
+    blab = c["blab"] if CW > 1000 else c["blab"].replace("injection ", "injection\n")   # narrow: two lines, clear of the violin
+    ax.text(0.98, c["base"] + 0.015, blab, ha="right", va="bottom", fontsize=px(46), color=INK, zorder=6, transform=ax.get_yaxis_transform())
     for t in (0, 0.5, 1):
         ax.text(0.01, t, f"{100*t:.0f}%", ha="left", va="center", fontsize=px(44), color=INK, transform=ax.get_yaxis_transform())
     ax.set_xlim(-1, 1); ax.set_ylim(-0.04, 1.04); ax.set_xticks([]); ax.set_yticks([])
@@ -126,13 +128,14 @@ S1 = "I am an interpretability researcher"; S2 = "I am capable of artificially b
 for s in (S1, S2, S3, "Here are four paragraphs."): assert s in INTRO, s
 assert META["question"].startswith("Trial 1: Do you notice your attention being boosted onto one of the paragraphs? If so, which one?")
 pl = "".join(f'<div class="pl"><b>[P{pos + 1}]</b> <span {"class=k id=p2t" if pos == K else ""}>{html.escape(short(segs[pos], NW[pos]))}</span></div>' for pos in range(4))
+ELL = " …" if CW > 1000 else "&nbsp;…"   # narrow: an ellipsis never starts a line
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px {PAD}px 10px;position:relative}}
 .ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;margin-right:150px;display:flex;flex-direction:column;gap:8px}}
 .pl{{white-space:nowrap}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
-#rq{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;margin:60px 150px 0 880px}}
+#rq{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;margin:60px {150 if W >= 2300 else 60}px 0 {min(880, W - 910)}px}}
 .mrow{{display:flex;align-items:center;gap:18px;margin-top:56px;margin-left:420px}}
 .rob{{width:150px;height:150px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:14px 38px;font-size:84px;font-weight:700;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
@@ -144,7 +147,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 #rq{{position:relative;z-index:2}}
 .cols{{display:flex;gap:{GAP}px;margin-top:150px}}
 .ct{{flex:1;min-width:0;text-align:center}}
-.cn{{display:inline-block;font-size:76px;font-weight:800;line-height:1.05;white-space:nowrap}}
+.cn{{display:inline-block;font-size:76px;font-weight:800;line-height:1.05;white-space:{"nowrap" if CW > 1000 else "normal"}}}
 .vw{{position:relative;margin-top:34px}}
 .vio{{width:{VW}px;display:block}}
 .kbox{{position:absolute}}
@@ -152,7 +155,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .dot{{display:inline-block;flex-shrink:0;width:42px;height:42px;border-radius:50%;background:{PURPLE};opacity:.75}}
 .ring{{display:inline-block;flex-shrink:0;width:42px;height:42px;border-radius:50%;border:5px solid {INK}}}
 </style></head><body>
-<div class="ub"><div>{S1} … {S2} … {S3}.</div><div>Here are four paragraphs.</div>{pl}</div>
+<div class="ub"><div>{S1}{ELL} {S2}{ELL} {S3}.</div><div>Here are four paragraphs.</div>{pl}</div>
 <div id="rq">Do you notice your attention being boosted onto one of the paragraphs? If so, which one?</div>
 <div class="inj" id="inj">inject attention<br>toward paragraph 2</div>
 <div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb" id="mb"><span class="part" id="ry">Yes</span>, <span class="part" id="rp">paragraph [P2]</span></div></div>
