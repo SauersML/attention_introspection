@@ -16,36 +16,38 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/privileged_both.png)
 
-4. Qwen rates how much they attended to each paragraph; a separate model guesses the same from the text alone. Qwen tracks it, but no better than the reader.
-
-![](figures/monitor_logprob.png)
-
-5. The noticing test with word lists instead of paragraphs: eight single-word lines, one of them boosted, then "did you notice, and which one?". Left: Qwen never says Yes, with or without a boost. Right: when made to start "Yes, word [", how often their top answer is the boosted word's number, as change from no boost (12.5%), with the raw rates above each bar.
-
-![](figures/words_told_pair.jpg)
-
 ## Can Qwen control their attention when told to?
 
-6. The instruction placed before the paragraphs instead of after: a much smaller effect.
-
-![](figures/hero_before.jpg)
-
-7. Focus and ignore compared against no instruction at all, instead of against just mentioning the paragraph.
+4. Focus and ignore compared against no instruction at all, instead of against just mentioning the paragraph.
 
 ![](figures/hero_none.jpg)
 
-8. Many wordings, from mild ("pay a little more attention") to strong ("completely ignore").
+5. Many wordings, from mild ("pay a little more attention") to strong ("completely ignore").
 
 ![](figures/dose_full.jpg)
 
-9. Telling Qwen to focus on (left) or ignore (right) each paragraph in turn: which paragraph's attention moves.
+6. Telling Qwen to focus on (left) or ignore (right) each paragraph in turn: which paragraph's attention moves.
 
 ![](figures/rotate2.jpg)
 
-10. The focus/ignore effect at every one of the 64 layers.
+7. The focus/ignore effect at every one of the 64 layers.
 
 ![](figures/layers.jpg)
 
-11. Focus and ignore on lists of single words instead of paragraphs.
+8. Focus and ignore on lists of single words instead of paragraphs.
 
 ![](figures/words_control.png)
+
+## More
+
+9. Qwen rates how much they attended to each paragraph; a separate model guesses the same from the text alone. Qwen tracks it, but no better than the reader.
+
+![](figures/monitor_logprob.png)
+
+10. The noticing test with word lists instead of paragraphs: eight single-word lines, one of them boosted, then "did you notice, and which one?". Left: Qwen never says Yes, with or without a boost. Right: when made to start "Yes, word [", how often their top answer is the boosted word's number, as change from no boost (12.5%), with the raw rates above each bar.
+
+![](figures/words_told_pair.jpg)
+
+11. The instruction placed before the paragraphs instead of after: a much smaller effect.
+
+![](figures/hero_before.jpg)
