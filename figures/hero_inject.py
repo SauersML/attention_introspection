@@ -154,7 +154,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 </style></head><body>
 <div class="ub"><div>{S1} … {S2} … {S3}.</div><div>Here are four paragraphs.</div>{pl}</div>
 <div id="rq">Do you notice your attention being boosted onto one of the paragraphs? If so, which one?</div>
-<div class="inj" id="inj">inject attention<br>into paragraph 2</div>
+<div class="inj" id="inj">inject attention<br>toward paragraph 2</div>
 <div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb" id="mb"><span class="part" id="ry">Yes</span>, <span class="part" id="rp">paragraph [P2]</span></div></div>
 {syringe()}
 <div class="cols"><div class="ct"><span class="cn" id="c1">says \u201cYes\u201d</span></div>
