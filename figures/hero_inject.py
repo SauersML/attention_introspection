@@ -115,7 +115,7 @@ def syringe():
     o.append(f'<text x="197" y="108" font-size="82" font-weight="800" text-anchor="middle" fill="#fff">\u00d7{DOSE:.1f}</text>')
     return f'<svg id="syr" width="380" height="160" viewBox="0 0 380 160">{"".join(o)}</svg>'
 def keydraw():
-    r = 30; dx, dy = r + 4, r + 4; ww = dx + r + 16 + 345
+    r = 30; dx, dy = r + 4, r + 4; ww = dx + r + 16 + 640
     o = [f'<circle cx="{dx}" cy="{dy}" r="{r}" fill="{PURPLE}" fill-opacity=".75"/><circle cx="{dx}" cy="{dy}" r="4" fill="#000"/>',
          f'<text x="{dx + r + 16}" y="{dy + 19}" font-size="54" font-weight="800" fill="{INK}">= one prompt</text>']
     return f'<svg class="kbox" id="kb" width="{ww:.0f}" height="{2*r + 8:.0f}" viewBox="0 0 {ww:.0f} {2*r + 8:.0f}">{"".join(o)}</svg>'

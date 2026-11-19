@@ -95,15 +95,16 @@ def method_svg(w, h, cf, ci, rob):
             o.append(f'<text x="{cx + 6:.1f}" y="{ty - 20 + 46 * j:.1f}" font-size="{F - 6}" fill="{INK}" text-anchor="middle">{t}</text>')
     o.append(f'<line x1="24" x2="{w - 24:.0f}" y1="{ty + 92 + dy}" y2="{ty + 92 + dy}" stroke="#E4E5E9" stroke-width="3"/>')
     # ---- (b) bottom: per-layer curve
-    x0 = 160; x1 = w - 40; y0 = ty + 165 + dy; y1 = h - 84
+    TF = F + 14   # axis numbers and "layer": as large as the curve label
+    x0 = 230; x1 = w - 40; y0 = ty + 165 + dy; y1 = h - 110
     lo = min(cf.min(), ci.min()) - 8; hi = max(cf.max(), ci.max())
     X = lambda l: x0 + (x1 - x0) * l / (len(cf) - 1); Y = lambda v: y1 - (y1 - y0) * (v - lo) / (hi - lo)
     o.append(f'<line x1="{x0}" x2="{x1}" y1="{Y(0):.1f}" y2="{Y(0):.1f}" stroke="{INK}" stroke-width="2.5"/>')
     for v in [0, 200]:
-        o.append(f'<text x="{x0 - 12}" y="{Y(v) + 11:.1f}" font-size="{F - 4}" fill="{INK}" text-anchor="end">{("+%d%%" % v) if v else "0%"}</text>')
+        o.append(f'<text x="{x0 - 12}" y="{Y(v) + 18:.1f}" font-size="{TF}" font-weight="700" fill="{INK}" text-anchor="end">{("+%d%%" % v) if v else "0%"}</text>')
     for v in [0, 63]:
-        o.append(f'<text x="{X(v):.1f}" y="{y1 + 48:.1f}" font-size="{F - 4}" fill="{INK}" text-anchor="middle">{v}</text>')
-    o.append(f'<text x="{X(46):.1f}" y="{y1 + 48:.1f}" font-size="{F - 4}" fill="{INK}" text-anchor="middle">layer</text>')
+        o.append(f'<text x="{X(v):.1f}" y="{y1 + 72:.1f}" font-size="{TF}" font-weight="700" fill="{INK}" text-anchor="middle">{v}</text>')
+    o.append(f'<text x="{X(46):.1f}" y="{y1 + 72:.1f}" font-size="{TF}" font-weight="700" fill="{INK}" text-anchor="middle">layer</text>')
     o.append(f'<line x1="{X(28):.1f}" x2="{X(28):.1f}" y1="{y0 - 34}" y2="{y1 + 8}" stroke="{INK}" stroke-width="3" stroke-dasharray="8 6"/>')
     for cv, col in [(cf, PURPLE), (ci, RED)]:
         pts = " ".join(f"{X(l):.1f},{Y(v):.1f}" for l, v in enumerate(cv))
@@ -214,7 +215,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .mbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;overflow:hidden}}
 </style></head><body><div class="cols">{"".join(cols)}</div><div class="vw"><img class="vio" src="data:image/png;base64,{VIO}">
   <div class="cbox" style="left:{CB['left']*sc:.0f}px;width:{(CB['right']-CB['left'])*sc:.0f}px;top:{CB['top']*sc:.0f}px;height:{(CB['bottom']-CB['top'])*sc:.0f}px">
-    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}">one dot <span class="dot"></span> = % change (log{"&nbsp;" if NARROW else " "}scale)</div><div class="cl1{" nw" if NARROW else ""}">compared to only mentioning the paragraph:</div></div>
+    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}"><span class="dot"></span> = one prompt's change</div><div class="cl1{" nw" if NARROW else ""}">compared to only mentioning the paragraph:</div></div>
     <div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][0].format(k=K))}</div></div></div>
   <div class="mbox" style="left:{(VW + 36) / 2:.0f}px;width:{(VW - 36) / 2:.0f}px;top:{BOX['top']*FH*sc:.0f}px;height:{SVGH:.0f}px">{SVG}</div></div></body></html>'''
     hp = os.path.join(HERE, f"{out}_dose.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, f"{out}_dose_raw.png")
