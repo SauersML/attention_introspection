@@ -1,6 +1,6 @@
 """Hero figure from the dose run (Qwen3-32B, 150 arithmetic contexts).
 Two columns: 'Focus your attention on paragraph [Pk].' and 'Completely ignore paragraph [Pk]. Do not look at it at all.'
-Layer 28 only. Violins are drawn on a log-ratio scale (log2 of attention ratio; y axis line, ticks and bold % labels, title "% change in attention", checked by yaxis.check); the big labels and p stay on the mean % change.
+Layer 28 only. Violins are drawn on a log-ratio scale (log2 of attention ratio, y axis labelled in % change); the big labels and p stay on the mean % change.
 Method box (top right): answer tokens attending to the named paragraph, and the per-layer mean % change curve (as layers3.py, vs the same control) with layer 28 marked.
 Each violin: per-context % change in attention on the named paragraph vs the mention-only line (control box, bottom left), at layer 28:
 attention weights averaged over heads, summed over the paragraph's tokens and divided by its token count, averaged over the query
@@ -18,7 +18,7 @@ from PIL import Image, ImageFont
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, RED, INK, pct_colour
 from pfmt import pstr
-import yaxis
+import stamp
 D = os.path.join(os.path.dirname(HERE), "results", "qwen3-32b-dose") + "/"
 meta = json.load(open(D + "meta.json")); L = [28]
 R = json.load(open(D + "dose.json")); by = {(r["id"], r["cond"]): r for r in R}
@@ -158,7 +158,7 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28_tall" if NARROW else 
         a.plot([x0 - mw, x0 + mw], [mu] * 2, color="black", lw=7, solid_capstyle="butt", zorder=5.5)
         xj = x0 + rng.uniform(-0.25, 0.25, len(z))
         a.scatter(xj, z, s=650, c=pct_colour(2.0 ** z), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
-        eff = f"{r['mean']:+.0f}%".replace("-", "\u2212")   # the y axis title says what the % is of
+        eff = f"{r['mean']:+.0f}%".replace("-", "\u2212")   # the % alone; the control box says what it is a change in
         pt = pstr(r["p"], floor=1 / (r["nf"] + 1))
         assert r["p"] * (r["nf"] + 1) >= 1.5 or 1 / (r["nf"] + 1) < 1e-5
         r["eff"], r["pt"] = eff, pt
@@ -168,26 +168,17 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28_tall" if NARROW else 
         else:    # effect below the dots, p under the effect
             texts.append(a.annotate(eff, (x0, z.min()), xytext=(0, -26), textcoords="offset points", fontsize=100, fontweight="bold", color=colr, ha="center", va="top"))
             texts.append(a.annotate(pt, (x0, z.min()), xytext=(0, -138 - 100 * eff.count(chr(10))), textcoords="offset points", fontsize=44, color=colr, ha="center", va="top"))
-    AXX, XL = -0.42, -1.10   # y axis line (data x) and the figure's left edge; title, labels, ticks and line sit left of the focus violin
-    a.plot([AXX, 2.01], [0, 0], color=INK, lw=4, zorder=0.5, solid_capstyle="butt")
-    a.set_xlim(XL, 2.01); a.set_xticks([]); a.set_yticks([])
+    a.axhline(0, color=INK, lw=4, zorder=0.5)
+    a.set_xlim(-0.82, 2.01); a.set_xticks([]); a.set_yticks([])   # left margin holds the y-axis labels
     for s_ in a.spines.values(): s_.set_visible(False)
+    for v in [1, 2, 4, 8]:   # y axis: % change ticks at their log2 positions, drawn as in hero_inject (bold labels at the left edge); 0% sits on the axis line
+        a.text(-0.81, np.log2(v) + (0.03 if v == 1 else 0), ("%+d%%" % round(100 * (v - 1))).replace("+0", "0"), ha="left", va="bottom" if v == 1 else "center", fontsize=52, fontweight="bold", color=INK)
     lo, hi = min(allz.min(), 0), max(allz.max(), 0); a.set_ylim(lo, hi)
     for _ in range(6):   # grow y-limits until every label fits
         fig.canvas.draw(); rd = fig.canvas.get_renderer(); inv = a.transData.inverted()
         ys = [inv.transform(t.get_window_extent(rd).get_points())[:, 1] for t in texts]
         ylo = min(lo, min(y.min() for y in ys)); yhi = max(hi, max(y.max() for y in ys))
         pad = 0.01 * (yhi - ylo); a.set_ylim(ylo - pad, yhi + pad)
-    # y axis: % change ticks at their log2 positions over the range of the dots, line, tick marks, bold labels, rotated title
-    TV = [v for v in [1 / 8, 1 / 4, 1 / 2, 1, 2, 4, 8, 16] if allz.min() - 0.3 <= np.log2(v) <= allz.max() + 0.3]
-    tk = (a.transData.inverted().transform((30, 0)) - a.transData.inverted().transform((0, 0)))[0]   # 30 px in data x
-    a.plot([AXX, AXX], [min(np.log2(TV[0]), allz.min()), max(np.log2(TV[-1]), allz.max())], color=INK, lw=4, solid_capstyle="butt", zorder=0.5)
-    ylab = []
-    for v in TV:
-        a.plot([AXX - tk * 0.8, AXX], [np.log2(v)] * 2, color=INK, lw=4, solid_capstyle="butt")
-        ylab.append(a.text(AXX - tk, np.log2(v), ("%+d%%" % round(100 * (v - 1))).replace("+0", "0").replace("-", "\u2212"), ha="right", va="center",
-                           fontsize=52, fontweight="bold", color=INK))
-    ytitle = a.text(XL + tk * 0.3, (np.log2(TV[0]) + np.log2(TV[-1])) / 2, "% change in attention", rotation=90, ha="left", va="center", fontsize=48, fontweight="bold", color=INK)
     fig.canvas.draw(); FW, FH = fig.canvas.get_width_height()
     ri = res[1]["z"].max(); ytop = a.transData.transform((0, ri))[1] + np.sqrt(650) / 2 * 110 / 72   # top of the highest ignore dot, px from bottom
     bxl = a.transData.transform((0.72, 0))[0]
@@ -196,9 +187,8 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28_tall" if NARROW else 
     rd = fig.canvas.get_renderer()
     yax = a.transData.transform((0, 0))[1]; yfd = a.transData.transform((0, res[0]["z"].min()))[1] - np.sqrt(650) / 2 * 110 / 72
     xr = min([a.transData.transform((X[1] - 0.36, 0))[0]] + [t.get_window_extent(rd).x0 for t in texts[2:]])
-    CB = dict(left=a.transData.transform((AXX, 0))[0] + 34, right=xr - 40, top=FH - min(yax, yfd) + 34, bottom=FH - 6)   # fig px from top-left
+    CB = dict(left=8, right=xr - 40, top=FH - min(yax, yfd) + 34, bottom=FH - 6)   # fig px from top-left
     print("control box fig px", {k: round(v) for k, v in CB.items()})
-    YL = yaxis.check(fig, ylab, title=ytitle, avoid=[(CB["left"], CB["top"], CB["right"], CB["bottom"]), (BOX["left"] * FW, BOX["top"] * FH, BOX["right"] * FW, BOX["bottom"] * FH)], name=out)
     fig.savefig(os.path.join(HERE, f"v{out}_dose.png"), dpi=110, facecolor="white"); plt.close(fig)
     # ---------- chat columns + violins
     VW = W - 52; sc = VW / FW; SVGW = (VW - 36) / 2 - 6; SVGH = (BOX["bottom"] - BOX["top"]) * FH * sc
@@ -246,5 +236,5 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
                     "--force-device-scale-factor=1", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
     im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
     im = im.crop((0, 0, W, nz[-1] + 20)); im.save(os.path.join(HERE, out + ".png")); im.save(os.path.join(HERE, out + ".jpg"), quality=92); print(out, im.size)
-    yaxis.stamp(os.path.join(HERE, out + ".png"), os.path.abspath(__file__), YL)
+    stamp.stamp(os.path.join(HERE, out + ".png"), os.path.abspath(__file__))
 for k, v in numbers.items(): print(k, "mean %+.1f%%  p_signflip=%.2g (of %d flips)  share>0 %d%%" % v)

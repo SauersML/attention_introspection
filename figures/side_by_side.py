@@ -1,8 +1,8 @@
 """Introspection hero (left) and control hero (right) side by side, white gap. Built from the narrower, taller versions rendered for the pair
-(hero_L28.py --W=1800 --VH=17.5 -> hero_L28_tall.png; hero_inject.py --W=1950 --VH=1295 -> hero_inject_tall.png), which come out the
+(hero_L28.py --W=1800 --VH=17.5 -> hero_L28_tall.png; hero_inject.py --W=1800 --VH=1295 -> hero_inject_tall.png), which come out the
 same height; any small difference is evened out by scaling both to the taller one.
-The default pair always re-renders both halves first, and refuses a half whose stamp (yaxis.py) does not match the current script and
-PNG, or that was rendered without its y axis: no stale half can be reused.
+The default pair always re-renders both halves first, and refuses a half whose stamp (stamp.py) does not match the current script and
+PNG: no stale half can be reused.
 Above each column: a horizontal curly brace spanning the whole column (tips down, centre point up), drawn as a filled calligraphic stroke
 (thin at the tips and the centre point, thick in between), with "attention control" / "attention introspection" centred above it."""
 import os, sys, subprocess
@@ -12,14 +12,14 @@ import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 H = os.path.dirname(os.path.abspath(__file__))
 INK = "#1D1D1F"
-sys.path.insert(0, H); import yaxis
+sys.path.insert(0, H); import stamp
 FILES = sys.argv[1:3] if len(sys.argv) > 3 else ("hero_inject_tall.png", "hero_L28_tall.png")   # introspection left, control right
-HALVES = {"hero_inject_tall.png": ("hero_inject.py", "--W=1950", "--VH=1295"), "hero_L28_tall.png": ("hero_L28.py", "--W=1800", "--VH=17.5")}
+HALVES = {"hero_inject_tall.png": ("hero_inject.py", "--W=1800", "--VH=1295"), "hero_L28_tall.png": ("hero_L28.py", "--W=1800", "--VH=17.5")}
 for f in FILES:
     if f in HALVES:   # rebuild from the current script, then check its stamp
         sc, *args = HALVES[f]
         subprocess.run([sys.executable, os.path.join(H, sc), *args], check=True, cwd=H, env={**os.environ, "OMP_NUM_THREADS": "2"})
-        print(f, "y axis", yaxis.verify(os.path.join(H, f), sc)["ylabels"])
+        stamp.verify(os.path.join(H, f), sc); print(f, "fresh")
 LAB = [("attention introspection" if "inject" in f else "attention control") for f in FILES]
 a, b = (Image.open(os.path.join(H, f)).convert("RGB") for f in FILES)
 OUT = sys.argv[3] if len(sys.argv) > 3 else "hero_pair"

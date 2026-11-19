@@ -21,7 +21,7 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE, pct_colour
 from pfmt import pstr as _pstr, pbound
 from robot_injected import injected_robot
-import yaxis
+import stamp
 OPT = dict(a[2:].split("=", 1) for a in sys.argv[1:] if a.startswith("--") and "=" in a)
 AMB = "#F2B53A"; LIL = "#A574F2"; W = int(OPT.get("W", 2300)); PAD = 26   # --W=1600 --VH=... : the narrower, taller version for hero_pair
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
@@ -67,7 +67,7 @@ print("example 101:", EXTXT, "| no injection:", rec["none"]["text"], "| dots", E
 pstr = lambda p: pbound(1e-4) if p < 1e-4 else _pstr(p)
 
 # ---------------- dot columns ----------------
-VW = W - 2 * PAD; GAP = 36; YG = 280; CW = (VW - GAP - YG) / 2; VH = int(OPT.get("VH", 1010))   # YG: left gutter for the y axis (title, labels, ticks)
+VW = W - 2 * PAD; GAP = 36; CW = (VW - GAP) / 2; VH = int(OPT.get("VH", 1010))
 TOPH = 226                  # band for the big label and p above each column
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 px = lambda v: v * 72 / 100
@@ -76,7 +76,7 @@ cols = [dict(v=B.mean(1), mu=y1, base=y0, blab=f"no injection {100*y0:.0f}%", bi
         dict(v=(nc / np.maximum(ny, 1))[ny > 0], mu=sh2, base=0.25, blab="chance 25%", big=f"{100*rel2:+.0f}%", p=p2, ex=EX2)]
 AX = []
 for j, c in enumerate(cols):
-    x0 = YG + j * (CW + GAP)
+    x0 = j * (CW + GAP)
     ax = fig.add_axes([x0 / VW, 30 / VH, CW / VW, (VH - TOPH - 30) / VH]); AX.append(ax)
     v = c["v"]; g = np.random.default_rng(1 + j)
     kde = gaussian_kde(v, bw_method=0.09 / v.std())
@@ -94,22 +94,14 @@ for j, c in enumerate(cols):
     ax.axhline(c["base"], color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
     blab = c["blab"].replace("injection ", "injection\n")   # two lines, clear of the violin's dots
     ax.text(0.98, c["base"] + 0.015, blab, ha="right", va="bottom", fontsize=px(56), color=INK, zorder=6, transform=ax.get_yaxis_transform())
-    if j == 0:   # one shared y axis left of column 1 (both columns are % of replies, 0-100%): line, tick marks, bold labels, title
-        tr = ax.get_yaxis_transform(); tk = 24 / CW
-        ax.plot([0, 0], [0, 1], color=INK, lw=4, transform=tr, clip_on=False, solid_capstyle="projecting")
-        ylab = []
-        for t in (0, 0.5, 1):
-            ax.plot([-tk, 0], [t, t], color=INK, lw=4, transform=tr, clip_on=False, solid_capstyle="butt")
-            ylab.append(ax.text(-1.5 * tk, t, f"{100*t:.0f}%", ha="right", va="center", fontsize=px(80), fontweight="bold", color=INK, transform=tr))
-        y0f, y1f = (fig.transFigure.inverted().transform(ax.transData.transform((0, v)))[1] for v in (0, 1))
-        ytitle = fig.text(6 / VW, (y0f + y1f) / 2, "% of replies", rotation=90, ha="left", va="center", fontsize=px(66), fontweight="bold", color=INK)
+    for t in (0, 0.5, 1) if j == 0 else ():   # one shared y axis: labels on the left column only
+        ax.text(0.01, t, f"{100*t:.0f}%", ha="left", va="center", fontsize=px(80), fontweight="bold", color=INK, transform=ax.get_yaxis_transform())
     ax.set_xlim(-1, 1); ax.set_ylim(-0.04, 1.04); ax.set_xticks([]); ax.set_yticks([])
     for s_ in ax.spines.values(): s_.set_visible(False)
     cx = (x0 + CW / 2) / VW
     fig.text(cx, 1 - 6 / VH, c["big"], ha="center", va="top", fontsize=89, fontweight="bold", color=PURPLE)
     fig.text(cx, 1 - 148 / VH, pstr(c["p"]), ha="center", va="top", fontsize=56, color=PURPLE)
     c["xj"] = xj
-YL = yaxis.check(fig, ylab, title=ytitle, name=OUT)
 VP = os.path.join(HERE, "_v_inject.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
@@ -127,10 +119,11 @@ def syringe():
     o.append(f'<text x="197" y="108" font-size="82" font-weight="800" text-anchor="middle" fill="#fff">\u00d7{DOSE:.1f}</text>')
     return f'<svg id="syr" width="380" height="160" viewBox="0 0 380 160">{"".join(o)}</svg>'
 def keydraw():
-    r = 30; dx, dy = r + 4, r + 4; ww = dx + r + 16 + 640
+    r = 30; dx, dy = r + 4, r + 4; ww = dx + r + 16 + 480; hh = 2 * r + 8 + 62   # two lines: the dot's prompt, and what its height is
     o = [f'<circle cx="{dx}" cy="{dy}" r="{r}" fill="{PURPLE}" fill-opacity=".75"/><circle cx="{dx}" cy="{dy}" r="4" fill="#000"/>',
-         f'<text x="{dx + r + 16}" y="{dy + 19}" font-size="54" font-weight="800" fill="{INK}">= one prompt</text>']
-    return f'<svg class="kbox" id="kb" width="{ww:.0f}" height="{2*r + 8:.0f}" viewBox="0 0 {ww:.0f} {2*r + 8:.0f}">{"".join(o)}</svg>'
+         f'<text x="{dx + r + 16}" y="{dy + 19}" font-size="54" font-weight="800" fill="{INK}">= one prompt,</text>',
+         f'<text x="{dx + r + 16}" y="{dy + 19 + 62}" font-size="54" font-weight="800" fill="{INK}">% of its replies</text>']
+    return f'<svg class="kbox" id="kb" width="{ww:.0f}" height="{hh:.0f}" viewBox="0 0 {ww:.0f} {hh:.0f}">{"".join(o)}</svg>'
 robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
 VIO = base64.b64encode(open(VP, "rb").read()).decode()
 def short(s, n): return " ".join(s.split()[:n]) + " …"
@@ -157,7 +150,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 #gl{{position:absolute;left:0;top:0;z-index:-1;pointer-events:none}}
 #ov{{position:absolute;left:0;top:0;pointer-events:none;z-index:1}}
 #rq{{position:relative;z-index:2}}
-.cols{{display:flex;gap:{GAP}px;margin-top:150px;padding-left:{YG}px}}
+.cols{{display:flex;gap:{GAP}px;margin-top:150px}}
 .ct{{flex:1;min-width:0;text-align:center}}
 .cn{{display:inline-block;font-size:76px;font-weight:800;line-height:1.05;white-space:{"nowrap" if CW > 1000 else "normal"}}}
 .vw{{position:relative;margin-top:34px}}
@@ -188,7 +181,7 @@ syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transfor
 const rq0=R('rq'), inj=document.getElementById('inj'), ub0=document.querySelector('.ub').getBoundingClientRect(); inj.style.top=(ub0.bottom+window.scrollY+10)+'px';   // just under the prompt, clear of the syringe
 // key drawing: between the violins, right of column 1's narrow top and left of column 2's narrow middle
 const kb=document.getElementById('kb'), vw=R('vw');
-kb.style.left='{YG+CW/2+70:.0f}px'; kb.style.top='{TOPH+(1.04-0.93)/1.08*(VH-TOPH-30):.0f}px';
+kb.style.left='{CW/2+70:.0f}px'; kb.style.top='{TOPH+(1.04-0.93)/1.08*(VH-TOPH-30):.0f}px';
 // wavy purple aura around the report question, Qwen's reply (the boost stays on while Qwen answers) and the injected robot
 const gl=document.getElementById('gl'); let g=`<defs>`;
 [[0.004,0.010,36,7,1],[0.006,0.014,28,4.5,2],[0.008,0.02,18,2.5,3]].forEach(([fx,fy,sc,bl,i])=>{{
@@ -251,6 +244,6 @@ subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hi
                 "--force-device-scale-factor=1", "--virtual-time-budget=3000", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
 im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
 im = im.crop((0, 0, W, nz[-1] + 20)); im.save(os.path.join(HERE, OUT + ".png")); im.save(os.path.join(HERE, OUT + ".jpg"), quality=92)
-yaxis.stamp(os.path.join(HERE, OUT + ".png"), os.path.abspath(__file__), YL)
+stamp.stamp(os.path.join(HERE, OUT + ".png"), os.path.abspath(__file__))
 print(OUT + ".png", im.size, "aspect", round(im.size[1] / im.size[0], 2))
 if "--keep" not in sys.argv: os.remove(raw); os.remove(hp); os.remove(VP)
