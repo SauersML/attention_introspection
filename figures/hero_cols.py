@@ -44,7 +44,7 @@ def pct(v): return (f"+{v:.0f}%" if v >= 0 else f"{MINUS}{abs(v):.0f}%")
 
 def bubble_col(name, col, paras, K, line, qline, ans, line_first=False, nwords=(2, 3, 3, 3)):
     """one chat column: condition name, the user bubble (four paragraphs shortened, [PK] amber, the varying line in a white box), robot + reply"""
-    pl = "".join(f'<div class="pl"><b class="{"k" if i + 1 == K else ""}">[P{i + 1}]</b> {html.escape(" ".join(p.split()[:nwords[i]]))} …</div>' for i, p in enumerate(paras))
+    pl = "".join(f'<div class="pl"><b>[P{i + 1}]</b> <span class="{"k" if i + 1 == K else ""}">{html.escape(" ".join(p.split()[:nwords[i]]))} …</span></div>' for i, p in enumerate(paras))
     var = f'<div class="var" style="color:{col}">{html.escape(line)}</div>' if line else ('<div class="var nol"></div>' if line == "" else "")
     q = f'<div>{html.escape(qline).replace(" + ", "&nbsp;+&nbsp;")}</div>'
     body = (var + "<div>Here are four paragraphs.</div>" + pl + q) if line_first else ("<div>Here are four paragraphs.</div>" + pl + var + q)
