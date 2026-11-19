@@ -60,7 +60,8 @@ for ctrl, ctag, out in [("b_mention", "mention", "hero_before")]:
     VW = W - 52; VH = 720; vp = os.path.join(TMP, f"_v{out}.png")
     info = violins(res, VW, VH, vp, skip=(18, 250), mean_mark=True, tick_right=190)
     base = f'<span>0% =</span><div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][1].format(k=K))}</div></div>'
-    cols = "".join(bubble_col(name, col, paras, K, LINE[c], qline, ANS[c], line_first=True) for c, name, col in CONDS)
+    cols = "".join(bubble_col(name, col, paras, K, LINE[c], qline, ANS[c], line_first=True,
+                              ans_note=f"attention to [P{K}] is measured<br>from these answer tokens") for c, name, col in CONDS)
     HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>{CSS} body{{width:{W}px}} .vio{{width:{VW}px}}</style></head><body>
 <div class="cols">{cols}</div>
 <div class="vw"><img class="vio" src="data:image/png;base64,{b64(vp)}">

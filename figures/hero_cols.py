@@ -42,15 +42,18 @@ body{{background:#fff;font-family:{FONT};color:{INK};padding:20px 26px 10px;posi
 
 def pct(v): return (f"+{v:.0f}%" if v >= 0 else f"{MINUS}{abs(v):.0f}%")
 
-def bubble_col(name, col, paras, K, line, qline, ans, line_first=False, nwords=(2, 3, 3, 3)):
-    """one chat column: condition name, the user bubble (four paragraphs shortened, [PK] amber, the varying line in a white box), robot + reply"""
+def bubble_col(name, col, paras, K, line, qline, ans, line_first=False, nwords=(2, 3, 3, 3), ans_note=None):
+    """one chat column: condition name, the user bubble (four paragraphs shortened, [PK] amber, the varying line in a white box), robot + reply.
+    ans_note (opt-in, HTML): a bold label with a left arrow beside the reply bubble, e.g. to say attention is measured from the answer tokens"""
     pl = "".join(f'<div class="pl"><b>[P{i + 1}]</b> <span class="{"k" if i + 1 == K else ""}">{html.escape(" ".join(p.split()[:nwords[i]]))} …</span></div>' for i, p in enumerate(paras))
     var = f'<div class="var" style="color:{col}">{html.escape(line)}</div>' if line else ('<div class="var nol"></div>' if line == "" else "")
     q = f'<div>{html.escape(qline).replace(" + ", "&nbsp;+&nbsp;")}</div>'
     body = (var + "<div>Here are four paragraphs.</div>" + pl + q) if line_first else ("<div>Here are four paragraphs.</div>" + pl + var + q)
     nm = f'<div class="cname" style="color:{col}">{name}</div>' if name else ""
+    note = (f'<div style="display:flex;align-items:center;gap:14px;margin-left:6px"><span style="font-size:84px;font-weight:800;line-height:1">&larr;</span>'
+            f'<span style="font-size:46px;font-weight:700;line-height:1.15">{ans_note}</span></div>') if ans_note else ""
     return f'''<div class="col">{nm}<div class="ub">{body}</div>
-  <div class="mrow"><img class="rob" src="data:image/png;base64,{ROBOT}"><div class="mb">{html.escape(ans)}</div></div></div>'''
+  <div class="mrow"><img class="rob" src="data:image/png;base64,{ROBOT}"><div class="mb">{html.escape(ans)}</div>{note}</div></div>'''
 
 def ticks_for(lo, hi):
     cand = [0.25, 0.5, 0.75, 1.5, 2, 3, 4, 6]
