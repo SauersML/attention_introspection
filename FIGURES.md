@@ -6,84 +6,81 @@
 
 ![](figures/hero_pair.jpg)
 
-2. We push attention onto paragraph 2, tell Qwen we might have, and ask "did you notice, and where?": how often they say yes, and how often their yes names the right paragraph.
 
-![](figures/hero_inject.jpg)
-
-3. The same setup, but we make Qwen start their answer with "Yes, paragraph [" and see which number they finish with.
+2. The same setup, but we make Qwen start their answer with "Yes, paragraph [" and see which number they finish with.
 
 ![](figures/hero_told.png)
 
-4. How often Qwen says yes at each strength of the push.
+3. How often Qwen says yes at each strength of the push.
 
 ![](figures/hero_told_yes.png)
 
-5. The push happens only while Qwen reads the question "which paragraph did you attend to most?", not while they answer.
+4. The push happens only while Qwen reads the question "which paragraph did you attend to most?", not while they answer.
 
 ![](figures/hero_question.png)
 
-6. Four of these side by side in one picture.
+5. Four of these side by side in one picture.
 
 ![](figures/hero4.png)
 
-7. The push happens either while Qwen answers or while they read the "which did you attend to" question, and we compare the two (paragraphs).
+6. The push happens either while Qwen answers or while they read the "which did you attend to" question, and we compare the two (paragraphs).
 
 ![](figures/privileged.png)
 
-8. The same with lists of single words instead of paragraphs.
+7. The same with lists of single words instead of paragraphs.
 
 ![](figures/privileged_words.png)
 
-9. Those two combined in one figure.
+8. Those two combined in one figure.
 
 ![](figures/privileged_both.png)
 
-10. The push happens while Qwen answers, and we ask about it later, on three kinds of lists.
+9. The push happens while Qwen answers, and we ask about it later, on three kinds of lists.
 
 ![](figures/trace3.jpg)
 
-11. Qwen rates how much they attended to each paragraph, and another model guesses the same thing from only the text; we compare the two.
+10. Qwen rates how much they attended to each paragraph, and another model guesses the same thing from only the text; we compare the two.
 
 ![](figures/monitor_logprob.png)
 
-12. The noticing test with word lists: Qwen never says yes, and the figure shows which word they pick when made to name one.
+11. The noticing test with word lists: Qwen never says yes, and the figure shows which word they pick when made to name one.
 
 ![](figures/words_told.png)
 
 ## Can Qwen control their attention when told to?
 
-13. "Focus on paragraph k" or "ignore paragraph k" vs just mentioning it: attention change at layer 28.
+12. "Focus on paragraph k" or "ignore paragraph k" vs just mentioning it: attention change at layer 28.
 
 ![](figures/hero_L28.jpg)
 
-14. The same, but with the instruction placed before the paragraphs instead of after.
+13. The same, but with the instruction placed before the paragraphs instead of after.
 
 ![](figures/hero_before.jpg)
 
-15. The same, compared against no instruction at all instead of just a mention.
+14. The same, compared against no instruction at all instead of just a mention.
 
 ![](figures/hero_none.jpg)
 
-16. Just mentioning a paragraph vs saying nothing.
+15. Just mentioning a paragraph vs saying nothing.
 
 ![](figures/v_mention_vs_none.jpg)
 
-17. Many wordings, from mild ("pay a little more attention") to strong ("completely ignore").
+16. Many wordings, from mild ("pay a little more attention") to strong ("completely ignore").
 
 ![](figures/dose_full.jpg)
 
-18. Telling Qwen to focus on each paragraph in turn, and seeing which paragraph's attention goes up.
+17. Telling Qwen to focus on each paragraph in turn, and seeing which paragraph's attention goes up.
 
 ![](figures/rotate2.jpg)
 
-19. Attention to every paragraph at layer 28, for each "focus" instruction.
+18. Attention to every paragraph at layer 28, for each "focus" instruction.
 
 ![](figures/grid_focus_L28.png)
 
-20. How the effect changes across all 64 layers.
+19. How the effect changes across all 64 layers.
 
 ![](figures/layers.jpg)
 
-21. Focus and ignore on lists of single words.
+20. Focus and ignore on lists of single words.
 
 ![](figures/words_control.png)
