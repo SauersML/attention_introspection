@@ -101,7 +101,7 @@ def card(i, a, nm):
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:18px {PAD}px 0;position:relative}}
-.cols{{display:flex;gap:{GAP}px}} .col{{width:{CW}px;display:flex;flex-direction:column;position:relative;z-index:2}}
+.cols{{display:flex;gap:{GAP}px}} .col{{width:{CW}px;display:flex;flex-direction:column;position:relative}} .col>*{{position:relative;z-index:5}} .col>.ub{{z-index:1}}
 .t1{{font-size:64px;font-weight:800;white-space:nowrap}} .t2{{font-size:46px;margin:0 0 10px;white-space:nowrap}}
 .ub{{background:#1F8BFF;color:#fff;border-radius:32px;padding:14px 26px;font-size:46px;line-height:1.18;margin-right:150px}}
 .wl{{display:grid;grid-template-rows:repeat(4,auto);grid-auto-flow:column;column-gap:60px;margin:6px 0 6px;width:max-content}}
@@ -114,14 +114,14 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .fl{{font-size:44px;font-weight:700;line-height:1.15;margin-left:10px;white-space:nowrap}} .flq{{color:{PURPLE};font-weight:800}}
 .ub2{{background:#1F8BFF;color:#fff;border-radius:32px;padding:12px 26px;font-size:46px;line-height:1.18;margin:20px 150px 0 0}}
 .img{{width:{W}px;display:block;margin-left:-{PAD}px}} .vio{{margin-top:44px}} .dose{{margin-top:24px}}
-#gl{{position:absolute;left:0;top:0;z-index:0;pointer-events:none}} #ov{{position:absolute;left:0;top:0;pointer-events:none;z-index:3}}
+#ol{{position:absolute;left:0;top:0;z-index:2;pointer-events:none}} #gl{{position:absolute;left:0;top:0;z-index:3;pointer-events:none}} #ov{{position:absolute;left:0;top:0;pointer-events:none;z-index:4}}
 </style></head><body><div class="cols">{card(0, *ARMS[0])}{card(1, *ARMS[1])}</div>
 <img class="img vio" src="data:image/png;base64,{b64(VP)}">
-<svg id="gl"></svg><svg id="ov"></svg>
+<svg id="ol"></svg><svg id="gl"></svg><svg id="ov"></svg>
 <script>
 const R=e=>document.getElementById(e).getBoundingClientRect();
 const WW=document.body.scrollWidth, HH=document.body.scrollHeight;
-for(const id of ['gl','ov']){{const s=document.getElementById(id);s.setAttribute('width',WW);s.setAttribute('height',HH);}}
+for(const id of ['ol','gl','ov']){{const s=document.getElementById(id);s.setAttribute('width',WW);s.setAttribute('height',HH);}}
 // wavy purple aura (hero_inject's) around the boosted queries: arm A the robot and its answer, arm C the report question
 const gl=document.getElementById('gl'); let g=`<defs>`;
 [[0.004,0.010,36,7,1],[0.006,0.014,28,4.5,2],[0.008,0.02,18,2.5,3]].forEach(([fx,fy,sc,bl,i])=>{{
@@ -158,14 +158,14 @@ const arrow=(p0,c1,c2,tip,id)=>{{ const SW=SW0*1.7; const L=SW*2.7, H=SW*1.6; le
    q+=`<path d="M${{(x+nx*w0).toFixed(1)}},${{(y+ny*w0).toFixed(1)}} L${{(x+nx*w1).toFixed(1)}},${{(y+ny*w1).toFixed(1)}} L${{(x+nx*w1+tx*ds).toFixed(1)}},${{(y+ny*w1+ty*ds).toFixed(1)}} L${{(x+nx*w0+tx*ds).toFixed(1)}},${{(y+ny*w0+ty*ds).toFixed(1)}} Z" fill="${{col}}" stroke="${{col}}" stroke-width="0.6"/>`; }} }}
  const xs=P.map(p=>p[0]), ys=P.map(p=>p[1]), pad=SW*4;
  const X=Math.min(...xs)-pad, Y=Math.min(...ys)-pad, Wd=Math.max(...xs)-X+pad, Ht=Math.max(...ys)-Y+pad;
- return o+`<defs><mask id="m${{id}}" maskUnits="userSpaceOnUse" x="${{X}}" y="${{Y}}" width="${{Wd}}" height="${{Ht}}"><path d="${{d}}" fill="none" stroke="#fff" stroke-width="${{SW}}" stroke-linecap="round"/><path d="${{h}}" fill="#fff"/></mask></defs><g mask="url(#m${{id}})">${{q}}</g>`; }};
-let s='';
+ OL+=o; return `<defs><mask id="m${{id}}" maskUnits="userSpaceOnUse" x="${{X}}" y="${{Y}}" width="${{Wd}}" height="${{Ht}}"><path d="${{d}}" fill="none" stroke="#fff" stroke-width="${{SW}}" stroke-linecap="round"/><path d="${{h}}" fill="#fff"/></mask></defs><g mask="url(#m${{id}})">${{q}}</g>`; }};
+let s='', OL='';
 for (const i of [0,1]) {{
  const t=R('wk'+i), src=R(i==0?'mb'+i:'rq'+i), ub=R('ub'+i);
- const T=[t.right+14, (t.top+t.bottom)/2], P0=[src.right+42, (src.top+src.bottom)/2], xm=ub.right+62;
+ const T=[t.right+14, (t.top+t.bottom)/2], P0=[src.right-70, (src.top+src.bottom)/2], xm=ub.right+62;
  s+=arrow(P0, [xm, P0[1]], [xm, T[1]], T, i);
 }}
-document.getElementById('ov').innerHTML=s;
+document.getElementById('ov').innerHTML=s; document.getElementById('ol').innerHTML=OL;
 </script></body></html>'''
 hp = os.path.join(HERE, "_pb.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "_pb_raw.png")
 subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3000",
