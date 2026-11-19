@@ -22,28 +22,36 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/dose_full.jpg)
 
-5. Telling Qwen to focus on (left) or ignore (right) each paragraph in turn: which paragraph's attention moves.
+5. Which tokens get the extra attention: one prompt, every token of paragraph 2 coloured by its % change when Qwen is told to focus on it, compared to just mentioning it.
+
+![](figures/tokens_focus.jpg)
+
+6. Telling Qwen to focus on (left) or ignore (right) each paragraph in turn: which paragraph's attention moves.
 
 ![](figures/rotate2.jpg)
 
-6. Focus and ignore on lists of single words instead of paragraphs.
+7. Focus and ignore on lists of single words instead of paragraphs.
 
 ![](figures/words_control.png)
 
 ## More
 
-7. The focus/ignore effect at every one of the 64 layers.
+8. The focus/ignore effect at every one of the 64 layers.
 
 ![](figures/layers.jpg)
 
-8. Qwen rates how much they attended to each paragraph; a separate model guesses the same from the text alone. Qwen tracks it, but no better than the reader.
+9. Qwen rates how much they attended to each paragraph; a separate model guesses the same from the text alone. Qwen tracks it, but no better than the reader.
 
 ![](figures/monitor_logprob.png)
 
-9. The noticing test with word lists instead of paragraphs: eight single-word lines, one of them boosted, then "did you notice, and which one?". Left: Qwen never says Yes, with or without a boost. Right: when made to start "Yes, word [", how often their top answer is the boosted word's number, as change from no boost (12.5%), with the raw rates above each bar.
+10. The noticing test with word lists instead of paragraphs: eight single-word lines, one of them boosted, then "did you notice, and which one?". Left: Qwen never says Yes, with or without a boost. Right: when made to start "Yes, word [", how often their top answer is the boosted word's number, as change from no boost (12.5%), with the raw rates above each bar.
 
 ![](figures/words_told_pair.jpg)
 
-10. The instruction placed before the paragraphs instead of after: a much smaller effect.
+11. The instruction placed before the paragraphs instead of after: a much smaller effect.
 
 ![](figures/hero_before.jpg)
+
+12. Two typical questions, each with "Focus your attention on paragraph [Pk]." for each of the four paragraphs in turn: every token of all four paragraphs coloured by its change in attention at layer 28, compared to only mentioning the named paragraph.
+
+![](figures/grid_focus_L28.png)
