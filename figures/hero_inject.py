@@ -185,7 +185,7 @@ const arrow=(p0,c1,c2,tip,col)=>{{ const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2[0]
   `<path d="M${{tip}} L${{b[0]-H*uy}},${{b[1]+H*ux}} L${{b[0]+H*uy}},${{b[1]-H*ux}} Z" fill="${{col}}"/>`; }};
 // purple: up out of the report question's top edge, one quarter-turn, into the right end of [P2]
 const t=R('p2t'), q=R('rq'); const P0=[q.left+260, q.top-6], T=[t.right+12, (t.top+t.bottom)/2];
-let s=arrow(P0, [P0[0], P0[1]-0.55*(P0[1]-T[1])], [T[0]+0.55*(P0[0]-T[0]), T[1]], T, '{PURPLE}');
+let s=arrow(P0, [P0[0], P0[1]-0.55*(P0[1]-T[1])], [T[0]+0.55*(P0[0]-T[0]), T[1]], T, '#A98BD6');
 // black: from under each underlined part of the reply, a gentle bow down to its column title
 const ry=R('ry'), rp=R('rp'), c1=R('c1'), c2=R('c2');
 // quadratic control point Q (no inflection possible), written as the equivalent cubic
