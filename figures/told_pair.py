@@ -84,7 +84,7 @@ def panel(x0, rel, p, base, rate):
             fig.text(cxf, 1 - 178 / VH, pstr(p, floor=1 / (NF + 1)), ha="center", va="top", fontsize=56, color=PURPLE)
         fig.text(cxf, 1 - 6 / VH, f"{100*mu:+.0f}%".replace("-", "\u2212"), ha="center", va="top", fontsize=78, fontweight="bold", color=PURPLE)
         fig.text(cxf, 1 - 112 / VH, f"{100*base:.0f}% \u2192 {100*rate[m]:.0f}%", ha="center", va="top", fontsize=36, fontweight="bold", color=INK, family=["Helvetica", "Arial Unicode MS"])
-        fig.text(cxf, 196 / VH, f"\u00d7{MASSES[m]:.1f}", ha="center", va="center", fontsize=78, fontweight="bold", color=PURPLE if m == M else INK)
+        fig.text(cxf, 196 / VH, f"\u00d7{MASSES[m]:.1f}", ha="center", va="center", fontsize=78, fontweight="bold", color=INK)
     fig.text((x0 + LM + 2 * CW) / VW, 52 / VH, "attention on the boosted paragraph", ha="center", va="center", fontsize=dr.px(76), fontweight="bold", color=INK)
 panel(0, RY, PY, YC.mean(), {m: YB[m].mean() for m in MS})
 panel(PW + GAP, RN, PN, 0.25, {m: AB[m].mean() for m in MS})
