@@ -139,7 +139,7 @@ We then asked the report question many more ways (which paragraph most, which le
 
 ## Summary and limits
 
-So, in short: Qwen3-32B can steer its attention on request, specifically when told to focus and much less specifically when told to ignore, without changing its answer, and stronger words don't help. It can't tell you where its attention went any better than a reader of the transcript, though a boost to its attention on a paragraph's text does leave a paragraph-specific, inverted mark on its report.
+So, in short: Qwen3-32B can steer its attention on request, specifically when told to focus and much less specifically when told to ignore, without changing its answer, and stronger words don't help. Its self-report tracks where its attention went, but no better than a reader of the transcript, though a boost to its attention on a paragraph's text does leave a paragraph-specific, inverted mark on its report.
 
 Some honest limits. Almost everything here is one model, Qwen3-32B (Qwen3-8B, in `results/RESULT.md`, shows the same picture with weaker control), with one kind of filler text and one unrelated task. "Attention" is our summary, averaged over heads and a band of layers; the model has no reason to know that particular number, and a report could track some other aspect of attention we didn't measure. The first report test asked in one wording; the later one in thirteen. The mention line controls for naming, but we can't fully rule out that part of the focus effect is the "[Pk]" in the instruction matching the "[Pk]" label by surface form. The direct boost is far outside normal operation, so a report that ignores it doesn't prove the model can't read natural variation. And we don't know why the trace in the report is inverted.
 

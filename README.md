@@ -1,8 +1,8 @@
 # Can a language model steer, and report, its own attention?
 
-![Left: told to focus on a paragraph, Qwen3-32B put more attention on it, and told to ignore it, less, while giving the same answer. Right: boosted onto a paragraph and asked if they noticed, they say "Yes" more often and name it above chance](figures/hero_pair.jpg)
+![Left: boosted onto a paragraph and asked if they noticed, Qwen3-32B say "Yes" more often and name it above chance. Right: told to focus on a paragraph, they put more attention on it, and told to ignore it, less, while giving the same answer](figures/hero_pair.jpg)
 
-We asked Qwen3-32B to focus on, or ignore, one of four paragraphs, and measured their attention weights. They can steer their attention on request without changing their answer. But they can't tell you where it went: their report follows their attention at the moment of reporting, not the attention they used to answer.
+We asked Qwen3-32B to focus on, or ignore, one of four paragraphs, and measured their attention weights. They can steer their attention on request without changing their answer. Their self-report tracks their attention, but no better than another model reading the transcript, and it follows their attention at the moment of reporting, not the attention they used to answer.
 
 Let's start with introspection. We boost one paragraph only while Qwen write their answer, then ask which paragraph they attended to most, with the report running unboosted on identical text. The boost leaves a trace, pointing the wrong way: at 6.5× the attention, they become 18% less likely to name the boosted paragraph than the others, growing smoothly with the dose. Boost the same paragraph while they read the report question instead, and they become 97% more likely to name it; with lists of single words, 580%.
 
@@ -18,9 +18,9 @@ With lists of single words, Qwen never say "Yes": 0 of 7,680 boosted trials. For
 
 ![With single words, Qwen never say "Yes" to noticing a boost; forced to name a word, they pick the boosted one far above chance, with the boost still on](figures/words_told.png)
 
-Could a self-report still be a useful monitor? We asked the report question 20 ways on 300 new prompts and compared it with the same model reading the transcript. Right after answering, the self-report tracks true attention worse than the transcript reader (rank correlation 0.42 against 0.49), and a classifier on surface features of the transcript beats both (0.77).
+Could a self-report still be a useful monitor? We asked the report question 20 ways on 300 new prompts and compared it with the same model reading the transcript. Right after answering, the self-report tracks true attention (rank correlation 0.42), but a little less well than the transcript reader (0.49), and a classifier on surface features of the transcript beats both (0.77).
 
-![The self-report tracks true attention a little worse than the same model reading the transcript](figures/monitor_logprob.png)
+![Qwen's self-report tracks their attention, but no better than the same model reading the transcript](figures/monitor_logprob.png)
 
 Now control. No boost: we add one line before an unrelated question ("what is 83 + 80?"). Against a line that only names the paragraph, "Focus your attention on paragraph [P2]" raises attention on it by 242% at layer 28, in every one of 150 prompts, and "Completely ignore paragraph [P2]" lowers it by 25%. The answer stays 163. Stronger words don't help: averaged over layers 21–53, "focus your attention on" gives +47%, "focus very strongly and only on" just +21%, and only "completely ignore" goes below the mention (−14%).
 
@@ -57,6 +57,6 @@ In [CHECKS.md](CHECKS.md):
 
 ## Why it matters
 
-Self-report would be a cheap monitor if it were faithful. Here it follows attention at the moment of reporting, not the attention behind the answer, so asking a model where they looked doesn't tell you. Steering, though, works.
+Self-report would be a cheap monitor if it were faithful. Here it tracks attention, but no better than reading the transcript, and it follows attention at the moment of reporting, not the attention behind the answer, so asking a model where they looked adds nothing over reading what they wrote. Steering, though, works.
 
 Code and data: [told_inject/](told_inject), [privileged/](privileged), [monitor/](monitor), [mechinterp/](mechinterp), [results/](results).
