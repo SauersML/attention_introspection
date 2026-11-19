@@ -1,4 +1,4 @@
-"""Control hero and introspection hero side by side, white gap. Built from the narrower, taller versions rendered for the pair
+"""Introspection hero (left) and control hero (right) side by side, white gap. Built from the narrower, taller versions rendered for the pair
 (hero_L28.py --W=1800 --VH=17.5 -> hero_L28_tall.png; hero_inject.py --W=1800 --VH=1295 -> hero_inject_tall.png), which come out the
 same height; any small difference is evened out by scaling both to the taller one.
 Above each column: a horizontal curly brace spanning the whole column (tips down, centre point up), drawn as a filled calligraphic stroke
@@ -10,7 +10,9 @@ import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 H = os.path.dirname(os.path.abspath(__file__))
 INK = "#1D1D1F"
-a, b = (Image.open(os.path.join(H, f)).convert("RGB") for f in (sys.argv[1:3] if len(sys.argv) > 3 else ("hero_L28_tall.png", "hero_inject_tall.png")))
+FILES = sys.argv[1:3] if len(sys.argv) > 3 else ("hero_inject_tall.png", "hero_L28_tall.png")   # introspection left, control right
+LAB = [("attention introspection" if "inject" in f else "attention control") for f in FILES]
+a, b = (Image.open(os.path.join(H, f)).convert("RGB") for f in FILES)
 OUT = sys.argv[3] if len(sys.argv) > 3 else "hero_pair"
 def _top(im): return int(np.where((np.asarray(im) < 250).any(2).any(1))[0][0])
 _tr = max(min(_top(a), _top(b)) - 4, 0); a, b = a.crop((0, _tr, a.width, a.height)), b.crop((0, _tr, b.width, b.height))   # no white between the braces and the columns
@@ -42,9 +44,9 @@ def brace(x0, x1, yb, ht, wmax=26.0, wtip=3.0, n=600):
 # label size: as big as both fit over their columns (one shared size), at most 138 pt = 1.5x the heroes' big % labels (89 pt)
 _f = plt.figure(dpi=100); _r = _f.canvas.get_renderer()
 FS = min([138] + [138 * (w - 40) / _f.text(0, 0, l, fontsize=138, fontweight="bold", family="Helvetica").get_window_extent(_r).width
-                  for w, l in ((a.width - 60, "attention control"), (b.width - 60, "attention introspection"))]); plt.close(_f); print("label pt", round(FS))
+                  for w, l in ((a.width - 60, LAB[0]), (b.width - 60, LAB[1]))]); plt.close(_f); print("label pt", round(FS))
 fig = plt.figure(figsize=(Wt / 100, BAND / 100), dpi=100); ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0, Wt); ax.set_ylim(0, BAND); ax.axis("off")
-for (x0, x1), lab in (((30, a.width - 30), "attention control"), ((a.width + gap + 30, Wt - 30), "attention introspection")):
+for (x0, x1), lab in (((30, a.width - 30), LAB[0]), ((a.width + gap + 30, Wt - 30), LAB[1])):
     ax.add_patch(Polygon(brace(x0, x1, 4, 116), closed=True, fc=INK, ec=INK, lw=1.0, joinstyle="miter"))
     t = ax.text((x0 + x1) / 2, 118, lab, ha="center", va="bottom", fontsize=FS, fontweight="bold", color=INK, family="Helvetica")
 bp = os.path.join(H, "_braces.png"); fig.savefig(bp, dpi=100, facecolor="white"); plt.close(fig)
