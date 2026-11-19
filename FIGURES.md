@@ -22,9 +22,9 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/dose_full.jpg)
 
-5. Which tokens get the extra attention: one prompt, every token of paragraph 2 coloured by its % change when Qwen is told to focus on it, compared to just mentioning it.
+5. One typical question: every token of all four paragraphs coloured by its change in attention at layer 28 when Qwen is told to focus on that paragraph, compared to only mentioning it.
 
-![](figures/tokens_focus.jpg)
+![](figures/grid_focus_one.jpg)
 
 6. Telling Qwen to focus on (left) or ignore (right) each paragraph in turn: which paragraph's attention moves.
 
