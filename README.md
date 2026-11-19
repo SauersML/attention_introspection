@@ -47,6 +47,8 @@ In [CHECKS.md](CHECKS.md):
 - single-word lists;
 - limits and prior work.
 
+![On single-word lists the same split holds: boosting a word while Qwen answer barely changes the report, and boosting it while they read the report question makes the report name it far more often](figures/privileged_words.png)
+
 ## Why it matters
 
 Self-report would be a cheap monitor if it were faithful. Here it follows attention at the moment of reporting, not the attention behind the answer, so asking a model where they looked doesn't tell you. Steering, though, works.

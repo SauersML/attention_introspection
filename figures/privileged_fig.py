@@ -27,7 +27,7 @@ ACOL = {"A": "#2B5FA8", "C": "#E07B24"}   # one colour per arm (the compared thi
 ROOT = os.path.dirname(HERE)
 NUMBERS = "--numbers" in sys.argv; ARGS = [a for a in sys.argv[1:] if a != "--numbers"]
 DD = os.path.join(ROOT, ARGS[0]) if ARGS else os.path.join(ROOT, "results/privileged_inorder_full"); D = os.path.join(DD, "data/")
-OUTPNG = os.path.join(ROOT, ARGS[2]) if len(ARGS) > 2 else os.path.join(HERE, "privileged.png")
+OUTPNG = os.path.join(ROOT, ARGS[2]) if len(ARGS) > 2 else os.path.join(HERE, "privileged_dose_violins.png")   # privileged.png is now drawn by privileged_words.py --par
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
 EX = json.load(open(os.path.join(ROOT, ARGS[1]))) if len(ARGS) > 1 else {c["id"]: c for c in json.load(open(os.path.join(HERE, "privileged_inorder_ctx.json")))}[29]
 DOSES = [0.25, 0.5, 2.0, 5.0, 10.0]

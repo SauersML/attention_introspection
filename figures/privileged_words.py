@@ -11,7 +11,7 @@ p: two-sided sign-flip test over prompts (200,000 flips; pfmt). Dots coloured by
 Column subtitle: measured attention mass on the boosted word, boost / no boost at x10 (results.json "manip").
 Bottom: dose line, x1/4 .. x10 (nominal multiplier on the attention weights; x1 = no boost = 0 by construction), mean and 95% bootstrap CI over
 prompts, read from results.json "spec".
-usage: OMP_NUM_THREADS=2 nice -n 19 python3 figures/privileged_words.py [--keep]  -> figures/privileged_words.png"""
+usage: OMP_NUM_THREADS=2 nice -n 19 python3 figures/privileged_words.py [--par] [--keep]  -> figures/privileged_words.png (--par: the 100 paragraph prompts of results/privileged_inorder_full, example context 29, -> figures/privileged.png)"""
 import json, glob, gzip, math, os, sys, html, base64, subprocess, random
 import numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
@@ -21,14 +21,20 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE, pct_colour
 from pfmt import pstr
 from robot_injected import injected_robot
-ROOT = os.path.dirname(HERE); DD = os.path.join(ROOT, "results/privileged_words"); D = os.path.join(DD, "data/")
+PARM = "--par" in sys.argv   # paragraphs (results/privileged_inorder_full, the 100 paragraph prompts) -> privileged.png
+ROOT = os.path.dirname(HERE); DD = os.path.join(ROOT, "results/privileged_inorder_full" if PARM else "results/privileged_words"); D = os.path.join(DD, "data/")
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 ROBOT = "/Users/user/watching/figures/assets/robot.png"
 AMB = "#F2B53A"; LIL = "#A574F2"; W = 2300; PAD = 26; GAP = 40; CW = (W - 2 * PAD - GAP) // 2
-R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl.gz") for l in gzip.open(f, "rt") if l.strip()], key=lambda r: r["id"]); assert len(R) == 100
-RES = json.load(open(os.path.join(DD, "results.json"))); META = json.load(open(D + "meta.json"))
+if PARM:
+    R = sorted([r for f in glob.glob(D + "recs_*.jsonl") for r in map(json.loads, filter(str.strip, open(f))) if r["setup"] in ("par_arith", "par_qa")], key=lambda r: r["id"])
+else:
+    R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl.gz") for l in gzip.open(f, "rt") if l.strip()], key=lambda r: r["id"])
+assert len(R) == 100
+RES = json.load(open(os.path.join(DD, "results.json"))); META = None if PARM else json.load(open(D + "meta.json"))
+NOUN, LET = ("paragraph", "P") if PARM else ("word", "W")
 M = 10.0; ARMS = [("A", "while answering"), ("C", "while reading the question")]
-EXID, K = 0, 5
+EXID, K = (29, 1) if PARM else (0, 5)   # paragraphs: context 29 (near both arms' median effect), boosted [P2]
 neg = lambda s: s.replace("-", "\u2212")
 pct = lambda v: 100 * (math.exp(v) - 1)
 
@@ -43,95 +49,120 @@ def signflip(x, NF=200000, seed=0):
     for _ in range(NF // 20000):
         s = rng.choice([-1.0, 1.0], (20000, len(x))); h += int((np.abs((s * x).mean(1)) >= obs).sum())
     return (h + 1) / (NF + 1)
+def boot(x, B=10000, seed=0):
+    x = np.asarray(x); m = x[np.random.default_rng(seed).integers(0, len(x), (B, len(x)))].mean(1)
+    return float(np.percentile(m, 2.5)), float(np.percentile(m, 97.5))
 Z = {a: np.array([spec(r, a, M) for r in R]) for a, _ in ARMS}
 ST = {}
 for a, _ in ARMS:
-    mu = float(Z[a].mean()); assert abs(mu - RES["spec"][f"{a}|{M}"]["mean"]) < 1e-9
+    mu = float(Z[a].mean())
+    if not PARM: assert abs(mu - RES["spec"][f"{a}|{M}"]["mean"]) < 1e-9
     ST[a] = dict(mean=mu, p=signflip(Z[a]), att=RES["manip"][a][str(M)]["mean"])
-    print(f"{a} x10: {pct(mu):+.1f}% CI [{pct(RES['spec'][f'{a}|{M}']['lo']):+.1f}, {pct(RES['spec'][f'{a}|{M}']['hi']):+.1f}] p={ST[a]['p']:.2g} "
+    lo_, hi_ = boot(Z[a])
+    print(f"{a} x10: {pct(mu):+.1f}% CI [{pct(lo_):+.1f}, {pct(hi_):+.1f}] p={ST[a]['p']:.2g} "
           f"({pstr(ST[a]['p'], floor=1/200001)}); attention x{ST[a]['att']:.2f}; prompts above 0: {(Z[a] > 0).mean():.0%}")
 DOSES = [0.25, 0.5, 1.0, 2.0, 5.0, 10.0]
-DL = {a: [(0.0, 0.0, 0.0) if m == 1.0 else tuple(RES["spec"][f"{a}|{m}"][k] for k in ("mean", "lo", "hi")) for m in DOSES] for a, _ in ARMS}
+def dl(a, m):
+    if m == 1.0: return (0.0, 0.0, 0.0)
+    if not PARM: return tuple(RES["spec"][f"{a}|{m}"][k] for k in ("mean", "lo", "hi"))
+    z = np.array([spec(r, a, m) for r in R]); return (float(z.mean()), *boot(z))   # mean and 95% bootstrap CI over the 100 prompts
+DL = {a: [dl(a, m) for m in DOSES] for a, _ in ARMS}
 for a, _ in ARMS: print(a, "dose", [f"{pct(v[0]):+.0f}%" for v in DL[a]])
 
 # ---------------- the example prompt ----------------
-rng = random.Random(META["seed"]); POOL = META["cats"]; XY = []
-for i in range(META["n"]):   # the run's draw order (privileged_words.py): cats, x, y, words, label and option permutations
+if PARM:
+    EX = {c["id"]: c for c in json.load(open(os.path.join(HERE, "privileged_inorder_ctx.json")))}[EXID]
+    rec = {r["id"]: r for r in R}[EXID]; assert rec["lab"] == EX["lab"] == [1, 2, 3, 4] and rec["ntok"] == EX["ntok"]
+    ITEMS = [" ".join(p.split()[:n]) + " …" for p, n in zip(EX["segs"], [3, 3, 2, 2])]
+    QLINE = EX["user"].split("\n\n")[-1]; HEADLINE = "Here are four paragraphs."
+if not PARM: rng = random.Random(META["seed"]); POOL = META["cats"]; XY = []
+for i in range(0 if PARM else META["n"]):   # the run's draw order (privileged_words.py): cats, x, y, words, label and option permutations
     cats = rng.sample(sorted(POOL), 8); x, y = rng.randrange(10, 90), rng.randrange(10, 90); segs = [rng.choice(POOL[c]) for c in cats]
     rng.sample(range(8), 8); rng.sample(range(1, 9), 8); XY.append((x, y, segs, cats))
-rec = R[EXID]; x, y, segs, cats = XY[EXID]
-assert segs == rec["words"] and cats == rec["cats"] and str(x + y) == rec["ans"].strip() and rec["lab"] == list(range(1, 9))
-QLINE = f"Unrelated question: what is {x} + {y}? Answer with just the number."
-QTEXT = "Which word did you attend to most while writing your answer?"
-print("example", rec["words"], QLINE, rec["ans"], "boosted", rec["words"][K])
+if not PARM:
+    rec = R[EXID]; x, y, segs, cats = XY[EXID]
+    assert segs == rec["words"] and cats == rec["cats"] and str(x + y) == rec["ans"].strip() and rec["lab"] == list(range(1, 9))
+    QLINE = f"Unrelated question: what is {x} + {y}? Answer with just the number."; ITEMS = rec["words"]; HEADLINE = "Here is a list of eight words."
+QTEXT = f"Which {NOUN} did you attend to most while writing your answer?"
+print("example", ITEMS, QLINE, rec["ans"], "boosted", ITEMS[K])
 
 # ---------------- violins ----------------
-VH = 820; HEAD = 215   # px above the tallest violin for its big label and p
+# one shared y axis (log scale, ticks as % change); y labels in the left margin; the dot key in the empty space above the arm-A violin
+VH = 820 if PARM else 760; HEAD = 250   # px above the tallest violin for its big label and p
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 px = lambda v: v * 72 / 100
 fig = plt.figure(figsize=(W / 100, VH / 100), dpi=100)
-TV = [0, 100, 300, 700, 1500, 3100]   # x1, x2, x4, x8, x16, x32: evenly spaced on the log axis
-allz = np.concatenate(list(Z.values())); ylo = min(allz.min(), 0) - 0.12; ztop = max(allz.max(), math.log(32))
+TV = [-50, 0, 100, 300, 700] if PARM else [0, 100, 300, 700, 1500, 3100]   # x1/2, x1, x2, x4, x8 (...): evenly spaced on the log axis
+allz = np.concatenate(list(Z.values())); ylo = min(allz.min(), 0) - 0.12; ztop = max(allz.max(), math.log(1 + TV[-1] / 100))
 AXB = 6; AXH = VH - AXB - 4; yhi = ztop + HEAD * (ztop - ylo) / (AXH - HEAD)
+LM = 250 if PARM else 320   # left margin for the y labels
+ax = fig.add_axes([0, AXB / VH, 1, AXH / VH]); ax.set_xlim(0, W); ax.set_ylim(ylo, yhi); ax.axis("off")
+ax.plot([LM - 20, W - PAD], [0, 0], color=INK, lw=4, zorder=0)
+for t in TV:
+    ax.text(LM - 34, math.log(1 + t / 100), neg(f"{t:+,d}%") if t else "0%", ha="right", va="center", fontsize=px(60), fontweight="bold", color=INK)
+CX = {"A": PAD + CW / 2 + LM / 3, "C": PAD + CW + GAP + CW / 2}   # violin centres (A nudged right of the y labels)
+HW = 330   # max half-width, px
 for j, (a, nm) in enumerate(ARMS):
-    x0 = PAD + j * (CW + GAP)
-    ax = fig.add_axes([x0 / W, AXB / VH, CW / W, AXH / VH])
-    z = Z[a]; g = np.random.default_rng(1 + j)
-    kde = gaussian_kde(z, bw_method=0.35); yy = np.linspace(z.min() - 0.06, z.max() + 0.06, 300); dd = kde(yy); hw = 0.30 * dd / dd.max()
-    ax.fill_betweenx(yy, -hw, hw, color=PURPLE, alpha=0.18, lw=0, zorder=1)
-    ax.plot(np.r_[hw, -hw[::-1], hw[:1]], np.r_[yy, yy[::-1], yy[:1]], color=PURPLE, lw=2.5, zorder=1)
-    xj = g.uniform(-0.9, 0.9, len(z)) * np.interp(z, yy, hw)
+    z = Z[a]; g = np.random.default_rng(1 + j); cx = CX[a]; col = PURPLE if a == "C" else INK
+    kde = gaussian_kde(z, bw_method=0.35); yy = np.linspace(z.min() - 0.06, z.max() + 0.06, 300); dd = kde(yy); hw = HW * dd / dd.max()
+    ax.fill_betweenx(yy, cx - hw, cx + hw, color=PURPLE, alpha=0.18, lw=0, zorder=1)
+    ax.plot(np.r_[cx + hw, cx - hw[::-1], cx + hw[:1]], np.r_[yy, yy[::-1], yy[:1]], color=PURPLE, lw=2.5, zorder=1)
+    xj = cx + g.uniform(-0.9, 0.9, len(z)) * np.interp(z, yy, hw)
     ax.scatter(xj, z, s=520, c=pct_colour(np.exp(z)), alpha=0.5, edgecolors="none", zorder=3); ax.scatter(xj, z, s=5, color="black", zorder=4)
-    ax.plot([-0.12, 0.12], [ST[a]["mean"]] * 2, color=INK, lw=4, zorder=7, solid_capstyle="butt")
-    ax.plot([-0.62 if j == 0 else -1, 1], [0, 0], color=INK, lw=4, zorder=0)
-    if j == 0:
-        for t in TV:
-            yv = math.log(1 + t / 100)
-            ax.text(-0.98, yv, f"+{t:,}%".replace("+0%", "0%"), ha="left", va="center", fontsize=px(58), fontweight="bold", color=INK)
-        ax.annotate("report names the boosted word\nmore often than the others", (-0.98, math.log(32)), xytext=(0, 34), textcoords="offset points", ha="left", va="bottom", fontsize=px(54), fontweight="bold", color=INK, linespacing=1.1)
-    ax.set_xlim(-1, 1); ax.set_ylim(ylo, yhi); ax.set_xticks([]); ax.set_yticks([])
-    for s_ in ax.spines.values(): s_.set_visible(False)
-    top = yy[-1]   # big label and p sit right above this violin's top
-    ax.annotate(pstr(ST[a]["p"], floor=1 / 200001), (0, top), xytext=(0, 6), textcoords="offset points", ha="center", va="bottom", fontsize=56, color=PURPLE)
-    ax.annotate(neg(f"{pct(ST[a]['mean']):+.0f}%"), (0, top), xytext=(0, 70), textcoords="offset points", ha="center", va="bottom", fontsize=89, fontweight="bold", color=PURPLE)
-    if j == 1:   # key, right of the purple violin
-        kx, ky = 0.30, math.log(1.9)
-        ax.scatter([kx], [ky], s=520, c=pct_colour([4.0]), alpha=0.5, edgecolors="none"); ax.scatter([kx], [ky], s=5, color="black")
-        ax.text(kx + 0.07, ky, "= one prompt", ha="left", va="center", fontsize=px(54), fontweight="bold", color=INK)
+    ax.plot([cx - 130, cx + 130], [ST[a]["mean"]] * 2, color=INK, lw=4, zorder=7, solid_capstyle="butt")
+    big = neg(f"{pct(ST[a]['mean']):+.0f}%"); ps = pstr(ST[a]["p"], floor=1 / 200001)
+    if True:   # label right above the violin's top
+        top = yy[-1]
+        ax.annotate(ps, (cx, top), xytext=(0, 6), textcoords="offset points", ha="center", va="bottom", fontsize=56, color=col)
+        ax.annotate(big, (cx, top), xytext=(0, 70), textcoords="offset points", ha="center", va="bottom", fontsize=89, fontweight="bold", color=col)
+    else:   # a drop: label to the right of the violin, level with the mean
+        ax.annotate(big, (cx + hw.max() + 40, ST[a]["mean"]), xytext=(0, 4), textcoords="offset points", ha="left", va="bottom", fontsize=89, fontweight="bold", color=col)
+        ax.annotate(ps, (cx + hw.max() + 40, ST[a]["mean"]), xytext=(0, -4), textcoords="offset points", ha="left", va="top", fontsize=56, color=col)
+# y-axis meaning and the dot key, in the empty space above the arm-A violin
+ky = math.log(1 + TV[-2] / 100) if PARM else math.log(1 + TV[-2] / 100)
+ax.text(LM, ztop + 0.02, f"report names the boosted {NOUN}\nmore often than the other {NOUN}s", ha="left", va="center", fontsize=px(56), fontweight="bold", color=INK, linespacing=1.1)
+kx = LM + 30
+if PARM: kx, ky = PAD + CW + GAP - 70, math.log(7.5)   # the A column's top is taken by the -18% label: key in the free space left of the arm-C violin
+ax.scatter([kx], [ky], s=520, c=pct_colour([4.0]), alpha=0.5, edgecolors="none"); ax.scatter([kx], [ky], s=5, color="black")
+ax.text(kx + 34, ky, "= one prompt", ha="left", va="center", fontsize=px(56), fontweight="bold", color=INK)
 VP = os.path.join(HERE, "_pw_violins.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- dose line ----------------
-DH = 430
+DH = 400
 fig = plt.figure(figsize=(W / 100, DH / 100), dpi=100)
-AX0, AX1 = 360, W - 670
-ax = fig.add_axes([AX0 / W, 62 / DH, (AX1 - AX0) / W, (DH - 112) / DH])
+AX0, AX1 = LM + (150 if PARM else 60), W - 640
+ax = fig.add_axes([AX0 / W, 66 / DH, (AX1 - AX0) / W, (DH - 96) / DH])
 lx = np.log(DOSES)
+DT = (-20, 0, 50, 100) if PARM else (0, 300, 700); DTOP = math.log(2.3) if PARM else math.log(8.4); DBOT = math.log(0.72)
 for a, nm in ARMS:
     col = PURPLE if a == "C" else INK
     mu, lo, hi = (np.array([v[i] for v in DL[a]]) for i in range(3))
     ax.fill_between(lx, lo, hi, color=col, alpha=0.18, lw=0); ax.plot(lx, mu, color=col, lw=6, marker="o", ms=14, zorder=3)
-    ax.text(lx[-1] + 0.12, mu[-1] + (0 if a == "C" else 0.16), f"boost {nm}".replace("reading ", "reading\n"), ha="left", va="center", fontsize=px(56), fontweight="bold", color=col, linespacing=1.05)
+    ax.text(lx[-1] + 0.12, mu[-1], f"boost {nm}".replace("reading ", "reading\n"), ha="left", va="center", fontsize=px(56), fontweight="bold", color=col, linespacing=1.05)
 ax.axhline(0, color=INK, lw=2.5, zorder=0)
-for t in (0, 300, 700):
-    ax.text(lx[0] - 0.2, math.log(1 + t / 100), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(54), fontweight="bold", color=INK)
-ax.text(lx[0] + 0.05, math.log(8), "report names the boosted word", ha="left", va="center", fontsize=px(54), fontweight="bold", color=INK, linespacing=1.05)
+for t in DT:
+    ax.text(lx[0] - 0.2, math.log(1 + t / 100), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(56), fontweight="bold", color=INK)
+ax.text(lx[0] + 0.05, DTOP - 0.04 * (DTOP - DBOT), f"report names the boosted {NOUN}", ha="left", va="top", fontsize=px(56), fontweight="bold", color=INK)
 TL = ["×¼", "×½", "none", "×2", "×5", "×10"]
-for xv, t in zip(lx, TL): ax.text(xv, math.log(0.72), t, ha="center", va="top", fontsize=px(58), color=INK)
-ax.text(lx[0] - 0.36, math.log(0.72), "boost", ha="right", va="top", fontsize=px(58), fontweight="bold", color=INK)
-ax.set_xlim(lx[0] - 0.1, lx[-1] + 0.1); ax.set_ylim(math.log(0.72), math.log(8.4)); ax.axis("off")
+if PARM:   # measured attention on the boosted paragraph (boost / no boost, results.json "manip"; the same for both arms to 2 digits)
+    TL = ["×" + (f"{v:.2f}" if v < 1 else f"{v:.1f}") if v is not None else "none" for v in [RES["manip"]["A"][str(m)]["mean"] if m != 1.0 else None for m in DOSES]]
+    assert TL == ["×" + (f"{v:.2f}" if v < 1 else f"{v:.1f}") if v is not None else "none" for v in [RES["manip"]["C"][str(m)]["mean"] if m != 1.0 else None for m in DOSES]]
+for xv, t in zip(lx, TL): ax.text(xv, DBOT, t, ha="center", va="top", fontsize=px(60), color=INK)
+fig.text(PAD / W, ax.transData.transform((0, DBOT))[1] / DH, "attention" if PARM else "boost", ha="left", va="top", fontsize=px(60), fontweight="bold", color=INK)
+ax.set_xlim(lx[0] - 0.1, lx[-1] + 0.1); ax.set_ylim(DBOT, DTOP); ax.axis("off")
 DP = os.path.join(HERE, "_pw_dose.png"); fig.savefig(DP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
 b64 = lambda p: base64.b64encode(open(p, "rb").read()).decode()
 robot = b64(ROBOT); robot_inj = injected_robot(ROBOT)
 def card(i, a, nm):
-    wl = "".join(f'<div class="w"><b>[W{p + 1}]</b> <span {f"class=k id=wk{i}" if p == K else ""}>{html.escape(rec["words"][p])}</span></div>' for p in range(8))
+    wl = "".join(f'<div class="w"><b>[{LET}{p + 1}]</b> <span {f"class=k id=wk{i}" if p == K else ""}>{html.escape(ITEMS[p])}</span></div>' for p in range(len(ITEMS)))
     rob = robot_inj if a == "A" else robot
-    return f'''<div class="col"><div class="t1">boost {nm}</div><div class="t2">attention to the boosted word ×{ST[a]["att"]:.1f}</div>
-<div class="ub" id="ub{i}">Here is a list of eight words.<div class="wl">{wl}</div><div>{html.escape(QLINE)}</div></div>
+    return f'''<div class="col"><div class="t1">boost {nm}</div><div class="t2">attention to the boosted {NOUN} ×{ST[a]["att"]:.1f}</div>
+<div class="ub" id="ub{i}">{HEADLINE}<div class="wl">{wl}</div><div>{html.escape(QLINE)}</div></div>
 <div class="mrow"><img class="rob" id="rob{i}" src="data:image/png;base64,{rob}"><div class="mb" id="mb{i}">{html.escape(rec["ans"].strip())}</div></div>
 <div class="ub2" id="rq{i}">{QTEXT} …</div>
-<div class="mrow fr"><img class="rob" id="frob{i}" src="data:image/png;base64,{robot_inj if a == "C" else robot}"><div class="mb fb" id="fb{i}"><span class="pf">[W</span><span class="qm">?</span></div>
+<div class="mrow fr"><img class="rob" id="frob{i}" src="data:image/png;base64,{robot_inj if a == "C" else robot}"><div class="mb fb" id="fb{i}"><span class="pf">{"P" if PARM else "[W"}</span><span class="qm">?</span></div>
 <div class="fl" id="fl{i}"><div>prefilled</div><div class="flq">chance of each<br>number read here</div></div></div></div>'''
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
@@ -206,6 +237,6 @@ hp = os.path.join(HERE, "_pw.html"); open(hp, "w").write(HTML); raw = os.path.jo
 subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3000",
                 "--force-device-scale-factor=1", "--virtual-time-budget=3000", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
 im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
-im = im.crop((0, 0, W, nz[-1] + 24)); out = os.path.join(HERE, "privileged_words.png"); im.save(out); print(out, im.size)
+im = im.crop((0, 0, W, nz[-1] + 24)); out = os.path.join(HERE, "privileged.png" if PARM else "privileged_words.png"); im.save(out); print(out, im.size)
 if "--keep" not in sys.argv:
     for f in (raw, hp, VP, DP): os.remove(f)
