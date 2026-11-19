@@ -16,7 +16,7 @@ and/or the report options were listed in a random order.
 | hero_before.png | `results/qwen3-32b-before/before.py` | in order | no report |
 | layers.png | `layers3.py` on the ladder's `dose.json` | in order | no report |
 | trace3.png | `attn_intro.py` (`results/qwen3-32b/A.json`, `A2.json`) | in order | in order |
-| privileged.png | `privileged/privileged.py`, arms A and C, all 5 doses, 100 paragraph prompts (+ the other five kinds at ×10 on its bottom line) | **shuffled** (`c["lab"]` random per prompt) | **shuffled** (`c["opt"]`) |
+| privileged.png | `privileged/privileged.py`, arms A and C, all 5 doses, 100 paragraph prompts (+ the other five kinds at ×10 on its bottom line) | **shuffled** (`c["lab"]` random per prompt); now redrawn in order | **shuffled** (`c["opt"]`); now redrawn in order |
 | monitor_logprob.png | `monitor/monitor.py` | in order | **shuffled** (`c["opts"]` random per prompt and wording) |
 
 ## Heroes (figures/hero*.png)
@@ -27,7 +27,7 @@ and/or the report options were listed in a random order.
 | hero.png, hero_none.png | `attn_intro.py` (`B.json`) | in order |
 | hero_told.png, hero_told_top.png, hero_told_yes.png, hero_told_yes_top.png | told injection, `told_inject/told_inject.py` | in order |
 | hero_question_top.png | `privileged_inorder/` (arm C at ×5, ×10) | in order |
-| hero_question.png | `privileged.py` arm C at ×10 (`results/privileged/data`) | **shuffled** |
+| hero_question.png | `privileged.py` arm C at ×10 (`results/privileged_shuffled/data`) | **shuffled** |
 | hero4*.png | not audited here (left as is) | |
 
 ## Other results the README cites
@@ -41,7 +41,7 @@ and/or the report options were listed in a random order.
 Shuffled experiments behind README figures, rerun with labels and options in order (`--inorder`, commit d99a33d), everything else identical
 (same seed, prompts, doses, arms):
 
-- `privileged.py --inorder`, all 300 prompts, all arms and doses, 6 shards: results in `results/privileged/` (the shuffled run moves to `results/privileged_shuffled/`).
-- `monitor.py --inorder`, 3 shards, 60 per family as before: results in `results/monitor/` (shuffled: `results/monitor_shuffled/`).
+- `privileged.py --inorder`, all 300 prompts, all arms and doses, 6 shards: done, results in `results/privileged_inorder_full/`; the shuffled run moved to `results/privileged_shuffled/`, its figure to `figures/shuffled/privileged.png`. `figures/privileged.png` is now drawn from the in-order run.
+- `monitor.py --inorder`, 3 shards, 60 per family as before: still running when the privileged rerun was merged; results will go to `results/monitor/` (shuffled: `results/monitor_shuffled/`).
 
 In-order vs shuffled numbers: the README's last section, "Checks: shuffled labels".

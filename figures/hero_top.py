@@ -10,7 +10,7 @@ told_yes: percent change vs no injection in how often Qwen says "Yes" (relative:
   told       same data, multiplier 10 (x6.4). Per prompt: percent of the 4 rotations whose top paragraph after "Yes, paragraph [P" (argmax of lp_par)
              is the boosted one, minus the same percent with no injection (the no-injection top answer compared to each boosted paragraph in turn:
              exactly 25 points). Example: context 101, [P2] boosted.                                                          -> hero_told_top.png
-  question   DATA (default results/privileged/data) arm C (boost while the report question is read), multiplier 10, report wording W1, the 100 paragraph
+  question   DATA (default results/privileged_shuffled/data) arm C (boost while the report question is read), multiplier 10, report wording W1, the 100 paragraph
              prompts; same top-answer metric as told. Example: the prompt whose top answer with [P2] boosted is [P2] and whose dot is nearest the
              median (ties: labels in order, then lowest id); its text from CTX (default figures/privileged_ctx.json, rebuilt by privileged_rebuild.py;
              rebuild it for a rerun with other labels; in-order rerun: figures/privileged_inorder_ctx.json from privileged_inorder_ctx.py).                                                                        -> hero_question_top.png
@@ -62,7 +62,7 @@ if MODE in ("told_yes", "told"):
     else: REPLY = f'Yes, paragraph [P{int(np.argmax(rec["boost"][f"{K}|{M}"]["lp_par"])) + 1}'
     print("example none reply:", rec["none"]["text"], " boosted reply:", rec["boost"][f"{K}|{M}"]["text"])
 else:
-    D = (sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "results/privileged/data")).rstrip("/") + "/"
+    D = (sys.argv[2] if len(sys.argv) > 2 else os.path.join(ROOT, "results/privileged_shuffled/data")).rstrip("/") + "/"
     CTXF = sys.argv[3] if len(sys.argv) > 3 else os.path.join(HERE, "privileged_ctx.json")
     R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
     rs = [r for r in R if r["setup"] in ("par_arith", "par_qa")]; assert len(rs) == 100

@@ -1,6 +1,6 @@
 # Privileged-channel experiment (Qwen3-32B): does a boost of attention on one segment, applied only at the
 # answer queries with the answer text held identical, reach the model's report of where it attended?
-# Design and pass/fail rules: results/privileged/PREREG.md (written before this ran).
+# Design and pass/fail rules: results/privileged_shuffled/PREREG.md (written before this ran).
 import argparse, json, math, os, random, re, time
 import numpy as np, torch
 import transformers.models.qwen3.modeling_qwen3 as mq

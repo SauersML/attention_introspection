@@ -1,10 +1,10 @@
 # Question-boost experiment, labels in order (Qwen3-32B)
 
-Rerun of arm C of `results/privileged` (attention onto one paragraph boosted at the report-question queries only, layers 21-53,
+Rerun of arm C of `results/privileged_shuffled` (attention onto one paragraph boosted at the report-question queries only, layers 21-53,
 the answer's KV cache unboosted), with the labels [P1]..[P4] in slots 1..4 and the report options listed in order.
 Same 100 paragraph prompts (60 arithmetic, 40 reading-question), same seed, report wording W1. Code: `privileged_inorder/`.
 Files: `data/recs_0.jsonl` (100 records, arm C at multipliers 5 and 10 plus no injection), `results.json`, `analyze.log`, `meta.json`.
-The shuffled arm is the original run's records (`results/privileged/data`), compared on the same 100 prompts.
+The shuffled arm is the original run's records (`results/privileged_shuffled/data`), compared on the same 100 prompts.
 
 Checks: per-paragraph token counts match the shuffled run on 100/100 prompts; 91/100 answers identical; the answer is correct on
 100% of arithmetic and 70% of reading-question prompts; measured attention onto the boosted paragraph x3.8 (m=5) and x6.2 (m=10),

@@ -1,9 +1,11 @@
 # Privileged test: the reported effect (analyze_priv.py) is the specificity, exp of the mean over contexts and boosted parts of
 # (target label's change in log P) minus (mean change in log P of the non-target labels). Beside it, the target label's own
 # change in log P, and the per-kind range in arm A. Wording W1. Multipliers are pre-softmax biases of log(m).
-# usage: python privileged/target_only.py  (reads results/privileged/data/recs_*.jsonl, writes results/privileged/target_only.json)
-import json, glob, math, numpy as np
-R = sorted([json.loads(l) for f in glob.glob("results/privileged/data/recs_*.jsonl") for l in open(f)], key=lambda r: r["id"])
+# usage: python privileged/target_only.py DIR  (reads DIR/data/recs_*.jsonl, writes DIR/target_only.json; DIR = results/privileged_inorder_full
+# for the in-order run, results/privileged_shuffled for the shuffled-label run)
+import json, glob, math, sys, numpy as np
+DIR = sys.argv[1].rstrip("/")
+R = sorted([json.loads(l) for f in glob.glob(DIR + "/data/recs_*.jsonl") for l in open(f)], key=lambda r: r["id"])
 def per(r, arm, m, w="W1"):
     N = r["N"]; n = np.array(r["none"][w]); t, s = [], []
     for k in range(N):
@@ -25,4 +27,4 @@ for m in [5.0, 10.0]:
     ks = {s: boot([per(r, "A", m)[1] for r in R if r["setup"] == s]) for s in kinds}
     out[f"A_by_kind|{m}"] = ks
     print(f"arm A x{m} by kind: " + ", ".join(f"{s} {pct(v[0]):+.1f}%" for s, v in ks.items()))
-json.dump(out, open("results/privileged/target_only.json", "w"), indent=1)
+json.dump(out, open(DIR + "/target_only.json", "w"), indent=1)

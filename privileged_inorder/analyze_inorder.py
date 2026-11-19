@@ -1,4 +1,4 @@
-# Arm C specificity, in-order labels vs the shuffled-label run (results/privileged), paragraph setups, W1.
+# Arm C specificity, in-order labels vs the shuffled-label run (results/privileged_shuffled), paragraph setups, W1.
 # usage: analyze_inorder.py OUT.json INORDER_RECS... -- SHUFFLED_RECS...
 import json, sys, numpy as np
 a = sys.argv[2:]; i = a.index("--")

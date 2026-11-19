@@ -1,5 +1,5 @@
 """Privileged-channel figure (Qwen3-32B), paragraph setups only (100 prompts: 60 arithmetic, 40 question about one paragraph).
-Top: one real prompt (context 28, labels [P1]..[P4] in order, text rebuilt by privileged_rebuild.py -> hero_question_example.json, as hero_question.py) in three copies with identical text:
+Top: one real prompt (context 28, labels [P1]..[P4] in order; text from privileged_inorder_ctx.json, or EXAMPLE) in three copies with identical text:
 no boost; attention to paragraph [P2] x10 while the answer is written (arm A); x10 while the report question is read (arm C).
 Arrows: answer -> [P2] and report question -> [P2]; the thick arrow marks where the x10 boost is applied.
 Reply bars (pair_bars.py): the model's real next-token probabilities after the prefilled "P" (W1), log y 0.1%-100%; grey = no boost, purple = that column's boost (no-boost column: grey only).
@@ -7,7 +7,11 @@ Bottom: violins, one dot per prompt: rotation specificity (change in log P(repor
 the other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as analyze_priv.py; y drawn on that log scale,
 ticks labelled as % change = exp(.) - 1 at x0.5, x1, x2, x4, x8 (evenly spaced). Big labels: exp(mean) - 1. Black line: the mean.
 95% bootstrap CI of the mean (10,000 resamples) printed, not drawn. Dots coloured by their % change, exp(.), on the shared fixed scale (pal.pct_colour). p over the largest boost and wherever p >= 0.0001 (every other p < 0.0001): two-sided sign-flip test over prompts (200,000 flips). Bottom line: the other five setups at x10 (CI excludes 0 or not).
-usage: privileged_fig.py   (writes figures/privileged.png)"""
+usage: privileged_fig.py [DATA [EXAMPLE [OUT]]] [--numbers]
+  DATA     results dir (default results/privileged_inorder_full: labels [P1]..[P4] in order, options in order)
+  EXAMPLE  example-prompt json (default context 28 from privileged_inorder_ctx.json; the shuffled run used hero_question_example.json)
+  OUT      png (default figures/privileged.png; the shuffled-label version is figures/shuffled/privileged.png)
+  --numbers  print the numbers only, no render"""
 import json, glob, math, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
@@ -18,13 +22,16 @@ from pal import PURPLE, RED, INK, pct_colour
 from pair_bars import pair_bars
 import matplotlib.patheffects as pe
 ACOL = {"A": "#2B5FA8", "C": "#E07B24"}   # one colour per arm (the compared things)
-ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged/data/")
+ROOT = os.path.dirname(HERE)
+NUMBERS = "--numbers" in sys.argv; ARGS = [a for a in sys.argv[1:] if a != "--numbers"]
+DD = os.path.join(ROOT, ARGS[0]) if ARGS else os.path.join(ROOT, "results/privileged_inorder_full"); D = os.path.join(DD, "data/")
+OUTPNG = os.path.join(ROOT, ARGS[2]) if len(ARGS) > 2 else os.path.join(HERE, "privileged.png")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
-EX = json.load(open(os.path.join(HERE, "hero_question_example.json")))
+EX = json.load(open(os.path.join(ROOT, ARGS[1]))) if len(ARGS) > 1 else {c["id"]: c for c in json.load(open(os.path.join(HERE, "privileged_inorder_ctx.json")))}[28]
 DOSES = [0.25, 0.5, 2.0, 5.0, 10.0]
 # tick = measured ratio of attention mass on the boosted part (boost / no boost, mean over prompts, results.json "manip"):
 # the boost adds log(m) to the pre-softmax scores, so a nominal m=10 gives about 6.5x the attention mass, m=5 about 3.9x
-MANIP = json.load(open(os.path.join(ROOT, "results/privileged/results.json")))["manip"]
+MANIP = json.load(open(os.path.join(DD, "results.json")))["manip"]
 TICKS = {a: ["×" + (f"{MANIP[a][str(m)]['mean']:.2f}" if MANIP[a][str(m)]['mean'] < 1 else f"{MANIP[a][str(m)]['mean']:.1f}") for m in DOSES] for a in "AC"}
 PAR = ("par_arith", "par_qa"); OTHER = [("list", "lists"), ("code", "code"), ("document", "document sections"), ("sentences", "sentences"), ("dialogue", "dialogue")]
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
@@ -61,6 +68,11 @@ for a, _ in ARMS:
         OTH[a, s] = dict(mean=mu, lo=lo, hi=hi, sig=(lo > 0 or hi < 0))
 for (a, m), v in ST.items(): print(f"{a} x{m:g}: {pct(v['mean']):+.1f}% [{pct(v['lo']):+.1f}, {pct(v['hi']):+.1f}] p={v['p']:.2g}")
 for (a, s), v in OTH.items(): print(f"other {a} {s} x10: {pct(v['mean']):+.1f}% [{pct(v['lo']):+.1f}, {pct(v['hi']):+.1f}] {'CI excludes 0' if v['sig'] else 'CI includes 0'}")
+for a, _ in ARMS:
+    for s in PAR:
+        mu, lo, hi = boot([spec(r, a, 10.0) for r in rs if r["setup"] == s]); print(f"{a} {s} x10: {pct(mu):+.1f}% [{pct(lo):+.1f}, {pct(hi):+.1f}]")
+print("attention mass ticks", TICKS)
+if NUMBERS: sys.exit(0)
 
 # ---------------- the example prompt ----------------
 rec = {r["id"]: r for r in R}[EX["id"]]
@@ -104,8 +116,8 @@ for j, (a, _) in enumerate(ARMS):
         ax.plot([i - 0.17, i + 0.17], [st["mean"]] * 2, color=INK, lw=3, zorder=7, solid_capstyle="butt")             # mean
         lab = neg(f"{pct(st['mean']):+.0f}%")
         yl = z.max() + 0.06 if up else z.min() - 0.06
-        ax.text(i, yl, lab, ha="center", va="bottom" if up else "top", fontsize=px(58), fontweight="bold", color=col, zorder=7)
-        ps = "p<0.0001" if st["p"] < 1e-4 else f"p={st['p']:.2f}"
+        ax.text(i, yl, lab, ha="center", va="bottom" if up else "top", fontsize=px(54), fontweight="bold", color=col, zorder=7)
+        ps = "p<0.0001" if st["p"] < 1e-4 else ("p<0.001" if st["p"] < 1e-3 else "p<0.01" if st["p"] < 0.01 else f"p={st['p']:.2f}")
         if m == 10.0 or st["p"] >= 1e-4: ax.text(i, yl + (0.25 if up else -0.25), ps, ha="center", va="bottom" if up else "top", fontsize=px(40), color=col)
     ax.set_xlim(-0.6, len(DOSES) - 0.4); ax.set_ylim(ylo, yhi)
     ax.set_xticks(range(len(DOSES))); ax.set_xticklabels(TICKS[a], fontsize=px(50)); ax.tick_params(length=0, pad=14, colors=INK)
@@ -123,7 +135,8 @@ for t in TV:
 fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.5)) / VH, YP(math.log(8)) / VH], color=INK, lw=3))
 LXp = AX0 - 200
 fig.text(*F(LXp, YP(math.log(6))), "report says the\nboosted paragraph\nmore often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
-fig.text(*F(LXp, YP(math.log(0.45))), "report says the\nboosted paragraph\nless often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
+TY0 = axs[0].get_position().y0 * VH - 58   # centre of the "attention on boosted paragraph" label
+fig.text(*F(LXp, max(YP(math.log(0.45)), TY0 + 215)), "report says the\nboosted paragraph\nless often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
 TY = axs[0].get_position().y0 * VH - 58
 fig.text(*F(AX0 - 14, TY), "attention on\nboosted\nparagraph", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.1)
 KY = (YP(math.log(0.45)) + TY) / 2 - 10
@@ -181,5 +194,5 @@ hp = os.path.join(HERE, "privileged.html"); open(hp, "w").write(HTML); raw = os.
 subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3400",
                 "--force-device-scale-factor=1", "--virtual-time-budget=3000", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
 im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
-im = im.crop((0, 0, W, nz[-1] + 24)); im.save(os.path.join(HERE, "privileged.png")); print("privileged.png", im.size)
+im = im.crop((0, 0, W, nz[-1] + 24)); im.save(OUTPNG); print(OUTPNG, im.size)
 os.remove(raw); os.remove(hp); os.remove(VP)

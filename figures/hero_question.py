@@ -15,10 +15,10 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE
 COL = "#E07B24"; AMB = "#F2B53A"; LIL = "#A574F2"
-ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged/data/")
+ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged_shuffled/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
 EX = json.load(open(os.path.join(HERE, "hero_question_example.json")))
-MANIP = json.load(open(os.path.join(ROOT, "results/privileged/results.json")))["manip"]
+MANIP = json.load(open(os.path.join(ROOT, "results/privileged_shuffled/results.json")))["manip"]
 ARM, M = "C", 10.0
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 W = 1400; PAD = 26

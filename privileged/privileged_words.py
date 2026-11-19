@@ -1,5 +1,5 @@
 # Privileged-channel test on a list of single words (Qwen3-32B), plus the instruction test on the same contexts.
-# Same design as privileged/privileged.py (results/privileged/PREREG.md): arms A (answer queries only), B (answer + report
+# Same design as privileged/privileged.py (results/privileged_shuffled/PREREG.md): arms A (answer queries only), B (answer + report
 # question), C (report question only); doses x1/4 x1/2 x2 x5 x10 on every word in turn; primary wording W1 only.
 # Context: "Here is a list of eight words." + 8 lines "[Wl] noun" (labels randomly permuted to positions), then the
 # par_arith task. Words: one noun from each of 8 different semantic categories (so no two in a list are related),

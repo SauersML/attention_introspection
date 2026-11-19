@@ -1,6 +1,6 @@
 # Privileged channel and attention instructions on a list of single words (Qwen3-32B)
 
-A follow-up to `results/privileged/` with the same design (PREREG.md there), on a simpler context: a list of 8 single-token nouns, then an unrelated arithmetic question. Not separately preregistered; one wording (W1) and one setup, so that experiment's rules R3 and R4 do not apply.
+A follow-up to `results/privileged_shuffled/` with the same design (PREREG.md there), on a simpler context: a list of 8 single-token nouns, then an unrelated arithmetic question. Not separately preregistered; one wording (W1) and one setup, so that experiment's rules R3 and R4 do not apply.
 
 Code: `privileged/privileged_words.py` (pod), `privileged/analyze_words.py` (tables; the same statistics as `analyze_priv.py`, plus the instruction test). Data: `data/recs_{0,1}.jsonl.gz` (gunzip before re-running the analysis), `results.json`, `tables.md`.
 
@@ -26,7 +26,7 @@ Manipulation check (attention mass on the boosted word, ratio to no boost): ×5 
 
 Dose (mean per-context Spearman of log multiplier vs specificity): A +0.06 [−0.03, +0.15]; B +0.29 [+0.14, +0.44]; C +0.23 [+0.08, +0.38].
 
-Same task with four paragraphs instead of eight words (`results/privileged/`, paragraphs-arithmetic, 60 contexts):
+Same task with four paragraphs instead of eight words (`results/privileged_shuffled/`, paragraphs-arithmetic, 60 contexts):
 
 | | words, ×5 | words, ×10 | paragraphs, ×5 | paragraphs, ×10 |
 |---|---|---|---|---|
