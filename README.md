@@ -12,7 +12,7 @@ That looks like noticing, but the boost is still on while Qwen read the question
 
 So we split the boost in time. We boost one paragraph only while Qwen write their answer, then ask which paragraph they attended to most, with the report running unboosted on identical text. The boost leaves a trace, pointing the wrong way: at 6.5× the attention, they become 18% less likely to name the boosted paragraph than the others, growing smoothly with the dose. Boost the same paragraph while they read the report question instead, and they become 97% more likely to name it.
 
-![Boosting a paragraph or word while Qwen answer makes the later report name it less often or barely more, and the same boost while they read the report question makes the report name it far more often](figures/privileged_both.png)
+![Boosting a paragraph or word while Qwen answer makes the later report name it less often or barely more, and the same boost while they read the report question makes the report name it far more often (each dot: change in the probability of naming the boosted item, against no boost and relative to the other items, averaged over boosting each item in turn)](figures/privileged_both.png)
 
 Could a self-report still be a useful monitor? We asked the report question 20 ways on 300 new prompts and compared it with the same model reading the transcript. Right after answering, the self-report tracks true attention worse than the transcript reader (rank correlation 0.42 against 0.49), and a classifier on surface features of the transcript beats both (0.77).
 

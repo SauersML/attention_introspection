@@ -80,7 +80,8 @@ for (t, a), z in Z.items():
     ax.annotate(neg(f"{pct(ST[t, a]['mean']):+.0f}%"), (cx, top), xytext=(0, 62), textcoords="offset points", ha="center", va="bottom", fontsize=80, fontweight="bold", color=col)
     lab = {"P": SETS[0][1], "W": SETS[1][1]}[t]
     fig.text(cx / W, (AXB - 24) / VH, lab, ha="center", va="top", fontsize=px(58), fontweight="bold", color=INK)
-ax.text(LM, ztop + 0.05, "report names the boosted\nparagraph or word more\noften than the others", ha="left", va="top", fontsize=px(54), fontweight="bold", color=INK, linespacing=1.1)
+ax.text(LM, ztop + 0.05, "chance of naming\nthe boosted one", ha="left", va="top", fontsize=px(58), fontweight="bold", color=INK, linespacing=1.1)
+ax.text(W - PAD, -0.04, "no boost", ha="right", va="top", fontsize=px(54), fontweight="bold", color=INK)
 kx, ky = LM + 30, math.log(1 + 700 / 100)
 ax.scatter([kx], [ky], s=330, c=pct_colour([4.0]), alpha=0.5, edgecolors="none"); ax.scatter([kx], [ky], s=4, color="black")
 ax.text(kx + 30, ky, "= one prompt", ha="left", va="center", fontsize=px(54), fontweight="bold", color=INK)
