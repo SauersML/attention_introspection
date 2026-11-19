@@ -5,7 +5,7 @@ the light-purple wave arrow toward paragraph 2; the syringe x6.4 = multiplier 10
 Both panels (Sauers: top answers only, no probabilities; relative % change from no boost, as in the rest of the repo): one bar per dose
 (multipliers 2, 5, 10, 20 = measured attention mass on the boosted paragraph x1.8, x3.9, x6.4, x9.9), bar = relative change of the mean over the 240
 contexts from the no-boost level (dashed 0% line), whiskers = 95% bootstrap CI over contexts (20,000 resamples, ratio recomputed per resample),
-big label above, p at the top dose only (two-sided sign-flip test over contexts, 200,000 flips). Means, not per-context dots: a context's no-boost
+big relative-change label above with the raw rates under it ("13% -> 22%": no-boost rate -> this dose's rate), y axis "change from no boost", p at the top dose only (two-sided sign-flip test over contexts, 200,000 flips). Means, not per-context dots: a context's no-boost
 "Yes" is 0% or 100%, so a per-context ratio is undefined for most contexts.
 LEFT: percent of greedy replies (no prefill, boost on, each of the 4 paragraphs boosted in turn) that start with "Yes", relative to the control
 replies' Yes rate (13.3% -> 12.4, 14.1, 17.1, 21.8% = -7, +5, +28, +63%). p on per-context boosted minus control rate.
@@ -62,16 +62,17 @@ assert EXTXT == f"Yes, paragraph [P{PICK}]" and PICK == K + 1, (EXTXT, PICK)
 
 sys.exit() if "--nums" in sys.argv else None
 # ---------------- two panels in one image ----------------
-VW = W - 2 * PAD; GAP = 60; PW = (VW - GAP) / 2; LM = 330; VH = 1380; TOPH = 250; BOT = 280
+VW = W - 2 * PAD; GAP = 60; PW = (VW - GAP) / 2; LM = 400; VH = 1480; TOPH = 330; BOT = 280
 CW = (PW - LM) / 4; ylo, yhi = -0.28, 1.50   # one shared relative-change axis for both panels
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 fig = plt.figure(figsize=(VW / 100, VH / 100), dpi=100)
 ax = fig.add_axes([0, BOT / VH, 1, (VH - TOPH - BOT) / VH])
 ax.set_xlim(0, VW); ax.set_ylim(ylo, yhi)
-def panel(x0, rel, p):
+def panel(x0, rel, p, base, rate):
     ax.plot([x0 + LM - 20, x0 + PW], [0, 0], color=INK, lw=4, ls=(0, (4, 3)), zorder=2)   # no boost = no change
     for t in (0.5, 1.0, 1.5):
         ax.text(x0 + LM - 30, t, f"+{100*t:.0f}%", ha="right", va="center", fontsize=dr.px(72), fontweight="bold", color=INK)
+    ax.text(x0 + 30, (ylo + yhi) / 2 + 0.12, "change from no boost", rotation=90, ha="center", va="center", fontsize=dr.px(64), fontweight="bold", color=INK)
     ax.text(x0 + LM - 30, 0, "0% =\nno boost", ha="right", va="center", fontsize=dr.px(60), fontweight="bold", color=INK, linespacing=1.0)
     for i, m in enumerate(MS):
         xc = x0 + LM + (i + 0.5) * CW; hw = 0.36 * CW; cxf = xc / VW
@@ -80,12 +81,13 @@ def panel(x0, rel, p):
         ax.plot([xc, xc], [lo, hi], color=INK, lw=6, zorder=5, solid_capstyle="butt")
         for yy in (lo, hi): ax.plot([xc - 0.25 * hw, xc + 0.25 * hw], [yy, yy], color=INK, lw=6, zorder=5, solid_capstyle="butt")
         if m == MS[-1]:
-            fig.text(cxf, 1 - 122 / VH, pstr(p, floor=1 / (NF + 1)), ha="center", va="top", fontsize=56, color=PURPLE)
+            fig.text(cxf, 1 - 178 / VH, pstr(p, floor=1 / (NF + 1)), ha="center", va="top", fontsize=56, color=PURPLE)
         fig.text(cxf, 1 - 6 / VH, f"{100*mu:+.0f}%".replace("-", "\u2212"), ha="center", va="top", fontsize=78, fontweight="bold", color=PURPLE)
+        fig.text(cxf, 1 - 112 / VH, f"{100*base:.0f}% \u2192 {100*rate[m]:.0f}%", ha="center", va="top", fontsize=36, fontweight="bold", color=INK, family=["Helvetica", "Arial Unicode MS"])
         fig.text(cxf, 196 / VH, f"\u00d7{MASSES[m]:.1f}", ha="center", va="center", fontsize=78, fontweight="bold", color=PURPLE if m == M else INK)
     fig.text((x0 + LM + 2 * CW) / VW, 52 / VH, "attention on the boosted paragraph", ha="center", va="center", fontsize=dr.px(76), fontweight="bold", color=INK)
-panel(0, RY, PY)
-panel(PW + GAP, RN, PN)
+panel(0, RY, PY, YC.mean(), {m: YB[m].mean() for m in MS})
+panel(PW + GAP, RN, PN, 0.25, {m: AB[m].mean() for m in MS})
 ax.set_xticks([]); ax.set_yticks([])
 for s_ in ax.spines.values(): s_.set_visible(False)
 VP = os.path.join(HERE, "_v_told_pair.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
@@ -93,8 +95,8 @@ VP = os.path.join(HERE, "_v_told_pair.png"); fig.savefig(VP, dpi=100, facecolor=
 # ---------------- page ----------------
 bubble = dr.told_bubble(META, CTX[EXID]["segs"], K)
 reply = f'<span class="part" id="ry">Yes</span>, paragraph [P<span class="part" id="rn">{PICK}</span>]'
-titles = (f'<div class="cols"><div class="ct" style="flex:none;width:{PW - LM:.0f}px;margin-left:{LM}px"><span class="cn" id="c1">change in how often<br>Qwen says \u201cYes\u201d</span></div>'
-          f'<div class="ct" style="flex:none;width:{PW - LM:.0f}px;margin-left:{GAP + LM:.0f}px"><span class="cn" id="c2">change in how often Qwen\u2019s top<br>answer is the boosted paragraph</span></div></div>')
+titles = (f'<div class="cols"><div class="ct" style="flex:none;width:{PW - LM:.0f}px;margin-left:{LM}px"><span class="cn" id="c1">how often Qwen\u2019s reply<br>starts with \u201cYes\u201d</span></div>'
+          f'<div class="ct" style="flex:none;width:{PW - LM:.0f}px;margin-left:{GAP + LM:.0f}px"><span class="cn" id="c2">how often Qwen\u2019s top answer is<br>the boosted paragraph\u2019s number</span></div></div>')
 HTML = dr.page(W, bubble, "Do you notice your attention being boosted onto one of the paragraphs? If so, which one?", reply, titles, VP, VW, f"{MASSES[M]:.1f}", inj="boost attention<br>toward paragraph 2", arrows=(("ry", "c1"), ("rn", "c2")), tipdrop=-2)
 HTML = HTML.replace("</style>", ".ub{margin-right:700px;font-size:62px}#rq{margin-left:1500px;margin-right:500px;font-size:62px}.mrow{margin-left:1250px}.mb{font-size:96px}.cn{font-size:86px}.inj{font-size:72px}.cols{margin-top:250px}</style>", 1)
 dr.render(HTML, HERE, "told_pair", W, jpg=True, keep="--keep" in sys.argv)
