@@ -4,9 +4,8 @@ same model reading the transcript (the reader prompt's real opening line, the co
 shows that setup's probabilities for P1..P4 (after the prefilled "P"); under them the true attention (the preregistered primary truth:
 attention from answer tokens to each paragraph, per token of the paragraph, averaged over heads and layers 21-53, as percent of the
 four values' total). Bottom left: per-prompt Spearman between report score and true attention, asked right after answering, self vs
-reader; big number = mean; ringed dot = prompt 173; p = paired two-sided sign-flip test of self vs reader (200,000 flips).
-Bottom right: held-out gain in within-prompt rank correlation from adding the self score to a model that already has the
-reader's scores for every wording asked at that timing, plus position and length (logprob.py "gain_all"), dot + 95% bootstrap CI over prompts.
+reader, one violin under each setup; big number = mean; p = paired two-sided sign-flip test of self vs reader (200,000 flips).
+(The held-out gain over every wording, logprob.py "gain_all", is reported in LOGPROB.md, not drawn.)
 usage: monitor_logprob_fig.py results/monitor_inorder/logprob_results.json OUT.png SHARD_DIR [SHARD_DIR ...]"""
 import json, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
