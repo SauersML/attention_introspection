@@ -85,16 +85,16 @@ plt.rcParams.update({"font.family": "Helvetica Neue", "font.size": 33, "text.col
 fig = plt.figure(figsize=(23 / K, 17 / K), dpi=100 * K)
 pct = lambda v, _=None: "0%" if abs(v) < 1e-9 else f"{v:+.0f}%"
 LW = 3.5
-def band(ax, xs, Y, col, **kw):
-    ax.fill_between(xs, Y[:, 1], Y[:, 2], color=col, alpha=.22, lw=0); ax.plot(xs, Y[:, 0], color=col, lw=LW, solid_capstyle="round", **kw)
+def band(ax, xs, Y, col, **kw):  # drawn only through measured tokens: a break wherever a token is missing
+    for seg in np.split(np.arange(len(xs)), np.where(np.diff(xs) > 1)[0] + 1):
+        ax.fill_between(xs[seg], Y[seg, 1], Y[seg, 2], color=col, alpha=.22, lw=0); ax.plot(xs[seg], Y[seg, 0], color=col, lw=LW, solid_capstyle="round", **kw)
 xw, Yw = WD["focus"]
-lo, hi = -60, max(PD["focus"]["S"][1][:, 2].max(), PD["focus"]["E"][1][:, 2].max()) + 105
-L, B, Wd, H, gap = 0.225, 0.16, 0.725, 0.62, 0.03
+lo, hi = -15, max(PD["focus"]["S"][1][:, 2].max(), PD["focus"]["E"][1][:, 2].max()) + 125
+L, B, Wd, H, gap = 0.225, 0.16, 0.725, 0.76, 0.03
 xS, xE = PD["focus"]["S"][0], PD["focus"]["E"][0]
 spanS, spanE = (-XL - 1, xS.max() + 1), (xE.min() - 1, XL + 1)
 fr = (spanS[1] - spanS[0]) / ((spanS[1] - spanS[0]) + (spanE[1] - spanE[0]))
 a1 = fig.add_axes([L, B, (Wd - gap) * fr, H]); a2 = fig.add_axes([L + (Wd - gap) * fr + gap, B, (Wd - gap) * (1 - fr), H], sharey=a1)
-LANE = 25  # word lists: hatched lane marks the 4 unmeasured tokens (newline, line label) between consecutive words
 for ax, key, (x0, x1) in ((a1, "S", spanS), (a2, "E", spanE)):
     for s in ("top", "right"): ax.spines[s].set_visible(False)
     ax.axhline(0, color=INK, lw=1.8, zorder=0); ax.yaxis.set_major_formatter(plt.FuncFormatter(pct))
@@ -102,13 +102,13 @@ for ax, key, (x0, x1) in ((a1, "S", spanS), (a2, "E", spanE)):
     inside = (0, x1) if key == "S" else (x0, 0)
     ax.add_patch(Rectangle((inside[0] - .5 if key == "S" else inside[0], lo), inside[1] - inside[0] + .5, hi - lo, color=CREAM, zorder=-2, lw=0))
     g0 = -4.5 if key == "S" else -.5  # 5 unmeasured tokens: S -4..0 (first word at 0), E 0..4 (the end token at 0)
-    ax.add_patch(Rectangle((g0, lo + LANE), 5, hi - lo - LANE, facecolor="white", edgecolor=PURPLE, hatch="//", lw=0, alpha=.5, zorder=-1))
-    sg = -1 if key == "S" else 1
-    for k in range(7):
-        ax.add_patch(Rectangle((sg * (5 * k + .5) - (4 if sg < 0 else 0), lo), 4, LANE, facecolor="white", edgecolor=TEAL, hatch="//", lw=0, alpha=.7, zorder=-1))
+    ax.add_patch(Rectangle((g0, lo), 5, hi - lo, facecolor="white", edgecolor=PURPLE, hatch="//", lw=0, alpha=.5, zorder=-1))
+    ax.text(g0 + 2.5, 270, "[P3] label: not measured", rotation=90, ha="center", va="center", fontsize=21, color=PURPLE,
+            bbox=dict(facecolor="white", edgecolor="none", pad=2))
     band(ax, PD["focus"][key][0], PD["focus"][key][1], PURPLE)
-    m = (xw <= 0) if key == "S" else (xw >= 0)
-    band(ax, xw[m], Yw[m], TEAL); ax.plot(xw[m], Yw[m, 0], "o", color=TEAL, ms=11)
+    m = (xw <= 0) if key == "S" else (xw >= 0)  # single words: one dot per word (words are 5 tokens apart), 95% CI as bars
+    ax.errorbar(xw[m], Yw[m, 0], yerr=[Yw[m, 0] - Yw[m, 1], Yw[m, 2] - Yw[m, 0]], fmt="o", color=TEAL, ms=11, elinewidth=2, capsize=0, zorder=3)
+    ax.plot(xw[m], Yw[m, 0], "--", color=TEAL, lw=2, zorder=3)
     ax.set_xticks([-60, -30, 0, 30] if key == "S" else [-30, 0, 30, 60]); ax.set_xticklabels(["-60", "-30", "start", "+30"] if key == "S" else ["-30", "end", "+30", "+60"])
 a2.spines["left"].set_visible(False); a2.tick_params(axis="y", left=False, labelleft=False)
 for ax, x in ((a1, 1), (a2, 0)):  # break marks
@@ -116,15 +116,13 @@ for ax, x in ((a1, 1), (a2, 0)):  # break marks
 ytop = hi - 6
 a1.text(-XL / 2 - 1, ytop, "earlier\ntext", ha="center", va="top")
 a2.text(XL / 2 + 3, ytop, "later\ntext", ha="center", va="top")
-a1.text(-XL, lo + LANE + 2, "not measured", ha="left", va="bottom", fontsize=28)
 xb = L + (Wd - gap) * fr + gap / 2; yf = lambda v: B + H * (v - lo) / (hi - lo)  # centred on the axis break, over both halves of the named paragraph
 fig.text(xb, yf(ytop), "named paragraph", ha="center", va="top", fontsize=36, fontweight="bold")
 fig.text(xb, yf(118), "paragraph", color=PURPLE, fontsize=38, fontweight="bold", ha="center", va="top")
 a2.text(9, float(Yw[xw == 5, 2][0]) + 12, "single\nword", color=TEAL, fontsize=38, fontweight="bold", ha="left", va="bottom")
 a1.set_ylabel("attention vs.\nonly mentioned", labelpad=6)
 fig.text(L + Wd / 2, B - 0.075, "tokens from the edge of the named text", ha="center", va="top")
-fig.text(0.02, 0.985, "Told to focus: the boost stops at a\nparagraph's edge, spreads past a word", fontsize=42, fontweight="bold", va="top")
-fig.text(0.985, B + H + 0.005, "Qwen3-32B, layer 28", ha="right", va="bottom", fontsize=28)
+fig.text(0.985, B + H + 0.01, "Qwen3-32B, layer 28", ha="right", va="bottom", fontsize=28)
 fig.savefig(f"{HERE}/edge_decay.png", facecolor="white")
 subprocess.run(["sips", "-s", "format", "jpeg", "-s", "formatOptions", "88", "-Z", "2300", f"{HERE}/edge_decay.png", "--out", f"{HERE}/edge_decay.jpg"], check=True, capture_output=True)
 print("xS near 0:", [int(v) for v in xS if -8 < v < 3], "xE near 0:", [int(v) for v in xE if -3 < v < 8])
