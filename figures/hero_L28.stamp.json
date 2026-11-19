@@ -1,0 +1,17 @@
+{
+ "script": "hero_L28.py",
+ "script_sha": "4ba69941d310c4f6ff6ba96129e04e71fe798946e822ea2426384f5ae2ba0645",
+ "helpers": {
+  "yaxis.py": "f8f1e29a24bb628df036255bfecc96d47baa14f5a92f69700a5edfece533bbd0",
+  "pal.py": "7bffcd0403f1f92715487dd90df4615b960c15ac2b7a4a17be2202d29061d0d0",
+  "pfmt.py": "2ee07f13f3ac504f85af7dda958b5d767e9a34187b4f40e8a4b7cac061d45a41"
+ },
+ "png_sha": "229836f8bff9eab9666b808fb5ffaa2125697e7472e0ee640a2540acd4e45b3b",
+ "ylabels": [
+  "\u221250%",
+  "0%",
+  "+100%",
+  "+300%",
+  "+700%"
+ ]
+}

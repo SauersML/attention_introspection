@@ -147,7 +147,7 @@ for ctrl, ctag, out in [("mention", "mention", "hero_L28_words_tall" if NARROW e
         for bb in vv["bodies"]: bb.set_facecolor(colr); bb.set_alpha(0.22); bb.set_edgecolor(colr); bb.set_linewidth(2.5)
         xj = x0 + rng.uniform(-0.25, 0.25, len(z))
         a.scatter(xj, z, s=650, c=pct_colour(2.0 ** z), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
-        eff = f"{r['mean']:+.0f}%{chr(10) if NARROW else ' '}attention".replace("-", "\u2212")
+        eff = f"{r['mean']:+.0f}%".replace("-", "\u2212")
         pt = pstr(r["p"], floor=1 / (r["nf"] + 1))
         assert r["p"] * (r["nf"] + 1) >= 1.5 or 1 / (r["nf"] + 1) < 1e-5
         r["eff"], r["pt"] = eff, pt

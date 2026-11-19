@@ -1,0 +1,15 @@
+{
+ "script": "hero_inject.py",
+ "script_sha": "d2fd09ac7453e7c4011688ef753e6040456f4f574d67555de8af1c18148b1127",
+ "helpers": {
+  "yaxis.py": "f8f1e29a24bb628df036255bfecc96d47baa14f5a92f69700a5edfece533bbd0",
+  "pal.py": "7bffcd0403f1f92715487dd90df4615b960c15ac2b7a4a17be2202d29061d0d0",
+  "pfmt.py": "2ee07f13f3ac504f85af7dda958b5d767e9a34187b4f40e8a4b7cac061d45a41"
+ },
+ "png_sha": "e025a2423f4aceda62bd82c9119250ed309c039b51c3d077e441ac00460375c4",
+ "ylabels": [
+  "0%",
+  "50%",
+  "100%"
+ ]
+}
