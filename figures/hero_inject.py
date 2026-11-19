@@ -19,6 +19,7 @@ from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE, pct_colour
+from pfmt import pstr as _pstr, pbound
 from robot_injected import injected_robot
 OPT = dict(a[2:].split("=", 1) for a in sys.argv[1:] if a.startswith("--") and "=" in a)
 AMB = "#F2B53A"; LIL = "#A574F2"; W = int(OPT.get("W", 2300)); PAD = 26   # --W=1600 --VH=... : the narrower, taller version for hero_pair
@@ -62,7 +63,7 @@ print(f"says boosted | yes: {int(nc.sum())}/{N2} = {100*sh2:.1f}% CI {np.percent
 rec = {r["id"]: r for r in R}[EXID]; EXTXT = rec["boost"][f"{K}|{M}"]["text"].strip(); assert EXTXT == "Yes, paragraph [P2]", EXTXT
 exi = [r["id"] for r in R].index(EXID); EX1 = B[exi].mean(); EX2 = nc[exi] / ny[exi]
 print("example 101:", EXTXT, "| no injection:", rec["none"]["text"], "| dots", EX1, EX2)
-pstr = lambda p: "p < 0.0001" if p < 1e-4 else f"p = {p:.1g}"
+pstr = lambda p: pbound(1e-4) if p < 1e-4 else _pstr(p)
 
 # ---------------- dot columns ----------------
 VW = W - 2 * PAD; GAP = 36; CW = (VW - GAP) / 2; VH = int(OPT.get("VH", 1010))

@@ -15,6 +15,7 @@ from PIL import Image
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, RED, INK, pct_colour
+from pfmt import pstr
 D = os.path.join(os.path.dirname(HERE), "results", "qwen3-32b-dose") + "/"
 meta = json.load(open(D + "meta.json")); L = [28]
 R = json.load(open(D + "dose.json")); by = {(r["id"], r["cond"]): r for r in R}
@@ -149,7 +150,7 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28_tall" if NARROW else 
         xj = x0 + rng.uniform(-0.25, 0.25, len(z))
         a.scatter(xj, z, s=650, c=pct_colour(2.0 ** z), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
         eff = f"{r['mean']:+.0f}%{chr(10) if NARROW else ' '}attention".replace("-", "\u2212")
-        pt = "p < 0.00001" if r["p"] * (r["nf"] + 1) < 1.5 else f"p = {r['p']:.1g}"
+        pt = pstr(r["p"], floor=1 / (r["nf"] + 1))
         assert r["p"] * (r["nf"] + 1) >= 1.5 or 1 / (r["nf"] + 1) < 1e-5
         r["eff"], r["pt"] = eff, pt
         if up:   # effect above the dots, p under the effect
