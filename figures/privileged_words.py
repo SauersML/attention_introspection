@@ -6,7 +6,7 @@ Wavy purple aura = the queries whose attention to the word is boosted x10: the a
 or the report question's tokens (arm C, "while reading the question"). Wavy arrow: from the boosted part to the word.
 Middle: violins at x10, one dot per prompt: rotation specificity (change in log P(report = boosted word) minus the mean change for the other
 seven words, averaged over boosting each word in turn), exactly as privileged/analyze_words.py; y on that log scale, ticks as % change = exp(.) - 1
-(x1, x2, x4, ... evenly spaced). Big label: exp(mean) - 1 (asserted equal to results.json "spec"). Black line: the mean.
+(x1, x2, x4, ... evenly spaced). Big label (right above each violin's top): exp(mean) - 1 (asserted equal to results.json "spec"). Black line: the mean.
 p: two-sided sign-flip test over prompts (200,000 flips; pfmt). Dots coloured by exp(.) on the shared fixed scale (pal.pct_colour).
 Column subtitle: measured attention mass on the boosted word, boost / no boost at x10 (results.json "manip").
 Bottom: dose line, x1/4 .. x10 (nominal multiplier on the attention weights; x1 = no boost = 0 by construction), mean and 95% bootstrap CI over
@@ -66,15 +66,16 @@ QTEXT = "Which word did you attend to most while writing your answer?"
 print("example", rec["words"], QLINE, rec["ans"], "boosted", rec["words"][K])
 
 # ---------------- violins ----------------
-VH = 1150; TOPH = 250
+VH = 820; HEAD = 215   # px above the tallest violin for its big label and p
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 px = lambda v: v * 72 / 100
 fig = plt.figure(figsize=(W / 100, VH / 100), dpi=100)
 TV = [0, 100, 300, 700, 1500, 3100]   # x1, x2, x4, x8, x16, x32: evenly spaced on the log axis
-allz = np.concatenate(list(Z.values())); ylo, yhi = min(allz.min(), 0) - 0.35, max(allz.max(), math.log(32)) + 0.12
+allz = np.concatenate(list(Z.values())); ylo = min(allz.min(), 0) - 0.12; ztop = max(allz.max(), math.log(32))
+AXB = 6; AXH = VH - AXB - 4; yhi = ztop + HEAD * (ztop - ylo) / (AXH - HEAD)
 for j, (a, nm) in enumerate(ARMS):
     x0 = PAD + j * (CW + GAP)
-    ax = fig.add_axes([x0 / W, 20 / VH, CW / W, (VH - TOPH - 20) / VH])
+    ax = fig.add_axes([x0 / W, AXB / VH, CW / W, AXH / VH])
     z = Z[a]; g = np.random.default_rng(1 + j)
     kde = gaussian_kde(z, bw_method=0.35); yy = np.linspace(z.min() - 0.06, z.max() + 0.06, 300); dd = kde(yy); hw = 0.30 * dd / dd.max()
     ax.fill_betweenx(yy, -hw, hw, color=PURPLE, alpha=0.18, lw=0, zorder=1)
@@ -87,36 +88,37 @@ for j, (a, nm) in enumerate(ARMS):
         for t in TV:
             yv = math.log(1 + t / 100)
             ax.text(-0.98, yv, f"+{t:,}%".replace("+0%", "0%"), ha="left", va="center", fontsize=px(58), fontweight="bold", color=INK)
-        ax.text(-0.40, math.log(10), "report names\nthe boosted\nword more\noften than\nthe others", ha="left", va="center", fontsize=px(54), fontweight="bold", color=INK, linespacing=1.1)
+        ax.annotate("report names the boosted word\nmore often than the others", (-0.98, math.log(32)), xytext=(0, 34), textcoords="offset points", ha="left", va="bottom", fontsize=px(54), fontweight="bold", color=INK, linespacing=1.1)
     ax.set_xlim(-1, 1); ax.set_ylim(ylo, yhi); ax.set_xticks([]); ax.set_yticks([])
     for s_ in ax.spines.values(): s_.set_visible(False)
-    cx = (x0 + CW / 2) / W
-    fig.text(cx, 1 - 4 / VH, neg(f"{pct(ST[a]['mean']):+.0f}%"), ha="center", va="top", fontsize=89, fontweight="bold", color=PURPLE)
-    fig.text(cx, 1 - 146 / VH, pstr(ST[a]["p"], floor=1 / 200001), ha="center", va="top", fontsize=56, color=PURPLE)
+    top = yy[-1]   # big label and p sit right above this violin's top
+    ax.annotate(pstr(ST[a]["p"], floor=1 / 200001), (0, top), xytext=(0, 6), textcoords="offset points", ha="center", va="bottom", fontsize=56, color=PURPLE)
+    ax.annotate(neg(f"{pct(ST[a]['mean']):+.0f}%"), (0, top), xytext=(0, 70), textcoords="offset points", ha="center", va="bottom", fontsize=89, fontweight="bold", color=PURPLE)
     if j == 1:   # key, right of the purple violin
-        kx, ky = 0.26, math.log(2.2)
+        kx, ky = 0.30, math.log(1.9)
         ax.scatter([kx], [ky], s=520, c=pct_colour([4.0]), alpha=0.5, edgecolors="none"); ax.scatter([kx], [ky], s=5, color="black")
-        ax.text(kx + 0.07, ky, "= one prompt", ha="left", va="center", fontsize=px(54), color=INK)
+        ax.text(kx + 0.07, ky, "= one prompt", ha="left", va="center", fontsize=px(54), fontweight="bold", color=INK)
 VP = os.path.join(HERE, "_pw_violins.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- dose line ----------------
-DH = 640
+DH = 430
 fig = plt.figure(figsize=(W / 100, DH / 100), dpi=100)
-ax = fig.add_axes([700 / W, 90 / DH, (W - 700 - 640) / W, (DH - 110) / DH])
+AX0, AX1 = 360, W - 670
+ax = fig.add_axes([AX0 / W, 62 / DH, (AX1 - AX0) / W, (DH - 112) / DH])
 lx = np.log(DOSES)
 for a, nm in ARMS:
     col = PURPLE if a == "C" else INK
     mu, lo, hi = (np.array([v[i] for v in DL[a]]) for i in range(3))
-    ax.fill_between(lx, lo, hi, color=col, alpha=0.18, lw=0); ax.plot(lx, mu, color=col, lw=6, marker="o", ms=16, zorder=3)
-    ax.text(lx[-1] + 0.14, mu[-1] + (0 if a == "C" else 0.12), f"boost {nm}".replace("reading ", "reading\n"), ha="left", va="center", fontsize=px(56), fontweight="bold", color=col, linespacing=1.1)
+    ax.fill_between(lx, lo, hi, color=col, alpha=0.18, lw=0); ax.plot(lx, mu, color=col, lw=6, marker="o", ms=14, zorder=3)
+    ax.text(lx[-1] + 0.12, mu[-1] + (0 if a == "C" else 0.16), f"boost {nm}".replace("reading ", "reading\n"), ha="left", va="center", fontsize=px(56), fontweight="bold", color=col, linespacing=1.05)
 ax.axhline(0, color=INK, lw=2.5, zorder=0)
-for t in (0, 100, 300, 700):
-    ax.text(lx[0] - 0.22, math.log(1 + t / 100), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(54), fontweight="bold", color=INK)
-ax.text(lx[0] - 1.05, math.log(3), "report names\nthe boosted\nword", ha="right", va="center", fontsize=px(54), fontweight="bold", color=INK, linespacing=1.1)
+for t in (0, 300, 700):
+    ax.text(lx[0] - 0.2, math.log(1 + t / 100), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(54), fontweight="bold", color=INK)
+ax.text(lx[0] + 0.05, math.log(8), "report names the boosted word", ha="left", va="center", fontsize=px(54), fontweight="bold", color=INK, linespacing=1.05)
 TL = ["×¼", "×½", "none", "×2", "×5", "×10"]
-for xv, t in zip(lx, TL): ax.text(xv, math.log(0.7), t, ha="center", va="top", fontsize=px(58), color=INK)
-ax.text(lx[0] - 0.95, math.log(0.7), "boost", ha="right", va="top", fontsize=px(58), fontweight="bold", color=INK)
-ax.set_xlim(lx[0] - 0.15, lx[-1] + 0.15); ax.set_ylim(math.log(0.62), math.log(8.6)); ax.axis("off")
+for xv, t in zip(lx, TL): ax.text(xv, math.log(0.72), t, ha="center", va="top", fontsize=px(58), color=INK)
+ax.text(lx[0] - 0.36, math.log(0.72), "boost", ha="right", va="top", fontsize=px(58), fontweight="bold", color=INK)
+ax.set_xlim(lx[0] - 0.1, lx[-1] + 0.1); ax.set_ylim(math.log(0.72), math.log(8.4)); ax.axis("off")
 DP = os.path.join(HERE, "_pw_dose.png"); fig.savefig(DP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
@@ -130,23 +132,23 @@ def card(i, a, nm):
 <div class="mrow"><img class="rob" id="rob{i}" src="data:image/png;base64,{rob}"><div class="mb" id="mb{i}">{html.escape(rec["ans"].strip())}</div></div>
 <div class="ub2" id="rq{i}">{QTEXT} …</div>
 <div class="mrow fr"><img class="rob" id="frob{i}" src="data:image/png;base64,{robot_inj if a == "C" else robot}"><div class="mb fb" id="fb{i}"><span class="pf">[W</span><span class="qm">?</span></div>
-<div class="fl"><div>prefilled</div><div class="flq">chance of each<br>number read here</div></div></div></div>'''
+<div class="fl" id="fl{i}"><div>prefilled</div><div class="flq">chance of each<br>number read here</div></div></div></div>'''
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:18px {PAD}px 0;position:relative}}
 .cols{{display:flex;gap:{GAP}px}} .col{{width:{CW}px;display:flex;flex-direction:column;position:relative;z-index:2}}
-.t1{{font-size:64px;font-weight:800;white-space:nowrap}} .t2{{font-size:46px;margin:2px 0 16px;white-space:nowrap}}
-.ub{{background:#1F8BFF;color:#fff;border-radius:32px;padding:18px 26px;font-size:46px;line-height:1.2;margin-right:170px}}
+.t1{{font-size:64px;font-weight:800;white-space:nowrap}} .t2{{font-size:46px;margin:0 0 10px;white-space:nowrap}}
+.ub{{background:#1F8BFF;color:#fff;border-radius:32px;padding:14px 26px;font-size:46px;line-height:1.18;margin-right:150px}}
 .wl{{display:grid;grid-template-rows:repeat(4,auto);grid-auto-flow:column;column-gap:60px;margin:6px 0 6px;width:max-content}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
-.mrow{{display:flex;align-items:center;gap:16px;margin-top:40px;margin-left:30px}}
-.rob{{width:120px;height:120px}}
+.mrow{{display:flex;align-items:center;gap:16px;margin-top:12px;margin-left:30px}}
+.rob{{width:104px;height:104px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:28px;padding:8px 32px;font-size:66px;font-weight:700}}
-.fr{{margin-top:34px}} .fb{{font-size:60px;padding:6px 26px;white-space:nowrap}} .pf{{border:4px dashed {INK};border-radius:10px;padding:0 8px}}
+.fr{{margin-top:12px}} .fb{{font-size:60px;padding:6px 26px;white-space:nowrap}} .pf{{border:4px dashed {INK};border-radius:10px;padding:0 8px}}
 .qm{{display:inline-block;border:5px solid {PURPLE};color:{PURPLE};border-radius:10px;padding:0 10px;margin-left:8px}}
-.fl{{font-size:40px;font-weight:700;line-height:1.15;margin-left:10px;white-space:nowrap}} .flq{{color:{PURPLE};font-weight:800}}
-.ub2{{background:#1F8BFF;color:#fff;border-radius:32px;padding:16px 26px;font-size:46px;line-height:1.2;margin:44px 170px 0 0}}
-.img{{width:{W}px;display:block;margin-left:-{PAD}px}} .vio{{margin-top:70px}} .dose{{margin-top:40px}}
+.fl{{font-size:44px;font-weight:700;line-height:1.15;margin-left:10px;white-space:nowrap}} .flq{{color:{PURPLE};font-weight:800}}
+.ub2{{background:#1F8BFF;color:#fff;border-radius:32px;padding:12px 26px;font-size:46px;line-height:1.18;margin:20px 150px 0 0}}
+.img{{width:{W}px;display:block;margin-left:-{PAD}px}} .vio{{margin-top:44px}} .dose{{margin-top:24px}}
 #gl{{position:absolute;left:0;top:0;z-index:0;pointer-events:none}} #ov{{position:absolute;left:0;top:0;pointer-events:none;z-index:3}}
 </style></head><body><div class="cols">{card(0, *ARMS[0])}{card(1, *ARMS[1])}</div>
 <img class="img vio" src="data:image/png;base64,{b64(VP)}"><img class="img dose" src="data:image/png;base64,{b64(DP)}">
@@ -164,8 +166,8 @@ const aura=(r,rad)=>{{ const S=(d,st,col,op,f,fill)=>`<rect x="${{r.left-d}}" y=
  return S(8,0,'#B994FF',0.75,'haze',1)+S(50,5,'#C9A8FF',0.45,'w1')+S(32,7,'{LIL}',0.6,'w2')+S(15,9,'#7B3FE4',0.75,'w3')+S(2,8,'{PURPLE}',0.55,'w3'); }};
 const ro=R('rob0'), mb=R('mb0');
 g+=aura({{left:ro.left+2,top:Math.min(ro.top,mb.top)+4,width:mb.right-ro.left-2,height:Math.max(ro.bottom,mb.bottom)-Math.min(ro.top,mb.top)-8}},40);
-const q1=R('rq1'), f1=R('frob1'), b1=R('fb1');   // arm C boosts every report-turn query: the question, the assistant template and the prefilled [W
-g+=aura({{left:Math.min(q1.left,f1.left)+2,top:q1.top,width:Math.max(q1.right,b1.right)-Math.min(q1.left,f1.left)-2,height:Math.max(f1.bottom,b1.bottom)-q1.top}},34);
+const q1=R('rq1'), f1=R('frob1'), b1=R('fb1'), l1=R('fl1');   // arm C boosts every report-turn query: the question, the assistant template and the prefilled [W
+g+=aura({{left:Math.min(q1.left,f1.left)+2,top:q1.top,width:Math.max(q1.right,b1.right)-Math.min(q1.left,f1.left)-2,height:Math.max(f1.bottom,b1.bottom,l1.bottom-4)-q1.top}},34);
 gl.innerHTML=g;
 // wavy arrow (hero_inject's): from the boosted part up the right margin into the right end of the boosted word
 const SW0=20;
@@ -195,13 +197,13 @@ const arrow=(p0,c1,c2,tip,id)=>{{ const SW=SW0*1.7; const L=SW*2.7, H=SW*1.6; le
 let s='';
 for (const i of [0,1]) {{
  const t=R('wk'+i), src=R(i==0?'mb'+i:'rq'+i), ub=R('ub'+i);
- const T=[t.right+14, (t.top+t.bottom)/2], P0=[src.right+6, (src.top+src.bottom)/2], xm=ub.right+70;
+ const T=[t.right+14, (t.top+t.bottom)/2], P0=[src.right+42, (src.top+src.bottom)/2], xm=ub.right+62;
  s+=arrow(P0, [xm, P0[1]], [xm, T[1]], T, i);
 }}
 document.getElementById('ov').innerHTML=s;
 </script></body></html>'''
 hp = os.path.join(HERE, "_pw.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "_pw_raw.png")
-subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3800",
+subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3000",
                 "--force-device-scale-factor=1", "--virtual-time-budget=3000", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
 im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
 im = im.crop((0, 0, W, nz[-1] + 24)); out = os.path.join(HERE, "privileged_words.png"); im.save(out); print(out, im.size)
