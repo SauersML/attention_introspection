@@ -82,7 +82,7 @@ a.plot([X0, X0], [L(-25) - 20 * u, L(100) + 20 * u], color=INK, lw=4, solid_caps
 for t in (-25, 0, 25, 50, 100):
     a.plot([X0 - 0.05, X0], [L(t)] * 2, color=INK, lw=4)
     a.text(X0 - 0.08, L(t), MN(f"{t:+d}%") if t else "0%", fontsize=44, fontweight="bold", ha="right", va="center")
-a.text(-1.9, L(37), "% change in attention\nto the named paragraph", rotation=90, fontsize=44, fontweight="bold", ha="left", va="center", linespacing=1.05, multialignment="center")
+a.text(-1.9, L(37), "% change in attention\nto the mentioned paragraph", rotation=90, fontsize=44, fontweight="bold", ha="left", va="center", linespacing=1.05, multialignment="center")
 a.set_xlim(-1.92, len(CS) - 0.45); a.set_ylim(ylo, yhi)
 a.set_yticks([]); a.set_xticks([])
 for s_ in a.spines.values(): s_.set_visible(False)
@@ -100,7 +100,7 @@ robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "
 DOSE = base64.b64encode(open(LAD, "rb").read()).decode()
 def para(p):
     lab, txt = p.split("] ", 1); i = int(lab[2:]); txt = " ".join(txt.split()[:3]) + " …"
-    return f'<div class="pl"><b class="{"k" if i == K else ""}">{html.escape(lab)}]</b> <span {"id=p2" if i == K else ""}>{html.escape(txt)}</span></div>'
+    return f'<div class="pl"><b>{html.escape(lab)}]</b> <span {"id=p2 class=k" if i == K else ""}>{html.escape(txt)}</span></div>'
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px 26px 10px}}
