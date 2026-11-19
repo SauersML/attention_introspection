@@ -75,8 +75,8 @@ body{{width:2300px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,
 <div class="ub"><div>{html.escape(parts[0].strip())}</div>{"".join(para(p) for p in paras)}
 <div class="alt">{chip(LN["mention"], INK, '<div class="lab">← 0%</div>')}{chip(LN["focus"], PURPLE)}{chip(LN["ignore"], RED, '<div class="lab">[Pk] = P1, P2, P3 or P4</div>')}</div>
 <div>{html.escape(q)}</div></div>
-<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb"><b>Qwen3-32B:</b> {html.escape(r["ans_none"].strip())}</div>
-<div class="ref">% = change in attention from the answer to each paragraph,<br>compared to the same prompt with the “Note that …” line</div></div>
+<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(r["ans_none"].strip())}</div>
+<div class="ref">% = change in attention from<br>the answer to each paragraph</div></div>
 <img class="maps" src="data:image/png;base64,{maps}"></body></html>'''
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 hp = os.path.join(HERE, "rotate2.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "rotate2_raw.png")
