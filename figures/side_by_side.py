@@ -12,6 +12,8 @@ H = os.path.dirname(os.path.abspath(__file__))
 INK = "#1D1D1F"
 a, b = (Image.open(os.path.join(H, f)).convert("RGB") for f in (sys.argv[1:3] if len(sys.argv) > 3 else ("hero_L28_tall.png", "hero_inject_tall.png")))
 OUT = sys.argv[3] if len(sys.argv) > 3 else "hero_pair"
+def _top(im): return int(np.where((np.asarray(im) < 250).any(2).any(1))[0][0])
+_tr = max(min(_top(a), _top(b)) - 4, 0); a, b = a.crop((0, _tr, a.width, a.height)), b.crop((0, _tr, b.width, b.height))   # no white between the braces and the columns
 h = max(a.height, b.height)
 a, b = (im if im.height == h else im.resize((round(im.width * h / im.height), h), Image.LANCZOS) for im in (a, b))
 gap = 80; Wt = a.width + gap + b.width
@@ -43,8 +45,8 @@ FS = min([138] + [138 * (w - 40) / _f.text(0, 0, l, fontsize=138, fontweight="bo
                   for w, l in ((a.width - 60, "attention control"), (b.width - 60, "attention introspection"))]); plt.close(_f); print("label pt", round(FS))
 fig = plt.figure(figsize=(Wt / 100, BAND / 100), dpi=100); ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0, Wt); ax.set_ylim(0, BAND); ax.axis("off")
 for (x0, x1), lab in (((30, a.width - 30), "attention control"), ((a.width + gap + 30, Wt - 30), "attention introspection")):
-    ax.add_patch(Polygon(brace(x0, x1, 14, 124), closed=True, fc=INK, ec=INK, lw=1.0, joinstyle="miter"))
-    t = ax.text((x0 + x1) / 2, 132, lab, ha="center", va="bottom", fontsize=FS, fontweight="bold", color=INK, family="Helvetica")
+    ax.add_patch(Polygon(brace(x0, x1, 4, 116), closed=True, fc=INK, ec=INK, lw=1.0, joinstyle="miter"))
+    t = ax.text((x0 + x1) / 2, 118, lab, ha="center", va="bottom", fontsize=FS, fontweight="bold", color=INK, family="Helvetica")
 bp = os.path.join(H, "_braces.png"); fig.savefig(bp, dpi=100, facecolor="white"); plt.close(fig)
 band = Image.open(bp).convert("RGB"); os.remove(bp)
 _rows = np.where((np.asarray(band) < 250).any(2).any(1))[0]; band = band.crop((0, max(_rows[0] - 14, 0), Wt, BAND)); BAND = band.height   # no white above the labels

@@ -89,7 +89,7 @@ for j, c in enumerate(cols):
     ax.scatter(xj, v, s=635, c=col, alpha=0.45, edgecolors="none", zorder=3); ax.scatter(xj, v, s=5, color="black", zorder=4)
     ie = int(np.argmin(np.abs(v - c["ex"]) + np.abs(xj) * 1e-3)) if j == 0 else None
     ax.axhline(c["base"], color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
-    blab = c["blab"] if CW > 1000 else c["blab"].replace("injection ", "injection\n")   # narrow: two lines, clear of the violin
+    blab = c["blab"].replace("injection ", "injection\n")   # two lines, clear of the violin's dots
     ax.text(0.98, c["base"] + 0.015, blab, ha="right", va="bottom", fontsize=px(62), color=INK, zorder=6, transform=ax.get_yaxis_transform())
     for t in (0, 0.5, 1) if j == 0 else ():   # one shared y axis: labels on the left column only
         ax.text(0.01, t, f"{100*t:.0f}%", ha="left", va="center", fontsize=px(80), fontweight="bold", color=INK, transform=ax.get_yaxis_transform())
@@ -171,10 +171,10 @@ const R=e=>document.getElementById(e).getBoundingClientRect();
 const WW=document.body.scrollWidth, HH=document.body.scrollHeight;
 for(const id of ['gl','ov']){{const s=document.getElementById(id);s.setAttribute('width',WW);s.setAttribute('height',HH);}}
 // syringe: tip into the lower left of the robot's screen, barrel rising to the upper left
-const rb=R('rob1'), syr=document.getElementById('syr'), A=40;
+const rb=R('rob1'), syr=document.getElementById('syr'), A=26;
 const tipx=rb.left+rb.width*0.29, tipy=rb.top+rb.height*0.72;
 syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='380px 80px'; syr.style.transform=`rotate(${{A}}deg) scale(1.38)`;
-const inj=document.getElementById('inj'), rq0=R('rq'); inj.style.top=(rq0.top-46)+'px';
+const rq0=R('rq'), inj=document.getElementById('inj'), ub0=document.querySelector('.ub').getBoundingClientRect(); inj.style.top=(ub0.bottom+window.scrollY+10)+'px';   // just under the prompt, clear of the syringe
 // key drawing: between the violins, right of column 1's narrow top and left of column 2's narrow middle
 const kb=document.getElementById('kb'), vw=R('vw');
 kb.style.left='{CW/2+70:.0f}px'; kb.style.top='{TOPH+(1.04-0.93)/1.08*(VH-TOPH-30):.0f}px';
