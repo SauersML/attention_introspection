@@ -31,7 +31,7 @@ TMP = os.environ.get("FIGTMP", HERE)
 RES = json.load(open(D + "dose_results.json")); VM = RES["vs_mention"]; PLY = RES["per_layer_vs_mention"]; B0, B1 = RES["layers"]
 CS = [("2_glance", "glance\nat"), ("3_focus", "focus\nyour\nattention\non"), ("4_focus_strongly", "focus\nstrongly\non"),
       ("5_very_strongly_only", "focus\nvery\nstrongly\nand only"), ("7_little_less", "a little\nless"),
-      ("8_do_not", "do not\npay\nattention"), ("9_completely_ignore", "com-\npletely\nignore")]
+      ("8_do_not", "do not\npay\nattention"), ("9_completely_ignore", "completely\nignore")]
 CS = sorted(CS, key=lambda c: -VM[c[0]]["mean"][0])
 def tcol(m):
     """text/line colour for a wording, as in the heroes: purple for more attention, red for less; a change under 4% is INK"""
@@ -67,14 +67,12 @@ for p, (c, lab) in enumerate(CS):
     pt = signflip(zp); PV[c] = pt
     if m > 5:   # % and p above the violin
         a.annotate(pt, (p, yy[-1]), xytext=(0, 4), textcoords="offset points", fontsize=44, color=COL[c], ha="center", va="bottom", zorder=7)
-        a.annotate(MN(f"{m:+.0f}%"), (p, yy[-1]), xytext=(0, 52), textcoords="offset points", fontsize=72, fontweight="bold", color=COL[c], ha="center", va="bottom", zorder=7)
+        a.annotate(MN(f"{m:+.0f}%"), (p, yy[-1]), xytext=(0, 50), textcoords="offset points", fontsize=64, fontweight="bold", color=COL[c], ha="center", va="bottom", zorder=7)
     else:       # below
-        a.annotate(MN(f"{m:+.0f}%"), (p, yy[0]), xytext=(0, -4), textcoords="offset points", fontsize=72, fontweight="bold", color=COL[c], ha="center", va="top", zorder=7)
-        a.annotate(pt, (p, yy[0]), xytext=(0, -78), textcoords="offset points", fontsize=44, color=COL[c], ha="center", va="top", zorder=7)
+        a.annotate(MN(f"{m:+.0f}%"), (p, yy[0]), xytext=(0, -4), textcoords="offset points", fontsize=64, fontweight="bold", color=COL[c], ha="center", va="top", zorder=7)
+        a.annotate(pt, (p, yy[0]), xytext=(0, -70), textcoords="offset points", fontsize=44, color=COL[c], ha="center", va="top", zorder=7)
     # x-axis label: the boxed words of the prompt, one equal dashed box per wording (as in the bubble)
-    a.text(p, BB + BH - 14 * u, lab, fontsize=38, fontweight="bold", color=COL[c], ha="center", va="top", linespacing=1.0, zorder=7)
-    a.add_patch(FancyBboxPatch((p - 0.45, BB), 0.90, BH, boxstyle="round,pad=0,rounding_size=0.12", mutation_aspect=BH / 0.90 * 0.95,
-                               fc="white", ec=INK, lw=3.5, ls=(0, (4, 3)), zorder=6))
+    a.text(p, BB + BH - 14 * u, lab, fontsize=37, fontweight="bold", color=COL[c], ha="center", va="top", linespacing=1.0, zorder=7)
 X0 = -0.52   # y axis
 a.plot([X0, len(CS) - 0.45], [0, 0], color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
 nm = VM["0_none"]["mean"][0]
@@ -113,9 +111,9 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .vrow{{display:flex;align-items:center;gap:22px;margin:4px 0}} .lab{{font-size:50px;font-weight:800;color:#fff;white-space:nowrap}}
 .mrow{{display:flex;align-items:center;gap:16px;margin-bottom:6px}}
 .top{{display:flex;align-items:flex-end;gap:26px;position:relative}}
-.mb#ans{{border:6px solid {PURPLE}}} .rd{{font-size:40px;font-weight:800;color:{PURPLE};line-height:1.1;margin-left:6px}}
+.mb#ans{{border:6px solid {PURPLE}}} .rd{{font-size:48px;font-weight:800;color:{PURPLE};line-height:1.1;margin-left:6px;white-space:nowrap}}
 #ov{{position:absolute;left:0;top:0;pointer-events:none;z-index:1}} .mrow{{position:relative;z-index:2}} .ub{{flex-shrink:0;position:relative;z-index:0}}
-.rob{{width:110px;height:110px;flex-shrink:0}}
+.rob{{width:110px;height:110px;flex-shrink:0}} .mcol{{display:flex;flex-direction:column;align-items:flex-start;gap:8px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:12px 34px;font-size:70px;font-weight:700;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
 .ref{{margin-left:34px;display:flex;flex-direction:column;gap:10px}}
 .r1{{font-size:50px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap}}
@@ -127,7 +125,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 </style></head><body>
 <div class="top"><div class="ub"><div>{html.escape(parts[0].strip())}</div>{"".join(para(p) for p in paras)}
 <div class="vrow"><div class="var"><span class="dv">{html.escape(VAR)}</span>{html.escape(line[len(VAR):])}</div></div><div>{html.escape(post.strip())}</div></div>
-<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb" id="ans">{html.escape(ex["ans_free"].strip())}</div><div class="rd">attention<br>read here</div>
+<div class="mcol"><div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb" id="ans">{html.escape(ex["ans_free"].strip())}</div></div><div class="rd">attention read from<br>the answer tokens</div></div>
 </div></div>
 <img class="dose" src="data:image/png;base64,{DOSE}"><svg id="ov"></svg>
 <script>
