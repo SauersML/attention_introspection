@@ -89,14 +89,14 @@ for j, c in enumerate(cols):
     ie = int(np.argmin(np.abs(v - c["ex"]) + np.abs(xj) * 1e-3)) if j == 0 else None
     ax.axhline(c["base"], color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
     blab = c["blab"] if CW > 1000 else c["blab"].replace("injection ", "injection\n")   # narrow: two lines, clear of the violin
-    ax.text(0.98, c["base"] + 0.015, blab, ha="right", va="bottom", fontsize=px(46), color=INK, zorder=6, transform=ax.get_yaxis_transform())
+    ax.text(0.98, c["base"] + 0.015, blab, ha="right", va="bottom", fontsize=px(62), color=INK, zorder=6, transform=ax.get_yaxis_transform())
     for t in (0, 0.5, 1):
-        ax.text(0.01, t, f"{100*t:.0f}%", ha="left", va="center", fontsize=px(44), color=INK, transform=ax.get_yaxis_transform())
+        ax.text(0.01, t, f"{100*t:.0f}%", ha="left", va="center", fontsize=px(62), fontweight="bold", color=INK, transform=ax.get_yaxis_transform())
     ax.set_xlim(-1, 1); ax.set_ylim(-0.04, 1.04); ax.set_xticks([]); ax.set_yticks([])
     for s_ in ax.spines.values(): s_.set_visible(False)
     cx = (x0 + CW / 2) / VW
     fig.text(cx, 1 - 6 / VH, c["big"], ha="center", va="top", fontsize=89, fontweight="bold", color=PURPLE)
-    fig.text(cx, 1 - 148 / VH, pstr(c["p"]), ha="center", va="top", fontsize=39, color=PURPLE)
+    fig.text(cx, 1 - 148 / VH, pstr(c["p"]), ha="center", va="top", fontsize=56, color=PURPLE)
     c["xj"] = xj
 VP = os.path.join(HERE, "_v_inject.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
@@ -151,7 +151,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .vw{{position:relative;margin-top:34px}}
 .vio{{width:{VW}px;display:block}}
 .kbox{{position:absolute}}
-.kl{{font-size:50px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap;line-height:1.1}} .kl2{{font-size:44px;font-weight:700;white-space:nowrap}}
+.kl{{font-size:50px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap;line-height:1.1}} .kl2{{font-size:56px;font-weight:700;white-space:nowrap}}
 .dot{{display:inline-block;flex-shrink:0;width:42px;height:42px;border-radius:50%;background:{PURPLE};opacity:.75}}
 .ring{{display:inline-block;flex-shrink:0;width:42px;height:42px;border-radius:50%;border:5px solid {INK}}}
 </style></head><body>
@@ -230,8 +230,8 @@ const quad=(p0,Q,tip,col)=>arrow(p0,[p0[0]+2/3*(Q[0]-p0[0]),p0[1]+2/3*(Q[1]-p0[1
 const cx=r=>(r.left+r.right)/2;
 // mirror pair: each leaves its underline almost straight down and turns outward by about 40 degrees onto its title
 const yt=c1.top-12, ys=ry.bottom, dy=yt-ys;
-for (const [p0x,sg] of [[cx(ry),-1],[rp.left+0.78*rp.width,1]]) {{
- const p0=[p0x,ys], tip=[p0x+sg*0.8*dy,yt]; s+=quad(p0,[p0x,ys+0.55*dy],tip,'{INK}').replace('stroke-linecap="round"','stroke-linecap="butt"'); }}  // flat start, flush with the underline
+for (const [p0x,tx] of [[cx(ry),cx(c1)],[cx(rp),cx(c2)]]) {{   // each ends at the middle of its column title
+ const p0=[p0x,ys], tip=[tx,yt]; s+=quad(p0,[p0x,ys+0.55*dy],tip,'{INK}').replace('stroke-linecap="round"','stroke-linecap="butt"'); }}  // flat start, flush with the underline
 document.getElementById('ov').innerHTML=s;
 </script></body></html>'''
 hp = os.path.join(HERE, "_hero_inject.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "_hero_inject_raw.png")

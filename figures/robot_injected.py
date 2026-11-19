@@ -34,12 +34,12 @@ def injected_robot_image(path=ASSET):
     smile = lambda w: (lambda d: d.arc([186 * S, 296 * S, 262 * S, 346 * S], 25, 155, fill=255, width=int(w * S)))
 
     face_l = Image.new("RGBA", (W, H), (0, 0, 0, 0))
-    put(face_l, (150, 80, 255), ImageChops.multiply(layer(disc(R_EYE + 12), blur=18, alpha=1.0), clip))   # wide bloom
-    put(face_l, (185, 130, 255), ImageChops.multiply(layer(disc(R_EYE + 2), blur=7, alpha=1.0), clip))         # tight bloom
+    put(face_l, (190, 150, 255), ImageChops.multiply(layer(disc(R_EYE + 12), blur=18, alpha=1.0), clip))   # wide bloom
+    put(face_l, (215, 185, 255), ImageChops.multiply(layer(disc(R_EYE + 2), blur=7, alpha=1.0), clip))         # tight bloom
     put(face_l, (170, 120, 255), ImageChops.multiply(layer(smile(12), blur=6, alpha=1.0), clip))             # mouth glow
-    put(face_l, (146, 72, 255), layer(disc(R_EYE)))                                                        # iris
+    put(face_l, (190, 150, 255), layer(disc(R_EYE)))                                                        # iris
     # brighter core: a radial ramp toward the centre, so the iris glows rather than sits flat
-    put(face_l, (182, 120, 255), layer(disc(R_EYE - 12), blur=10, alpha=0.8))
+    put(face_l, (220, 195, 255), layer(disc(R_EYE - 12), blur=10, alpha=0.8))
     put(face_l, (200, 160, 255), layer(smile(7)))                                                        # mouth
     hl = lambda d: [(d.ellipse([(cx - 25) * S, (cy - 31) * S, (cx - 5) * S, (cy - 11) * S], fill=255),
                      d.ellipse([(cx + 13) * S, (cy + 11) * S, (cx + 23) * S, (cy + 21) * S], fill=255)) for cx, cy in EYES]
