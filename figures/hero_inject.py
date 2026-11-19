@@ -137,7 +137,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
 #rq{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;margin:60px {150 if W >= 2300 else 60}px 0 {min(880, W - 910)}px}}
 .mrow{{display:flex;align-items:center;gap:18px;margin-top:56px;margin-left:420px}}
-.rob{{width:150px;height:150px}}
+.rob{{width:260px;height:260px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:14px 38px;font-size:84px;font-weight:700;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
 .part{{border-bottom:8px solid {INK};padding-bottom:2px}}
 #syr{{position:absolute}}
@@ -170,9 +170,9 @@ const R=e=>document.getElementById(e).getBoundingClientRect();
 const WW=document.body.scrollWidth, HH=document.body.scrollHeight;
 for(const id of ['gl','ov']){{const s=document.getElementById(id);s.setAttribute('width',WW);s.setAttribute('height',HH);}}
 // syringe: tip into the lower left of the robot's screen, barrel rising to the upper left
-const rb=R('rob1'), syr=document.getElementById('syr'), A=30;
+const rb=R('rob1'), syr=document.getElementById('syr'), A=40;
 const tipx=rb.left+rb.width*0.29, tipy=rb.top+rb.height*0.72;
-syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='380px 80px'; syr.style.transform=`rotate(${{A}}deg)`;
+syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='380px 80px'; syr.style.transform=`rotate(${{A}}deg) scale(1.38)`;
 const inj=document.getElementById('inj'), rq0=R('rq'); inj.style.top=(rq0.top-46)+'px';
 // key drawing: between the violins, right of column 1's narrow top and left of column 2's narrow middle
 const kb=document.getElementById('kb'), vw=R('vw');
