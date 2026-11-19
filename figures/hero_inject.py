@@ -113,20 +113,10 @@ def syringe():
     o.append(f'<text x="197" y="108" font-size="82" font-weight="800" text-anchor="middle" fill="#fff">\u00d7{DOSE:.1f}</text>')
     return f'<svg id="syr" width="380" height="160" viewBox="0 0 380 160">{"".join(o)}</svg>'
 def keydraw():
-    # one prompt run 4 times, boosting P1, P2, P3, P4 in turn (four mini chats, the boosted paragraph amber), averaged into one dot
-    o = []; bw, bh, g, sx = 120, 134, 34, 0; lens = [0.92, 0.78, 0.86, 0.6]
-    for i in range(4):
-        x = sx + i * (bw + g)
-        o.append(f'<rect x="{x}" y="0" width="{bw}" height="{bh}" rx="20" fill="#1F8BFF"/>')
-        for k in range(4):
-            o.append(f'<rect x="{x+13}" y="{13 + k*29}" width="{(bw-26)*lens[k]:.0f}" height="22" rx="7" fill="{AMB if k == i else "#fff"}"/>')
-    tw = 4 * bw + 3 * g; dx, dy, r = tw / 2, bh + 86, 30; ww = dx + r + 16 + 345
-    for i in range(4):
-        x = sx + i * (bw + g) + bw / 2
-        o.append(f'<path d="M{x},{bh+8} L{dx + (x-dx)*0.10:.0f},{dy - r - 8}" stroke="{INK}" stroke-width="7" stroke-linecap="round" fill="none"/>')
-    o.append(f'<circle cx="{dx}" cy="{dy}" r="{r}" fill="{PURPLE}" fill-opacity=".75"/><circle cx="{dx}" cy="{dy}" r="4" fill="#000"/>')
-    o.append(f'<text x="{dx + r + 16}" y="{dy + 19}" font-size="54" font-weight="800" fill="{INK}">= one prompt</text>')
-    return f'<svg class="kbox" id="kb" width="{ww:.0f}" height="{dy + r + 4:.0f}" viewBox="0 0 {ww:.0f} {dy + r + 4:.0f}">{"".join(o)}</svg>'
+    r = 30; dx, dy = r + 4, r + 4; ww = dx + r + 16 + 345
+    o = [f'<circle cx="{dx}" cy="{dy}" r="{r}" fill="{PURPLE}" fill-opacity=".75"/><circle cx="{dx}" cy="{dy}" r="4" fill="#000"/>',
+         f'<text x="{dx + r + 16}" y="{dy + 19}" font-size="54" font-weight="800" fill="{INK}">= one prompt</text>']
+    return f'<svg class="kbox" id="kb" width="{ww:.0f}" height="{2*r + 8:.0f}" viewBox="0 0 {ww:.0f} {2*r + 8:.0f}">{"".join(o)}</svg>'
 robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
 VIO = base64.b64encode(open(VP, "rb").read()).decode()
 def short(s, n): return " ".join(s.split()[:n]) + " …"
@@ -220,7 +210,7 @@ const ry=R('ry'), rp=R('rp'), c1=R('c1'), c2=R('c2');
 const quad=(p0,Q,tip,col)=>arrow(p0,[p0[0]+2/3*(Q[0]-p0[0]),p0[1]+2/3*(Q[1]-p0[1])],[tip[0]+2/3*(Q[0]-tip[0]),tip[1]+2/3*(Q[1]-tip[1])],tip,col);
 const cx=r=>(r.left+r.right)/2;
 // mirror pair: each leaves its underline almost straight down and turns outward by about 40 degrees onto its title
-const yt=c1.top-12, ys=ry.bottom+16, dy=yt-ys;
+const yt=c1.top-12, ys=ry.bottom-5, dy=yt-ys;
 for (const [p0x,sg] of [[cx(ry),-1],[rp.left+0.78*rp.width,1]]) {{
  const p0=[p0x,ys], tip=[p0x+sg*0.8*dy,yt]; s+=quad(p0,[p0x+sg*0.12*dy,ys+0.5*dy],tip,'{INK}'); }}
 document.getElementById('ov').innerHTML=s;
