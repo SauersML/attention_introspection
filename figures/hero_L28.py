@@ -58,6 +58,8 @@ def curve(c, ctrl):   # per-layer mean % change over contexts, same measure as l
     PL = lambda cc: np.array([[by[i, cc]["att_mean"][l][by[i, cc]["k"]] for l in range(meta["NL"])] for i in ids])
     return (100 * (PL(c) / PL(ctrl) - 1)).mean(0)
 L3 = json.load(open(os.path.join(HERE, "layers3_data.json")))
+_band = json.load(open(os.path.join(os.path.dirname(HERE), "results", "told_inject", "data", "meta.json")))["BAND"]   # layers the introspection hero boosts
+assert _band == list(range(_band[0], _band[-1] + 1)); BAND = (_band[0], _band[-1])
 for c, _, _ in CONDS: assert np.allclose(curve(c, "1_mention"), L3[c]["mean"])
 
 def method_svg(w, h, cf, ci, rob):
@@ -103,7 +105,14 @@ def method_svg(w, h, cf, ci, rob):
     o.append(f'<line x1="24" x2="{w - 24:.0f}" y1="{ty + 92 + dy}" y2="{ty + 92 + dy}" stroke="#E4E5E9" stroke-width="3"/>')
     # ---- (b) bottom: per-layer curve
     TF = F + 14; TY = F + 30   # y-axis % larger   # axis numbers and "layer": as large as the curve label
-    x0 = 270; x1 = w - 40; y0 = ty + 165 + dy; y1 = h - 110
+    x0 = 270; x1 = w - 40; y0 = ty + 165 + dy
+    # under the layer axis: a square bracket (ticks up) over the boosted band of the introspection run (told_inject meta.json BAND,
+    # layers 21-53, all heads), bold label under it; the curve is squished vertically to make the room
+    B0, B1 = BAND; BL = ["attention boosted in", "these layers (all heads)"]; hb = ImageFont.truetype("/System/Library/Fonts/HelveticaNeue.ttc", 100, index=1)
+    BF = min(F + 10, int(100 * (w - 60) / max(hb.getlength(t) for t in BL)))
+    if BF < F + 2: BL = ["attention boosted", "in these layers", "(all heads)"]; BF = min(F + 10, int(100 * (w - 60) / max(hb.getlength(t) for t in BL)))
+    y1 = h - 110 - 40 - len(BL) * (BF + 6)
+    yk = y1 + 72 + 24   # bracket tick tops, under the axis numbers
     lo = min(cf.min(), ci.min()) - 8; hi = max(cf.max(), ci.max())
     X = lambda l: x0 + (x1 - x0) * l / (len(cf) - 1); Y = lambda v: y1 - (y1 - y0) * (v - lo) / (hi - lo)
     o.append(f'<line x1="{x0}" x2="{x1}" y1="{Y(0):.1f}" y2="{Y(0):.1f}" stroke="{INK}" stroke-width="2.5"/>')
@@ -117,6 +126,10 @@ def method_svg(w, h, cf, ci, rob):
         pts = " ".join(f"{X(l):.1f},{Y(v):.1f}" for l, v in enumerate(cv))
         o.append(f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="5" stroke-linejoin="round"/>')
         o.append(f'<circle cx="{X(28):.1f}" cy="{Y(cv[28]):.1f}" r="11" fill="{col}" stroke="#fff" stroke-width="3"/>')
+    o.append(f'<path d="M{X(B0):.1f},{yk:.1f} V{yk + 24:.1f} H{X(B1):.1f} V{yk:.1f}" fill="none" stroke="{INK}" stroke-width="5"/>')
+    bxc = min(max(X((B0 + B1) / 2), 30 + max(hb.getlength(t) for t in BL) * BF / 200), w - 30 - max(hb.getlength(t) for t in BL) * BF / 200)
+    for j, t in enumerate(BL):
+        o.append(f'<text x="{bxc:.1f}" y="{yk + 24 + 14 + BF * 0.8 + (BF + 6) * j:.1f}" font-size="{BF}" font-weight="700" fill="{INK}" text-anchor="middle">{t}</text>')
     LF = F + 12   # shrinks only if the label would run past the box's right edge
     LF = min(LF, int((w - 16 - X(28) - 22) / (0.56 * len("violins:"))))
     for j, t in enumerate(["violins:", "layer 28"]):

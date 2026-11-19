@@ -1,10 +1,10 @@
 {
  "script": "hero_L28.py",
- "script_sha": "1e2ae467bb99bb10f57a46b4bdb9a8bb6f233bb97255924c3ae1a06491e9a2dd",
+ "script_sha": "dc180dd1755b4ee4abea0927d52f900b30bbe930cc5a727b5d542a893b6dc9b8",
  "helpers": {
   "stamp.py": "eda7260b68aeaa90c5054a96fa8890c1dfffe47275701c8dff34c45be7d07333",
   "pal.py": "7bffcd0403f1f92715487dd90df4615b960c15ac2b7a4a17be2202d29061d0d0",
   "pfmt.py": "2ee07f13f3ac504f85af7dda958b5d767e9a34187b4f40e8a4b7cac061d45a41"
  },
- "png_sha": "6d06081206293da02e427d2da59b425fde38cfb1e11c198cd07c5e91e27d7974"
+ "png_sha": "3a004dd6dd3111bcf5e52abebaa032974bf98ac3107681fbf7e2d860e3059121"
 }
