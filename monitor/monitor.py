@@ -1,4 +1,4 @@
-# Attention monitoring (results/monitor/PREREG.md). Phases (separate processes, one GPU):
+# Attention monitoring (results/monitor_shuffled/PREREG.md). Phases (separate processes, one GPU):
 #   gen1 (vLLM): answers, later turns, generated reports;  hf1 (transformers): attention truth + read reports;
 #   gen2 (vLLM): feedback pct reports (need truth);         hf2 (transformers): feedback read reports.
 import argparse, json, math, os, random, re, sys, time

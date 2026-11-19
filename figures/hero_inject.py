@@ -193,13 +193,29 @@ const arrow=(p0,c1,c2,tip,col,ol)=>{{ const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2
  const d=`M${{p0}} C${{c1}} ${{c2}} ${{e}}`, h=`M${{tip}} L${{b[0]-H*uy}},${{b[1]+H*ux}} L${{b[0]+H*uy}},${{b[1]-H*ux}} Z`;
  const o=ol?`<path d="${{d}}" fill="none" stroke="{INK}" stroke-width="${{SW+6}}" stroke-linecap="round"/><path d="${{h}}" fill="{INK}" stroke="{INK}" stroke-width="6" stroke-linejoin="round"/>`:'';
  let w='';
- if (ol) {{ // the arrow body filled with a 2D wavy purple texture (same vibe as the auras), masked to the arrow's shape
-  const xs=[p0[0],c1[0],c2[0],tip[0]], ys=[p0[1],c1[1],c2[1],tip[1]], pad=SW*3;
+ if (ol) {{ // the arrow filled with wave bands perpendicular to the curve, crests bent forward so they flow toward the tip
+  const B=(t,i)=>{{const u=1-t; return u*u*u*p0[i]+3*u*u*t*c1[i]+3*u*t*t*c2[i]+t*t*t*e[i];}};
+  const P=[]; const N=600;
+  for (let k=0;k<=N;k++){{ const t=k/N; P.push([B(t,0),B(t,1)]); }}
+  for (let k=1;k<=40;k++) P.push([e[0]+ux*L*1.15*k/40, e[1]+uy*L*1.15*k/40]);   // on through the head
+  const S=[0]; for (let k=1;k<P.length;k++) S.push(S[k-1]+Math.hypot(P[k][0]-P[k-1][0],P[k][1]-P[k-1][1]));
+  const lam=SW*1.9, half=H*1.05, rows=8, bend=SW*0.9;
+  const lerp=(a,b,f)=>Math.round(a+(b-a)*f), C1=[0xC9,0xB2,0xEC], C2=[0x6A,0x3D,0xB5];
+  let q='';
+  for (let k=0;k<P.length-1;k++){{
+   const a=P[Math.max(k-1,0)], b=P[Math.min(k+2,P.length-1)]; let tx=b[0]-a[0], ty=b[1]-a[1]; const m=Math.hypot(tx,ty)||1; tx/=m; ty/=m; const nx=-ty, ny=tx;
+   const ds=Math.hypot(P[k+1][0]-P[k][0],P[k+1][1]-P[k][1])+0.8;
+   for (let r=0;r<rows;r++){{
+    const w0=-half+2*half*r/rows-0.7, w1=-half+2*half*(r+1)/rows+0.7, wm=(w0+w1)/2;   // overlap: no seams
+    const ph=(S[k] + bend*Math.pow(Math.abs(wm)/half,1.6))/lam;     // crests lag at the edges: chevrons pointing along the flow
+    const f=0.5+0.5*Math.sin(2*Math.PI*ph);
+    const col=`rgb(${{lerp(C1[0],C2[0],f)}},${{lerp(C1[1],C2[1],f)}},${{lerp(C1[2],C2[2],f)}})`;
+    const x=P[k][0], y=P[k][1];
+    q+=`<path d="M${{(x+nx*w0).toFixed(1)}},${{(y+ny*w0).toFixed(1)}} L${{(x+nx*w1).toFixed(1)}},${{(y+ny*w1).toFixed(1)}} L${{(x+nx*w1+tx*ds).toFixed(1)}},${{(y+ny*w1+ty*ds).toFixed(1)}} L${{(x+nx*w0+tx*ds).toFixed(1)}},${{(y+ny*w0+ty*ds).toFixed(1)}} Z" fill="${{col}}" stroke="${{col}}" stroke-width="0.6"/>`; }} }}
+  const xs=P.map(p=>p[0]), ys=P.map(p=>p[1]), pad=SW*4;
   const X=Math.min(...xs)-pad, Y=Math.min(...ys)-pad, Wd=Math.max(...xs)-X+pad, Ht=Math.max(...ys)-Y+pad;
-  w=`<defs><mask id="amask" maskUnits="userSpaceOnUse" x="${{X}}" y="${{Y}}" width="${{Wd}}" height="${{Ht}}"><path d="${{d}}" fill="none" stroke="#fff" stroke-width="${{SW}}" stroke-linecap="round"/><path d="${{h}}" fill="#fff"/></mask>`+
-   `<filter id="wfill" filterUnits="userSpaceOnUse" x="${{X}}" y="${{Y}}" width="${{Wd}}" height="${{Ht}}"><feTurbulence type="turbulence" baseFrequency="0.010 0.035" numOctaves="2" seed="11" result="n"/>`+
-   `<feColorMatrix in="n" type="matrix" values="-1.05 0 0 0 0.80  -1.30 0 0 0 0.70  -0.80 0 0 0 0.96  0 0 0 0 1"/></filter></defs>`+
-   `<g mask="url(#amask)"><rect x="${{X}}" y="${{Y}}" width="${{Wd}}" height="${{Ht}}" fill="#A98BD6" filter="url(#wfill)"/></g>`; }}
+  w=`<defs><mask id="amask" maskUnits="userSpaceOnUse" x="${{X}}" y="${{Y}}" width="${{Wd}}" height="${{Ht}}"><path d="${{d}}" fill="none" stroke="#fff" stroke-width="${{SW}}" stroke-linecap="round"/><path d="${{h}}" fill="#fff"/></mask></defs>`+
+   `<g mask="url(#amask)">${{q}}</g>`; }}
  if (ol) return o+w;
  return o+`<path d="${{d}}" fill="none" stroke="${{col}}" stroke-width="${{SW}}" stroke-linecap="round"/>`+w+
   `<path d="${{h}}" fill="${{col}}"/>`; }};

@@ -1,4 +1,4 @@
-# Tables, pass rule and verdict for the attention-monitoring experiment (results/monitor/PREREG.md).
+# Tables, pass rule and verdict for the attention-monitoring experiment (results/monitor_shuffled/PREREG.md).
 # usage: analyze_monitor.py OUTDIR SHARD_DIR [SHARD_DIR ...]
 import json, os, re, sys, math
 import numpy as np

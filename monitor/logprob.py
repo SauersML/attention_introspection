@@ -1,6 +1,6 @@
 # Does the model's own report of where its attention went track that attention, and does the report carry anything a
 # reader of the same transcript (the same model, Qwen3-32B, given the conversation as quoted text) does not?
-# Writes results/monitor/logprob_results.json and prints the tables in results/monitor/LOGPROB.md.
+# Writes OUTJSON (results/monitor_{inorder,shuffled}/logprob_results.json) and prints the tables in results/monitor_shuffled/LOGPROB.md.
 # usage: logprob.py OUTJSON SHARD_DIR [SHARD_DIR ...]   (shards: hypha-prod-mon{0,1,2}/out with hf1.json, hf2.json, contexts.json)
 import json, os, sys
 import numpy as np
@@ -105,7 +105,7 @@ for tr in TRUTHS:
               + " ".join(f"{o}:{v['mean']:+.4f}" for o, v in q['second_reader'].items()) + f" shuffle {b}/{NPERM}", flush=True)
 json.dump(dict(res=RES, perprompt=PER, ids=IDS, note="truth norm = preregistered primary (per-token attention); mass = secondary, post hoc"), open(OUT, "w"))
 
-# markdown tables for results/monitor/LOGPROB.md
+# markdown tables for results/monitor_shuffled/LOGPROB.md
 NAME = {"after|most": "most attended, asked right after", "before|most": "most attended, asked before answering", "later|most": "most attended, asked one turn later",
         "think|most": "most attended, with thinking", "fb4|most": "most attended, after 4 true examples", "fb16|most": "most attended, after 16 true examples",
         "after|rate": "0–10 rating, asked right after", "before|rate": "0–10 rating, asked before answering", "later|rate": "0–10 rating, asked one turn later",

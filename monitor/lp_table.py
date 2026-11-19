@@ -1,4 +1,4 @@
-# Markdown tables for results/monitor/LOGPROB.md from logprob_signal.py outputs.
+# Markdown tables for results/monitor_shuffled/LOGPROB.md from logprob_signal.py outputs.
 # usage: lp_table.py MAIN/logprob.json [LABEL=OTHER/logprob.json ...]
 import json, sys
 J = json.load(open(sys.argv[1]))["res"]

@@ -1,4 +1,4 @@
-# Is there signal in the self-report's log-probabilities, whatever its calibration or bias? (results/monitor/LOGPROB.md)
+# Is there signal in the self-report's log-probabilities, whatever its calibration or bias? (results/monitor_shuffled/LOGPROB.md)
 # Reads the saved label probabilities of the "which paragraph did you attend to most?" read (hf1.json, hf2.json):
 # probabilities of the four label digits after the prefilled "P", renormalised over the four, so log P differs from the
 # raw log-probability by one constant per prompt; every measure below is invariant to that constant.

@@ -42,6 +42,6 @@ Shuffled experiments behind README figures, rerun with labels and options in ord
 (same seed, prompts, doses, arms):
 
 - `privileged.py --inorder`, all 300 prompts, all arms and doses, 6 shards: done, results in `results/privileged_inorder_full/`; the shuffled run moved to `results/privileged_shuffled/`, its figure to `figures/shuffled/privileged.png`. `figures/privileged.png` is now drawn from the in-order run.
-- `monitor.py --inorder`, 3 shards, 60 per family as before: still running when the privileged rerun was merged; results will go to `results/monitor/` (shuffled: `results/monitor_shuffled/`).
+- `monitor.py --inorder`, 3 shards, 60 per family as before: done, results in `results/monitor_inorder/` (write-up `RESULT.md`); the shuffled run moved to `results/monitor_shuffled/`, its figure to `figures/shuffled/monitor_logprob.png`. `figures/monitor_logprob.png` is now drawn from the in-order run.
 
 In-order vs shuffled numbers: the README's last section, "Checks: shuffled labels".

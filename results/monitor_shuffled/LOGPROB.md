@@ -1,6 +1,8 @@
 # Does Qwen3-32B's report of its own attention carry anything a transcript reader lacks?
 
-![Qwen3-32B, 300 prompts: asked right after answering, the self-report's rank correlation with true attention (0.42) is no better than the same model reading the transcript (0.43); added to a reader asked every way at the same time, the self-report adds nothing in any way of asking](../../figures/monitor_logprob.png)
+This is the first run, with the report options in a random order per prompt and wording. The rerun with options in order, and both side by side, is `../monitor_inorder/RESULT.md` (same conclusion; the post-hoc gain in point 4 does not survive there).
+
+![Qwen3-32B, 300 prompts: asked right after answering, the self-report's rank correlation with true attention (0.42) is no better than the same model reading the transcript (0.43); added to a reader asked every way at the same time, the self-report adds nothing in any way of asking](../../figures/shuffled/monitor_logprob.png)
 
 ## Answer
 

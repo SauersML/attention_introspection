@@ -1,4 +1,4 @@
-# Figure for results/monitor/LOGPROB.md: per-prompt rank correlation (self-report vs transcript reader) and the
+# Figure for results/monitor_shuffled/LOGPROB.md: per-prompt rank correlation (self-report vs transcript reader) and the
 # held-out gain from adding the self-report's log-probabilities, against its shuffle null.
 # usage: fig_logprob.py logprob.json SHARD_DIR [SHARD_DIR ...] OUT.png
 import json, os, sys

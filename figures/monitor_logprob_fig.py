@@ -1,11 +1,12 @@
-"""Figure for results/monitor/LOGPROB.md (Qwen3-32B, 300 prompts with four paragraphs).
+"""Figure for results/monitor_inorder/RESULT.md and results/monitor_shuffled/LOGPROB.md (Qwen3-32B, 300 prompts with four paragraphs).
 Top: one real prompt (id 173): the chat, the self-report question, the report's probabilities for P1..P4 (after the
 prefilled "P") beside the true attention (the preregistered primary truth: attention from answer tokens to each paragraph,
 per token of the paragraph, averaged over heads and layers 21-53, as percent of the four values' total). Bottom left: per-prompt Spearman between report score and true attention, asked
 right after answering, self vs the same model reading the transcript; black bar = 95% bootstrap CI of the mean.
 Bottom right: held-out gain in within-prompt rank correlation from adding the self score to a model that already has the
 reader's scores for every wording asked at that timing, plus position and length (logprob.py "gain_all"), dot + 95% bootstrap CI over prompts.
-usage: monitor_logprob_fig.py results/monitor/logprob_results.json SHARD_DIR [SHARD_DIR ...]   (writes figures/monitor_logprob.png)"""
+Violins show the mean only (black line), with the paired sign-flip p of self vs reader under the self-report's mean.
+usage: monitor_logprob_fig.py results/monitor_inorder/logprob_results.json OUT.png SHARD_DIR [SHARD_DIR ...]"""
 import json, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
@@ -14,7 +15,7 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, INK
 ORANGE = "#E07B24"
-J = json.load(open(sys.argv[1])); DIRS = sys.argv[2:]
+J = json.load(open(sys.argv[1])); OUTP = os.path.abspath(sys.argv[2]); DIRS = sys.argv[3:]
 TR = "norm"  # preregistered primary truth
 RES, PP, IDS = J["res"][TR], J["perprompt"][TR], J["ids"]
 C, H, G = {}, {}, {}
@@ -72,16 +73,22 @@ F = lambda x, y: (x / W, y / BH)
 L0, LW, B0, BHh = 190, 720, 300, 1160
 ax = fig.add_axes([L0 / W, B0 / BH, LW / W, BHh / BH])
 rng = np.random.default_rng(1)
+dsr = np.subtract(PP["after|most"]["self"], PP["after|most"]["reader"]); obs = abs(dsr.mean())
+PV = (sum(int((np.abs((np.random.default_rng(k).choice([-1.0, 1.0], (20000, len(dsr))) * dsr).mean(1)) >= obs - 1e-12).sum()) for k in range(10)) + 1) / 200001
+PTXT = ("p < 10\u207b\u2074" if PV < 1e-4 else (f"p < 10\u207b\u00b3" if PV < 1e-3 else f"p = {PV:.2g}")) + " vs reader"
+print("self - reader", round(dsr.mean(), 4), "p", PV)
 for j, (who, col, lab) in enumerate([("self", PURPLE, "self-report"), ("reader", ORANGE, "same model\nreading the\ntranscript")]):
     z = np.array(PP["after|most"][who]); st = RES["after|most"][who]
     kde = gaussian_kde(z, bw_method=0.3); yy = np.linspace(-1.05, 1.05, 300); dd = kde(yy); dd = dd / dd.max() * 0.42
     ax.fill_betweenx(yy, j - dd, j + dd, color=col, alpha=0.12, lw=0); ax.plot(np.r_[j - dd, (j + dd)[::-1]], np.r_[yy, yy[::-1]], color=col, lw=2.5, alpha=0.6)
     xj = j + rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.40; yj = z + rng.uniform(-0.035, 0.035, len(z))
     ax.scatter(xj, yj, s=120, color=col, alpha=0.45, edgecolors="none", zorder=3); ax.scatter(xj, yj, s=4, color="black", zorder=4)
-    ax.plot([j, j], [st["lo"], st["hi"]], color=INK, lw=10, solid_capstyle="butt", zorder=6)
-    ax.plot([j - 0.17, j + 0.17], [st["mean"]] * 2, color=INK, lw=6, zorder=6)
+    ax.plot([j - 0.17, j + 0.17], [st["mean"]] * 2, color=INK, lw=4, zorder=6)
     ax.text(j + 0.2, st["mean"], f"{st['mean']:.2f}", ha="left", va="center", fontsize=px(54), fontweight="bold", color=col, zorder=7,
             bbox=dict(fc="white", ec="none", alpha=0.85, pad=2))
+    if who == "self":
+        ax.text(j + 0.2, st["mean"] - 0.075, PTXT, ha="left", va="top", fontsize=px(40), color=col, zorder=7, fontweight="bold",
+                bbox=dict(fc="white", ec="none", alpha=0.95, pad=2))
     ax.text(j, -1.16, lab, ha="center", va="top", fontsize=px(48), fontweight="bold", color=col, linespacing=1.05)
 ax.set_xlim(-0.55, 1.55); ax.set_ylim(-1.1, 1.1); ax.set_xticks([])
 ax.set_yticks([-1, 0, 1]); ax.set_yticklabels(["\u22121", "0", "1"], fontsize=px(46)); ax.tick_params(length=0, pad=10)
@@ -137,5 +144,5 @@ hp = os.path.join(HERE, "monitor_logprob.html"); open(hp, "w").write(HTML); raw 
 subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3200",
                 "--force-device-scale-factor=1", "--virtual-time-budget=3000", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
 im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
-im = im.crop((0, 0, W, nz[-1] + 24)); im.save(os.path.join(HERE, "monitor_logprob.png")); print("monitor_logprob.png", im.size)
+im = im.crop((0, 0, W, nz[-1] + 24)); im.save(OUTP); print(OUTP, im.size)
 os.remove(raw); os.remove(hp); os.remove(VP)
