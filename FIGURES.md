@@ -7,7 +7,7 @@
 ![](figures/hero_pair.jpg)
 
 
-2. The same setup, but we make Qwen start their answer with "Yes, paragraph [" and see which number they finish with.
+2. The same setup, but we make Qwen start their answer with "Yes, paragraph [" and plot the probability Qwen gives the boosted paragraph's number (chance 25%), with no boost and at each boost strength.
 
 ![](figures/hero_told.png)
 
