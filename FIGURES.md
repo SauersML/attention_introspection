@@ -12,35 +12,39 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/told_pair.jpg)
 
-3. When does the push matter? We push either while Qwen answers or only while they read the question "which did you attend to most?", for paragraphs and for single words. Only the push at question time raises naming the pushed one.
+3. Same question, but instead of boosting attention we add paragraph 2's content into the residual stream at the same layers, at the same size or twice the size: the content addition raises Yes as much as the attention boost, but only the attention boost makes Qwen pick the right paragraph.
+
+![](figures/salience.jpg)
+
+4. When does the push matter? We push either while Qwen answers or only while they read the question "which did you attend to most?", for paragraphs and for single words. Only the push at question time raises naming the pushed one.
 
 ![](figures/privileged_both.png)
 
 ## Can Qwen control their attention when told to?
 
-4. Many wordings, from mild ("pay a little more attention") to strong ("completely ignore").
+5. Many wordings, from mild ("pay a little more attention") to strong ("completely ignore").
 
 ![](figures/dose_full.jpg)
 
-5. One typical question: every token of all four paragraphs coloured by its change in attention at layer 28 when Qwen is told to focus on that paragraph, compared to only mentioning it.
+6. One typical question: every token of all four paragraphs coloured by its change in attention at layer 28 when Qwen is told to focus on that paragraph, compared to only mentioning it.
 
 ![](figures/grid_focus_one.jpg)
 
-6. Focus and ignore on lists of single words instead of paragraphs.
+7. Focus and ignore on lists of single words instead of paragraphs.
 
 ![](figures/words_control.png)
 
 ## More
 
-7. Telling Qwen to focus on (left) or ignore (right) each paragraph in turn: which paragraph's attention moves.
+8. Telling Qwen to focus on (left) or ignore (right) each paragraph in turn: which paragraph's attention moves.
 
 ![](figures/rotate2.jpg)
 
-8. The focus/ignore effect at every one of the 64 layers.
+9. The focus/ignore effect at every one of the 64 layers.
 
 ![](figures/layers.jpg)
 
-9. Qwen rates how much they attended to each paragraph; two readers guess the same from the transcript alone: Qwen reading it as someone else's chat, and Gemma 4 31B. Qwen's self-report tracks their attention, but both readers do slightly better.
+10. Qwen rates how much they attended to each paragraph; two readers guess the same from the transcript alone: Qwen reading it as someone else's chat, and Gemma 4 31B. Qwen's self-report tracks their attention, but both readers do slightly better.
 
 ![](figures/monitor_logprob.png)
 
@@ -48,7 +52,7 @@ A smaller reader does worse: Qwen3-8B ranks which paragraph Qwen3-32B attended t
 
 ![](figures/reader_size.jpg)
 
-10. The noticing test with word lists instead of paragraphs: eight single-word lines, one of them boosted, then "did you notice, and which one?". Left: Qwen never says Yes, with or without a boost. Right: when made to start "Yes, word [", how often their top answer is the boosted word's number, as change from no boost (12.5%), with the raw rates above each bar.
+11. The noticing test with word lists instead of paragraphs: eight single-word lines, one of them boosted, then "did you notice, and which one?". Left: Qwen never says Yes, with or without a boost. Right: when made to start "Yes, word [", how often their top answer is the boosted word's number, as change from no boost (12.5%), with the raw rates above each bar.
 
 ![](figures/words_told_pair.jpg)
 
@@ -56,6 +60,6 @@ The same test in probabilities: after "Yes, word [W", the average probability Qw
 
 ![](figures/words_told_pair_lp.jpg)
 
-11. The instruction placed before the paragraphs instead of after: a much smaller effect.
+12. The instruction placed before the paragraphs instead of after: a much smaller effect.
 
 ![](figures/hero_before.jpg)
