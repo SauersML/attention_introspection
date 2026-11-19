@@ -1,50 +1,55 @@
 """rotate2.png: the rotation experiment drawn with its method. Top: the real prompt of context 0 (paragraphs cut to three words),
 its instruction line shown as the three alternatives (mention, focus, completely ignore; [Pk] names one paragraph, rotated over all
 four), and Qwen3-32B's answer. Below: two 4x4 heatmaps (focus | completely ignore) of the % change in attention from the answer
-tokens to each paragraph (layers 21-53) against the mention-only line naming the same paragraph, with each cell's 95% bootstrap CI
-written under its mean, and one shared diverging colour key. Data: results/qwen3-32b-rotate2/rotate2_results.json
+tokens to each paragraph (layers 21-53) against the mention-only line naming the same paragraph (cell colour = pct_colour of 1 + change/100, the fixed scale of every
+figure; the 95% bootstrap CIs stay in rotate2_tables.md), above each map the share of (prompt, named paragraph) pairs where the named
+paragraph moved most in the instructed direction (share_named_most; chance 25%), and one shared colour key. Data: results/qwen3-32b-rotate2/rotate2_results.json
 (rotate2_analyze.py) and R2.json (the example prompt). Usage: python rotate2_fig.py [rotate2_results.json]"""
 import json, sys, os, base64, html, subprocess, numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from matplotlib.patches import Rectangle
-from matplotlib.colorbar import ColorbarBase
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
-from pal import DIV, norm, PURPLE, RED, INK
+from pal import DIV, PCTNORM, PURPLE, RED, INK
 D = os.path.join(HERE, "..", "results", "qwen3-32b-rotate2")
 O = json.load(open(sys.argv[1] if len(sys.argv) > 1 else os.path.join(D, "rotate2_results.json")))
 meta = json.load(open(os.path.join(D, "meta.json"))); LN = {c: t.replace("{k}", "k") for c, t in meta["lines"].items()}
 MN = lambda s: s.replace("-", "\u2212")
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK, "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": INK})
 P = {c: np.array(O[c]["mean"]) for c in ["focus", "ignore"]}
-LO = {c: np.array(O[c]["lo"]) for c in P}; HI = {c: np.array(O[c]["hi"]) for c in P}
-vm = max(np.abs(P["focus"]).max(), np.abs(P["ignore"]).max()); nm = norm(-vm, vm)
+L2 = {c: np.log2(1 + P[c] / 100) for c in P}   # cell colour = pct_colour(1 + change/100): the fixed ¼×..4× scale of every figure
+SH = {c: O[c]["share_named_most"] for c in P}   # share of (prompt, named paragraph) pairs where the named paragraph moved most
 W = 2248
-fig = plt.figure(figsize=(W / 100, 13.3))
-axs = [fig.add_axes([0.09, 0.175, 0.405, 0.655]), fig.add_axes([0.59, 0.175, 0.405, 0.655])]
+fig = plt.figure(figsize=(W / 100, 15.6))
+axs = [fig.add_axes([0.085, 0.165, 0.405, 0.6]), fig.add_axes([0.59, 0.165, 0.405, 0.6])]
 fmt = lambda v: MN(f"{v:+.0f}%") if round(v) else "0%"
-for a, c, title, col in zip(axs, ["focus", "ignore"], ["“focus your attention”", "“completely ignore”"], [PURPLE, RED]):
-    M = P[c]; a.imshow(M, cmap=DIV, norm=nm, aspect="auto")
+for a, c, title, col, verb in zip(axs, ["focus", "ignore"], ["focus your attention", "completely ignore"], [PURPLE, RED], ["gains", "loses"]):
+    a.imshow(L2[c], cmap=DIV, norm=PCTNORM, aspect="auto")
     for k in range(4):
         for m in range(4):
-            v = M[k, m]; dark = abs(v) > 0.45 * vm
-            tc = "white" if dark else INK
-            a.text(m, k - 0.13, fmt(v), ha="center", va="center", fontsize=56 if k == m else 52, fontweight="bold", color=tc)
-            hw = int(np.ceil(max(HI[c][k, m] - v, v - LO[c][k, m])))   # half-width of the 95% CI, rounded up
-            a.text(m, k + 0.25, f"±{hw}", ha="center", va="center", fontsize=42, fontweight="bold", color=tc)
+            v = P[c][k, m]; tc = "white" if abs(L2[c][k, m]) > 1.1 else INK
+            a.text(m, k, fmt(v), ha="center", va="center", fontsize=50 if k == m else 44, fontweight="bold", color=tc)
         a.add_patch(Rectangle((k - 0.5, k - 0.5), 1, 1, fill=False, lw=8, ec=INK, zorder=5))
     a.set_xticks(range(4)); a.set_xticklabels([f"P{i}" for i in range(1, 5)]); a.set_yticks(range(4)); a.set_yticklabels([f"P{i}" for i in range(1, 5)])
-    a.xaxis.tick_top(); a.xaxis.set_label_position("top"); a.tick_params(length=0, pad=10, labelsize=50)
-    a.set_xlabel("attention to paragraph", fontsize=50, labelpad=12)
-    a.set_ylabel("[Pk] in the line", fontsize=50, labelpad=10)
-    fig.text(a.get_position().x0 + a.get_position().width / 2, 0.995, title, ha="center", va="top", fontsize=60, fontweight="bold", color=col)
-    for s in a.spines.values(): s.set_visible(False)
-cax = fig.add_axes([0.27, 0.06, 0.46, 0.04])
-cb = ColorbarBase(cax, cmap=DIV, norm=nm, orientation="horizontal")
-tk = [-60, -30, 0, 30, 60]; cb.set_ticks(tk); cb.set_ticklabels([MN(f"{t:+d}%") if t else "0%" for t in tk])
-cb.outline.set_visible(False); cax.tick_params(labelsize=46, length=0, pad=8)
-fig.text(0.26, 0.08, "less attention", ha="right", va="center", fontsize=48, fontweight="bold", color=RED)
-fig.text(0.74, 0.08, "more attention", ha="left", va="center", fontsize=48, fontweight="bold", color=PURPLE)
+    a.xaxis.tick_top(); a.xaxis.set_label_position("top"); a.tick_params(length=0, pad=8, labelsize=40)
+    for t in a.get_xticklabels() + a.get_yticklabels(): t.set_fontweight("bold")
+    a.set_xlabel("attention to paragraph", fontsize=36, fontweight="bold", labelpad=8)
+    a.set_ylabel("paragraph named in the line", fontsize=34, fontweight="bold", labelpad=8)
+    for s_ in a.spines.values(): s_.set_visible(False)
+    x0 = a.get_position().x0; xc = x0 + a.get_position().width / 2
+    fig.text(xc, 0.995, title, ha="center", va="top", fontsize=62, fontweight="bold", color=col)
+    fig.text(xc - 0.092, 0.893, f"{100 * SH[c]:.0f}%", ha="right", va="center", fontsize=92, fontweight="bold", color=col)
+    fig.text(xc - 0.08, 0.893, f"of prompts: the named\nparagraph {verb} the most\n(chance 25%)", ha="left", va="center", fontsize=33,
+             fontweight="bold", color=INK, linespacing=1.1)
+# one shared colour key, on the same fixed scale as the cells
+cax = fig.add_axes([0.3, 0.045, 0.4, 0.045])
+gx = np.linspace(-2, 2, 512)[None, :]; cax.imshow(gx, cmap=DIV, norm=PCTNORM, aspect="auto", extent=(-2, 2, 0, 1))
+cax.set_yticks([]); tk = [-2, -1, 0, 1, 2]; cax.set_xticks(tk)
+cax.set_xticklabels([MN(f"{100 * (2.0 ** t - 1):+.0f}%") if t else "0%" for t in tk]); cax.tick_params(labelsize=40, length=0, pad=8)
+for t in cax.get_xticklabels(): t.set_fontweight("bold")
+for s_ in cax.spines.values(): s_.set_visible(False)
+fig.text(0.29, 0.0675, "less attention", ha="right", va="center", fontsize=42, fontweight="bold", color=RED)
+fig.text(0.71, 0.0675, "more attention", ha="left", va="center", fontsize=42, fontweight="bold", color=PURPLE)
 hm = os.path.join(HERE, "_rotate2_maps.png"); fig.savefig(hm, dpi=100, facecolor="white"); plt.close(fig)
 # ---- method on top: the real prompt of context 0
 R = json.load(open(os.path.join(D, "R2.json"))); r = R[0]
@@ -73,7 +78,7 @@ body{{width:2300px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,
 <div class="alt">{chip(LN["mention"], INK, '<div class="lab">← 0%</div>')}{chip(LN["focus"], PURPLE)}{chip(LN["ignore"], RED, '<div class="lab">[Pk] = P1, P2, P3 or P4</div>')}</div>
 <div>{html.escape(q)}</div></div>
 <div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb"><b>Qwen3-32B:</b> {html.escape(r["ans_none"].strip())}</div>
-<div class="ref">% = change in attention from the answer to each paragraph,<br>against the same prompt with the “Note that …” line;<br>± = the 95% confidence interval</div></div>
+<div class="ref">% = change in attention from the answer to each paragraph,<br>compared to the same prompt with the “Note that …” line</div></div>
 <img class="maps" src="data:image/png;base64,{maps}"></body></html>'''
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 hp = os.path.join(HERE, "rotate2.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "rotate2_raw.png")
