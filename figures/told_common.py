@@ -26,7 +26,7 @@ rel_lab = lambda mu: f"{100*mu:+.0f}%".replace("-", "\u2212")
 
 
 def bars_panel(fig, ax, x0, G, MS, bars, base, rate, masses, ticks, item, p=None, NF=200000, ylab="change from no boost",
-               zero="0% =\nno boost", tick_lab=lambda t: f"+{100*t:.0f}%", big=rel_lab, base_lab=lambda b: f"{100*b:.0f}%"):
+               zero="0% =\nno boost", tick_lab=lambda t: f"+{100*t:.0f}%", big=rel_lab, base_lab=lambda b: f"{100*b:.0f}%", rate_lab=lambda r: f"{100*r:.0f}%"):
     """one panel at x0 (canvas px) on ax (x in canvas px, y in data units); G: layout (PW, LM, CW, VW, VH, ylo, yhi).
     bars[m] = (height, (lo, hi) or None); base: no-boost rate; rate[m]: boosted rate; ticks: labelled y values; p: p at the top dose
     (None: not drawn); base_lab(base): how the no-boost rate is written; item: 'paragraph' / 'word' in the dose axis title; big(height): the big label over each bar."""
@@ -47,6 +47,6 @@ def bars_panel(fig, ax, x0, G, MS, bars, base, rate, masses, ticks, item, p=None
         if p is not None and m == MS[-1]:
             fig.text(cxf, 1 - 178 / VH, pstr(p, floor=1 / (NF + 1)), ha="center", va="top", fontsize=56, color=PURPLE)
         fig.text(cxf, 1 - 6 / VH, big(mu), ha="center", va="top", fontsize=78, fontweight="bold", color=PURPLE)
-        fig.text(cxf, 1 - 112 / VH, f"{base_lab(base)} \u2192 {100*rate[m]:.0f}%", ha="center", va="top", fontsize=36, fontweight="bold", color=INK, family=["Helvetica", "Arial Unicode MS"])
+        fig.text(cxf, 1 - 112 / VH, f"{base_lab(base)} \u2192 {rate_lab(rate[m])}", ha="center", va="top", fontsize=36, fontweight="bold", color=INK, family=["Helvetica", "Arial Unicode MS"])
         fig.text(cxf, 196 / VH, f"\u00d7{masses[m]:.1f}", ha="center", va="center", fontsize=78, fontweight="bold", color=INK)
     fig.text((x0 + LM + 2 * CW) / VW, 52 / VH, f"attention on the boosted {item}", ha="center", va="center", fontsize=dr.px(76), fontweight="bold", color=INK)

@@ -8,8 +8,10 @@ being boosted onto one of the words? If so, which one?". The boost adds log(mult
 word's token from every query from "Trial 1" on, layers 21-53. Top: the method drawing from injb_draw.py (example context nearest the median of
 P(boosted digit) at multiplier 10 among those whose top prefilled digit is the boosted word, word 3 boosted; Qwen's real greedy reply "No"
 and the prefilled "Yes, word [W" with the real top digit, black arrows to the two panel headers).
-LEFT: greedy replies starting with "Yes": 0 of 240 control and 0 of 7,680 boosted trials (240 contexts x 8 words x 4 doses), so the relative
-change from no boost is undefined; the panel shows the raw rates (0% at every dose; no-boost rate 0%) and says so.
+LEFT: probability of "Yes" as the reply's first token, renormalised over Yes/No (exp(lp_yes) / (exp(lp_yes) + exp(lp_no)), stored log-probs),
+per context the mean over the 8 boosted words, as relative change of the mean over contexts from no boost (the "none" record); whiskers 95%
+bootstrap over contexts; p: sign-flip over contexts at the top dose; raw mean probabilities above each bar. Greedy replies starting with "Yes":
+0 of 240 control and 0 of 7,680 boosted trials (240 contexts x 8 words x 4 doses), written on the panel.
 RIGHT: top answer after the prefill "Yes, word [W" (boost on) = argmax of the stored log-probs of digits 1-8; per context, the percent of the
 8 boosted words where the top answer is the boosted word's number, relative to no boost (exactly 12.5% for every context: one fixed top answer
 matches 1 of 8 rotations); whiskers 95% bootstrap over contexts (20,000 resamples); p: two-sided sign-flip over contexts at the top dose
@@ -37,7 +39,13 @@ MASSES = {m: float(np.mean([np.mean([T(r, k, m)["mass"][k] / r["none"]["mass"][k
 YC = np.array([yes(r["none"]["text"]) for r in R], float)
 YB = {m: np.array([np.mean([yes(T(r, k, m)["text"]) for k in range(NW)]) for r in R]) for m in MS}
 NY = sum(int(round(NW * YB[m].sum())) for m in MS); NT = len(R) * NW * len(MS)
-assert NY == 0 and YC.sum() == 0, (NY, YC.sum())   # Qwen never says Yes: relative change undefined, raw rates drawn
+assert NY == 0 and YC.sum() == 0, (NY, YC.sum())   # Qwen never says Yes greedily: written on the panel
+PY = lambda t: 1 / (1 + np.exp(t["lp_no"] - t["lp_yes"]))   # P(Yes) renormalised over Yes/No
+assert all(set(r["boost"]) == {f"{k}|{m}" for k in range(NW) for m in MS} for r in R)
+PC = np.array([PY(r["none"]) for r in R]); PYB = {m: np.array([np.mean([PY(T(r, k, m)) for k in range(NW)]) for r in R]) for m in MS}
+PNY = tc.signflip(PYB[20.0] - PC, NF)
+RY = {m: (PYB[m].mean() / PC.mean() - 1, tc.boot(lambda ix, m=m: PYB[m][ix].mean() / PC[ix].mean() - 1, len(R))) for m in MS}
+print("P(Yes) %:", f"{100*PC.mean():.2f} ->", [f"{100*PYB[m].mean():.2f}" for m in MS], "relative:", [f"{100*RY[m][0]:+.0f} [{100*RY[m][1][0]:+.0f}, {100*RY[m][1][1]:+.0f}]" for m in MS], "p", PNY)
 # right: probability of the boosted word's number after the prefill, renormalised over the eight digit log-probs
 def pr(lp, k): e = np.exp(np.asarray(lp) - max(lp)); return e[k] / e.sum()
 AC = np.array([np.mean([pr(r["none"]["lp_par"], k) for k in range(NW)]) for r in R])
@@ -65,20 +73,20 @@ print("example context", EXID, rec["words"], QLINE, "->", rec["ans"].strip(), "|
 sys.exit() if "--nums" in sys.argv else None
 
 # ---------------- two panels in one image ----------------
-VW = W - 2 * PAD; GAP = 60; LM = 400; VH = 1480; TOPH = 330; BOT = 280
-PWL = 1600; PWR = VW - GAP - PWL   # the right panel wider: its big labels ("+388%") need wider columns than the left panel's "0%"
+VW = W - 2 * PAD; GAP = 60; LM = 370; VH = 1480; TOPH = 330; BOT = 280
+PWL = 1700; PWR = VW - GAP - PWL   # the right panel wider: its big labels ("+388%") need wider columns than the left panel's "0%"
 CWL, CWR = (PWL - LM) / 4, (PWR - LM) / 4
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 fig = plt.figure(figsize=(VW / 100, VH / 100), dpi=100)
 def axis(lo, hi):   # full-width axes (x in canvas px), one per panel so each has its own y scale
     a = fig.add_axes([0, BOT / VH, 1, (VH - TOPH - BOT) / VH]); a.set_xlim(0, VW); a.set_ylim(lo, hi); a.patch.set_visible(False)
     a.set_xticks([]); a.set_yticks([]); [s_.set_visible(False) for s_ in a.spines.values()]; return a
-L = dict(PW=PWL, LM=LM, CW=CWL, VW=VW, VH=VH, ylo=-0.10, yhi=1.0); Rg = dict(PW=PWR, LM=LM, CW=CWR, VW=VW, VH=VH, ylo=-0.34, yhi=3.4)
+L = dict(PW=PWL, LM=LM, CW=CWL, VW=VW, VH=VH, ylo=-0.034, yhi=0.34); Rg = dict(PW=PWR, LM=LM, CW=CWR, VW=VW, VH=VH, ylo=-0.34, yhi=3.4)
 axL = axis(L["ylo"], L["yhi"]); axR = axis(Rg["ylo"], Rg["yhi"])
-# left: raw rates (relative change undefined: no Yes anywhere, control included)
-tc.bars_panel(fig, axL, 0, L, MS, {m: (YB[m].mean(), None) for m in MS}, YC.mean(), {m: YB[m].mean() for m in MS}, MASSES,
-              (0.5, 1.0), "word", ylab="% of replies", zero="0% =\nno boost", tick_lab=lambda t: f"{100*t:.0f}%", big=lambda v: f"{100*v:.0f}%")
-axL.text(LM + 2 * CWL, 0.42, f"never says \u201cYes\u201d\n(0 of {NT:,})", ha="center", va="center", fontsize=dr.px(100), fontweight="bold", color=PURPLE, linespacing=1.1)
+# left: P(Yes) renormalised over Yes/No, relative to no boost; the greedy count written on the panel
+tc.bars_panel(fig, axL, 0, L, MS, RY, PC.mean(), {m: PYB[m].mean() for m in MS}, MASSES, (0.1, 0.2, 0.3), "word", PNY, NF,
+              base_lab=lambda b: f"{100*b:.2f}", rate_lab=lambda r: f"{100*r:.2f}%")
+axL.text(LM + 1.5 * CWL, 0.25, f"Qwen\u2019s reply starts\nwith \u201cYes\u201d: 0 of {NT:,}", ha="center", va="center", fontsize=dr.px(84), fontweight="bold", color=INK, linespacing=1.1)
 tc.bars_panel(fig, axR, PWL + GAP, Rg, MS, RN, 1 / NW, {m: AB[m].mean() for m in MS}, MASSES, (1, 2, 3), "word", PN, NF,
               base_lab=lambda b: f"{100*b:.1f}%")
 VP = os.path.join(HERE, "_v_words_told_pair_lp.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
@@ -87,7 +95,7 @@ VP = os.path.join(HERE, "_v_words_told_pair_lp.png"); fig.savefig(VP, dpi=100, f
 bubble = dr.told_words_bubble(META, rec["words"], K, QLINE)
 pre = f'<div class="arow" id="rowA"><img class="rob0" src="data:image/png;base64,ROBOT_PLAIN"><div class="mb0">{rec["ans"].strip()}</div></div>'
 reply = f'<span class="part" id="ry">No</span>'
-titles = (f'<div class="cols"><div class="ct" style="flex:none;width:{PWL - LM:.0f}px;margin-left:{LM}px"><span class="cn" id="c1">how often Qwen\u2019s reply<br>starts with \u201cYes\u201d</span></div>'
+titles = (f'<div class="cols"><div class="ct" style="flex:none;width:{PWL - LM:.0f}px;margin-left:{LM}px"><span class="cn" id="c1">average probability<br>of \u201cYes\u201d</span></div>'
           f'<div class="ct" style="flex:none;width:{PWR - LM:.0f}px;margin-left:{GAP + LM:.0f}px"><span class="cn" id="c2">average probability Qwen gives<br>the boosted word\u2019s number</span></div></div>')
 HTML = dr.page(W, bubble, "Do you notice your attention being boosted onto one of the words? If so, which one?", reply, titles, VP, VW, f"{MASSES[M]:.1f}",
                pre=pre, inj=f"boost attention<br>toward word {K + 1}", arrows=(("ry", "c1"), ("rp", "c2")), tipdrop=-2, inj_px=105, inj_near=(-18, -60))
