@@ -179,13 +179,15 @@ g+=aura(rq0,34); g+=aura(R('mb'),30); const ro=R('rob1'); g+=aura({{left:ro.left
 gl.innerHTML=g;
 // hand-shaped arrows: one cubic each, explicit control points; the head is drawn along the end tangent (last control -> tip)
 const SW=20;
-const arrow=(p0,c1,c2,tip,col)=>{{ const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2[0], uy=tip[1]-c2[1]; const n=Math.hypot(ux,uy); ux/=n; uy/=n;
+const arrow=(p0,c1,c2,tip,col,ol)=>{{ const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2[0], uy=tip[1]-c2[1]; const n=Math.hypot(ux,uy); ux/=n; uy/=n;
  const e=[tip[0]-L*ux, tip[1]-L*uy], b=[e[0]+1.5*ux, e[1]+1.5*uy];
- return `<path d="M${{p0}} C${{c1}} ${{c2}} ${{e}}" fill="none" stroke="${{col}}" stroke-width="${{SW}}" stroke-linecap="round"/>`+
-  `<path d="M${{tip}} L${{b[0]-H*uy}},${{b[1]+H*ux}} L${{b[0]+H*uy}},${{b[1]-H*ux}} Z" fill="${{col}}"/>`; }};
+ const d=`M${{p0}} C${{c1}} ${{c2}} ${{e}}`, h=`M${{tip}} L${{b[0]-H*uy}},${{b[1]+H*ux}} L${{b[0]+H*uy}},${{b[1]-H*ux}} Z`;
+ const o=ol?`<path d="${{d}}" fill="none" stroke="{INK}" stroke-width="${{SW+6}}" stroke-linecap="round"/><path d="${{h}}" fill="{INK}" stroke="{INK}" stroke-width="6" stroke-linejoin="round"/>`:'';
+ return o+`<path d="${{d}}" fill="none" stroke="${{col}}" stroke-width="${{SW}}" stroke-linecap="round"/>`+
+  `<path d="${{h}}" fill="${{col}}"/>`; }};
 // purple: up out of the report question's top edge, one quarter-turn, into the right end of [P2]
 const t=R('p2t'), q=R('rq'); const P0=[q.left+260, q.top-6], T=[t.right+12, (t.top+t.bottom)/2];
-let s=arrow(P0, [P0[0], P0[1]-0.55*(P0[1]-T[1])], [T[0]+0.55*(P0[0]-T[0]), T[1]], T, '#A98BD6');
+let s=arrow(P0, [P0[0], P0[1]-0.55*(P0[1]-T[1])], [T[0]+0.55*(P0[0]-T[0]), T[1]], T, '#A98BD6', 1);
 // black: from under each underlined part of the reply, a gentle bow down to its column title
 const ry=R('ry'), rp=R('rp'), c1=R('c1'), c2=R('c2');
 // quadratic control point Q (no inflection possible), written as the equivalent cubic
