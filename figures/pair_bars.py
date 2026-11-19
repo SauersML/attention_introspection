@@ -5,8 +5,9 @@ import math
 from pal import INK, PURPLE
 GREY = "#B8B8C0"; AMB = "#F2B53A"
 
-def pair_bars(p0, p1, order, K, bw=44, gw=136, x0=116):
-    H, base = 210, 250; o = []; top = 0
+def pair_bars(p0, p1, order, K, bw=44, gw=136, x0=116, top=0):
+    """top: highest SVG y to include (pass the smallest top of several panels so they share one height)."""
+    H, base = 210, 250; o = []
     Y = lambda v: base - H * (math.log10(max(v, 1e-3)) + 3) / 3
     for t, lab in ((1.0, "100%"), (0.01, "1%"), (0.001, "0.1%")):
         o.append(f'<text x="{x0 - 16}" y="{Y(t) + 13:.1f}" font-size="38" font-weight="700" text-anchor="end" fill="{INK}">{lab}</text>')

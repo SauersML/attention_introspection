@@ -1,15 +1,15 @@
 """Privileged-channel figure (Qwen3-32B), paragraph setups only (100 prompts: 60 arithmetic, 40 question about one paragraph).
-Top: one real prompt (context 28, labels [P1]..[P4] in order; text from privileged_inorder_ctx.json, or EXAMPLE) in three copies with identical text:
+Top: one real prompt (context 29, chosen near both arms' median effect at x6.5 (ranks 64 and 59 of 100), so the [P2] bar changes as is typical; labels [P1]..[P4] in order; text from privileged_inorder_ctx.json, or EXAMPLE) in three copies with identical text:
 no boost; attention to paragraph [P2] x10 while the answer is written (arm A); x10 while the report question is read (arm C).
 Arrows: answer -> [P2] and report question -> [P2]; the thick arrow marks where the x10 boost is applied.
 Reply bars (pair_bars.py): the model's real next-token probabilities after the prefilled "P" (W1), log y 0.1%-100%; grey = no boost, purple = that column's boost (no-boost column: grey only).
 Bottom: violins, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for
 the other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as analyze_priv.py; y drawn on that log scale,
-ticks labelled as % change = exp(.) - 1 at x0.5, x1, x2, x4, x8 (evenly spaced). Big labels: exp(mean) - 1. Black line: the mean.
-95% bootstrap CI of the mean (10,000 resamples) printed, not drawn. Dots coloured by their % change, exp(.), on the shared fixed scale (pal.pct_colour). p over the largest boost and wherever p >= 0.0001 (every other p < 0.0001): two-sided sign-flip test over prompts (200,000 flips). Bottom line: the other five setups at x10 (CI excludes 0 or not).
+ticks labelled as % change = exp(.) - 1 at x1/4, x1/2, x1, x2, x4, x8 (evenly spaced, symmetric about x1). Big labels: exp(mean) - 1. Black line: the mean.
+95% bootstrap CI of the mean (10,000 resamples) printed, not drawn. Dots coloured by their % change, exp(.), on the shared fixed scale (pal.pct_colour). p under every % label: two-sided sign-flip test over prompts (200,000 flips). Bottom line: the other five setups at x10 (CI excludes 0 or not).
 usage: privileged_fig.py [DATA [EXAMPLE [OUT]]] [--numbers]
   DATA     results dir (default results/privileged_inorder_full: labels [P1]..[P4] in order, options in order)
-  EXAMPLE  example-prompt json (default context 28 from privileged_inorder_ctx.json; the shuffled run used hero_question_example.json)
+  EXAMPLE  example-prompt json (default context 29 from privileged_inorder_ctx.json; the shuffled run used hero_question_example.json)
   OUT      png (default figures/privileged.png; the shuffled-label version is figures/shuffled/privileged.png)
   --numbers  print the numbers only, no render"""
 import json, glob, math, os, sys, html, base64, subprocess
@@ -27,7 +27,7 @@ NUMBERS = "--numbers" in sys.argv; ARGS = [a for a in sys.argv[1:] if a != "--nu
 DD = os.path.join(ROOT, ARGS[0]) if ARGS else os.path.join(ROOT, "results/privileged_inorder_full"); D = os.path.join(DD, "data/")
 OUTPNG = os.path.join(ROOT, ARGS[2]) if len(ARGS) > 2 else os.path.join(HERE, "privileged.png")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
-EX = json.load(open(os.path.join(ROOT, ARGS[1]))) if len(ARGS) > 1 else {c["id"]: c for c in json.load(open(os.path.join(HERE, "privileged_inorder_ctx.json")))}[28]
+EX = json.load(open(os.path.join(ROOT, ARGS[1]))) if len(ARGS) > 1 else {c["id"]: c for c in json.load(open(os.path.join(HERE, "privileged_inorder_ctx.json")))}[29]
 DOSES = [0.25, 0.5, 2.0, 5.0, 10.0]
 # tick = measured ratio of attention mass on the boosted part (boost / no boost, mean over prompts, results.json "manip"):
 # the boost adds log(m) to the pre-softmax scores, so a nominal m=10 gives about 6.5x the attention mass, m=5 about 3.9x
@@ -87,6 +87,8 @@ NW = [3, 3, 2, 2]
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
 QTEXT = "Which paragraph did you attend to most while writing your answer?"
 
+import re
+BTOP = min(float(re.search(r'viewBox="0 (-?[\d.]+)', pair_bars(probs['none'], None if k == 'none' else probs[k], order, K, bw=30, gw=120, x0=116)).group(1)) for k in probs)   # one height for all three bar panels
 def column(i, title, sub, key, tcol=INK):
     pl = "".join(f'<div class="pl"><b class="{"k" if pos == K else "lb"}" {"id=p2c" + str(i) if pos == K else ""}>[P{EX["lab"][pos]}]</b> '
                  f'<span {"id=p2t" + str(i) if pos == K else ""}>{html.escape(short(EX["segs"][pos], NW[pos]))}</span></div>' for pos in range(4))
@@ -94,14 +96,14 @@ def column(i, title, sub, key, tcol=INK):
 <div class="ub">Here are four paragraphs.{pl}<div class="q">{html.escape(qline)}</div></div>
 <div class="mrow"><img class="rob" id="rob{i}" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
 <div class="ub2" id="rq{i}">{QTEXT} …</div>
-<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb bb"><span class="pp">P</span>{pair_bars(probs['none'], None if key == 'none' else probs[key], order, K, bw=30, gw=120, x0=116)}</div></div></div>'''
+<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb bb"><span class="pp">P</span>{pair_bars(probs['none'], None if key == 'none' else probs[key], order, K, bw=30, gw=120, x0=116, top=BTOP)}</div></div></div>'''
 
 # ---------------- violins ----------------
 VH = 1250; px = lambda v: v * 72 / 100   # px -> pt at dpi 100
-plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
+plt.rcParams.update({"font.family": "Helvetica", "text.color": INK, "mathtext.fontset": "custom", "mathtext.rm": "Helvetica", "mathtext.it": "Helvetica", "mathtext.default": "regular"})
 fig = plt.figure(figsize=(W / 100, VH / 100), dpi=100)
 allz = np.concatenate(list(Z.values()))
-ylo, yhi = allz.min() - 0.08, allz.max() + 0.5
+ylo, yhi = min(allz.min() - 0.35, math.log(0.25) - 0.22), allz.max() + 0.5
 axs = []
 for j, (a, _) in enumerate(ARMS):
     x0 = PAD + (j + 1) * (CW + GAP)
@@ -115,10 +117,12 @@ for j, (a, _) in enumerate(ARMS):
         ax.scatter(xj, z, s=200, c=pct_colour(np.exp(z)), alpha=0.35, edgecolors="none", zorder=3); ax.scatter(xj, z, s=2, color="black", zorder=4)
         ax.plot([i - 0.17, i + 0.17], [st["mean"]] * 2, color=INK, lw=3, zorder=7, solid_capstyle="butt")             # mean
         lab = neg(f"{pct(st['mean']):+.0f}%")
-        yl = z.max() + 0.06 if up else z.min() - 0.06
-        ax.text(i, yl, lab, ha="center", va="bottom" if up else "top", fontsize=px(54), fontweight="bold", color=col, zorder=7)
-        ps = "p<0.0001" if st["p"] < 1e-4 else ("p<0.001" if st["p"] < 1e-3 else "p<0.01" if st["p"] < 0.01 else f"p={st['p']:.2f}")
-        if m == 10.0 or st["p"] >= 1e-4: ax.text(i, yl + (0.25 if up else -0.25), ps, ha="center", va="bottom" if up else "top", fontsize=px(40), color=col)
+        ps = "$p<10^{-4}$" if st["p"] < 1e-4 else ("$p<10^{-3}$" if st["p"] < 1e-3 else "$p<0.01$" if st["p"] < 0.01 else f"$p={st['p']:.2f}$")
+        # one block per violin, the same for all ten: the % label with its p directly under it,
+        # the block above the violin when the mean is up, below it when down
+        yb = z.max() + 0.05 if up else z.min() - 0.05; PH = px(40) * 1.2   # p line height in points
+        ax.annotate(lab, (i, yb), xytext=(0, PH if up else 0), textcoords="offset points", ha="center", va="bottom" if up else "top", fontsize=px(54), fontweight="bold", color=col, zorder=7)
+        ax.annotate(ps, (i, yb), xytext=(0, 0 if up else -px(54) * 1.15), textcoords="offset points", ha="center", va="bottom" if up else "top", fontsize=px(40), color=col, zorder=7)
     ax.set_xlim(-0.6, len(DOSES) - 0.4); ax.set_ylim(ylo, yhi)
     ax.set_xticks(range(len(DOSES))); ax.set_xticklabels(TICKS[a], fontsize=px(50)); ax.tick_params(length=0, pad=14, colors=INK)
     for s_ in ax.spines.values(): s_.set_visible(False)
@@ -126,13 +130,13 @@ for j, (a, _) in enumerate(ARMS):
 # zero line across both panels, ticks on the first
 zl = fig.add_axes([axs[0].get_position().x0, axs[0].get_position().y0, axs[1].get_position().x1 - axs[0].get_position().x0, axs[0].get_position().height], facecolor="none")
 zl.set_xlim(0, 1); zl.set_ylim(ylo, yhi); zl.axhline(0, color=INK, lw=4, zorder=0); zl.axis("off")
-TV = [-50, 0, 100, 300, 700]   # x0.5, x1, x2, x4, x8: evenly spaced on the log axis
+TV = [-75, -50, 0, 100, 300, 700]   # x1/4, x1/2, x1, x2, x4, x8: evenly spaced on the log axis, symmetric about x1
 AX0 = PAD + CW + GAP; F = lambda x, y: (x / W, y / VH)   # px (from left, from bottom) -> figure coords
 YP = lambda v: axs[0].transData.transform((0, v))[1]       # data -> px from bottom
 for t in TV:
     y = math.log(1 + t / 100)
     if ylo < y < yhi: fig.text(*F(AX0 - 14, YP(y)), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
-fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.5)) / VH, YP(math.log(8)) / VH], color=INK, lw=3))
+fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.25)) / VH, YP(math.log(8)) / VH], color=INK, lw=3))
 LXp = AX0 - 200
 fig.text(*F(LXp, YP(math.log(6))), "report says the\nboosted paragraph\nmore often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
 TY0 = axs[0].get_position().y0 * VH - 58   # centre of the "attention on boosted paragraph" label
