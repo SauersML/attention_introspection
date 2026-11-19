@@ -112,6 +112,21 @@ def syringe():
     o.append(f'<rect x="2" y="40" width="24" height="80" rx="7" fill="{INK}"/>')
     o.append(f'<text x="197" y="108" font-size="82" font-weight="800" text-anchor="middle" fill="#fff">\u00d7{DOSE:.1f}</text>')
     return f'<svg id="syr" width="380" height="160" viewBox="0 0 380 160">{"".join(o)}</svg>'
+def keydraw():
+    # one prompt run 4 times, boosting P1, P2, P3, P4 in turn (four mini chats, the boosted paragraph amber), averaged into one dot
+    o = []; bw, bh, g, sx = 120, 134, 34, 0; lens = [0.92, 0.78, 0.86, 0.6]
+    for i in range(4):
+        x = sx + i * (bw + g)
+        o.append(f'<rect x="{x}" y="0" width="{bw}" height="{bh}" rx="20" fill="#1F8BFF"/>')
+        for k in range(4):
+            o.append(f'<rect x="{x+13}" y="{13 + k*29}" width="{(bw-26)*lens[k]:.0f}" height="22" rx="7" fill="{AMB if k == i else "#fff"}"/>')
+    tw = 4 * bw + 3 * g; dx, dy, r = tw / 2, bh + 86, 30; ww = dx + r + 16 + 345
+    for i in range(4):
+        x = sx + i * (bw + g) + bw / 2
+        o.append(f'<path d="M{x},{bh+8} L{dx + (x-dx)*0.10:.0f},{dy - r - 8}" stroke="{INK}" stroke-width="7" stroke-linecap="round" fill="none"/>')
+    o.append(f'<circle cx="{dx}" cy="{dy}" r="{r}" fill="{PURPLE}" fill-opacity=".75"/><circle cx="{dx}" cy="{dy}" r="4" fill="#000"/>')
+    o.append(f'<text x="{dx + r + 16}" y="{dy + 19}" font-size="54" font-weight="800" fill="{INK}">= one prompt</text>')
+    return f'<svg class="kbox" id="kb" width="{ww:.0f}" height="{dy + r + 4:.0f}" viewBox="0 0 {ww:.0f} {dy + r + 4:.0f}">{"".join(o)}</svg>'
 robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
 VIO = base64.b64encode(open(VP, "rb").read()).decode()
 def short(s, n): return " ".join(s.split()[:n]) + " …"
@@ -142,7 +157,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .cn{{display:inline-block;font-size:76px;font-weight:800;line-height:1.05;white-space:nowrap}}
 .vw{{position:relative;margin-top:34px}}
 .vio{{width:{VW}px;display:block}}
-.kbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;padding:18px 26px;display:flex;flex-direction:column;gap:10px}}
+.kbox{{position:absolute}}
 .kl{{font-size:50px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:nowrap;line-height:1.1}} .kl2{{font-size:44px;font-weight:700;white-space:nowrap}}
 .dot{{display:inline-block;flex-shrink:0;width:42px;height:42px;border-radius:50%;background:{PURPLE};opacity:.75}}
 .ring{{display:inline-block;flex-shrink:0;width:42px;height:42px;border-radius:50%;border:5px solid {INK}}}
@@ -155,7 +170,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <div class="cols"><div class="ct"><span class="cn" id="c1">says \u201cYes\u201d</span></div>
 <div class="ct"><span class="cn" id="c2">says the injected paragraph</span></div></div>
 <div class="vw" id="vw"><img class="vio" src="data:image/png;base64,{VIO}">
-<div class="kbox" id="kb"><div class="kl">one dot <span class="dot"></span> = one prompt,</div><div class="kl2">injected into each paragraph in turn</div></div></div>
+{keydraw()}</div>
 <svg id="gl"></svg><svg id="ov"></svg>
 <script>
 const R=e=>document.getElementById(e).getBoundingClientRect();
@@ -166,9 +181,9 @@ const rb=R('rob1'), syr=document.getElementById('syr'), A=30;
 const tipx=rb.left+rb.width*0.29, tipy=rb.top+rb.height*0.72;
 syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='380px 80px'; syr.style.transform=`rotate(${{A}}deg)`;
 const inj=document.getElementById('inj'), rq0=R('rq'); inj.style.top=(rq0.top-46)+'px';
-// key box: between the violins, right of column 1's narrow top and left of column 2's narrow middle
+// key drawing: between the violins, right of column 1's narrow top and left of column 2's narrow middle
 const kb=document.getElementById('kb'), vw=R('vw');
-kb.style.left='{CW/2+95:.0f}px'; kb.style.top='{TOPH+(1.04-0.89)/1.08*(VH-TOPH-30):.0f}px';
+kb.style.left='{CW/2+70:.0f}px'; kb.style.top='{TOPH+(1.04-0.93)/1.08*(VH-TOPH-30):.0f}px';
 // wavy purple aura around the report question, Qwen's reply (the boost stays on while Qwen answers) and the injected robot
 const gl=document.getElementById('gl'); let g=`<defs>`;
 [[0.004,0.010,36,7,1],[0.006,0.014,28,4.5,2],[0.008,0.02,18,2.5,3]].forEach(([fx,fy,sc,bl,i])=>{{
