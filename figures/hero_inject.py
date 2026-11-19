@@ -210,9 +210,9 @@ const ry=R('ry'), rp=R('rp'), c1=R('c1'), c2=R('c2');
 const quad=(p0,Q,tip,col)=>arrow(p0,[p0[0]+2/3*(Q[0]-p0[0]),p0[1]+2/3*(Q[1]-p0[1])],[tip[0]+2/3*(Q[0]-tip[0]),tip[1]+2/3*(Q[1]-tip[1])],tip,col);
 const cx=r=>(r.left+r.right)/2;
 // mirror pair: each leaves its underline almost straight down and turns outward by about 40 degrees onto its title
-const yt=c1.top-12, ys=ry.bottom+SW/2, dy=yt-ys;
+const yt=c1.top-12, ys=ry.bottom, dy=yt-ys;
 for (const [p0x,sg] of [[cx(ry),-1],[rp.left+0.78*rp.width,1]]) {{
- const p0=[p0x,ys], tip=[p0x+sg*0.8*dy,yt]; s+=quad(p0,[p0x+sg*0.12*dy,ys+0.5*dy],tip,'{INK}'); }}
+ const p0=[p0x,ys], tip=[p0x+sg*0.8*dy,yt]; s+=quad(p0,[p0x,ys+0.55*dy],tip,'{INK}').replace('stroke-linecap="round"','stroke-linecap="butt"'); }}  // flat start, flush with the underline
 document.getElementById('ov').innerHTML=s;
 </script></body></html>'''
 hp = os.path.join(HERE, "_hero_inject.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "_hero_inject_raw.png")
