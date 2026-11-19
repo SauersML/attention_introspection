@@ -48,6 +48,10 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/words_told_pair.jpg)
 
+The same test in probabilities: after "Yes, word [W", the average probability Qwen gives the boosted word's number (out of the eight numbers; 12.5% with no boost), as change from no boost.
+
+![](figures/words_told_pair_lp.jpg)
+
 11. The instruction placed before the paragraphs instead of after: a much smaller effect.
 
 ![](figures/hero_before.jpg)
