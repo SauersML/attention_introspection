@@ -12,7 +12,7 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/told_pair.jpg)
 
-3. We add paragraph 2's meaning (its tokens' activations averaged, minus all four paragraphs averaged) into the activations at the question and answer tokens, at the same size as the attention boost's change, and tell Qwen that either kind may happen. Qwen says Yes more after the attention boost and less after the meaning addition, picks the boosted paragraph mainly after the attention boost, and says "attention" more often after the attention boost than after the meaning addition (73% vs 67%, a real difference). Bottom: with the prompt that mentions only attention boosts, the same attention boost makes the boosted paragraph Qwen's top answer far more often when asked which paragraph was boosted than when asked to pick one at random.
+3. Is it attention, or just paragraph 2 being louder? We tell Qwen that either of two things may happen: their attention is boosted onto one paragraph, or that paragraph's meaning (its tokens' activations averaged, minus all four paragraphs averaged) is added into their activations at the question and answer tokens, scaled to the same size of change as the attention boost. Qwen says something changed more after the attention boost (55%, vs 45% with no change) and less after the meaning addition (38%), names the right paragraph more after the attention boost (54% vs 36%), and says "attention" more after the attention boost than after the meaning addition (73% vs 64%). Bottom: with the same attention boost, Qwen's top answer is the boosted paragraph 58% of the time when asked which one was boosted, but 37% when asked to pick one at random.
 
 ![](figures/salience.jpg)
 

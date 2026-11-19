@@ -14,6 +14,10 @@ We also mirrored Anthropic's introspection setup. We tell Qwen that a researcher
 
 That looks like noticing, but the boost is still on while Qwen read the question and write the label, so extra attention to that paragraph could simply make its label more likely. Asked as a literal two-turn conversation (Yes or No first, then "which paragraph?"), they almost always say "No": 17 Yes replies in 960 boosted trials, too few to test naming.
 
+Two controls separate noticing from that pull. With the same boost, asked only to pick a paragraph at random, Qwen's top answer is the boosted paragraph 37% of the time, against 58% when asked which one was boosted. And when we tell Qwen that either their attention may be boosted or a paragraph's meaning may be added straight into their activations (at the same size of change), they say something changed more after the attention boost (55%, against 45% with nothing changed) and less after the meaning addition (38%), name the right paragraph more often (54% vs 36%), and say "attention" more often after the attention boost (73% vs 64%).
+
+![Told both kinds of change are possible, Qwen notice an attention boost more than a size-matched meaning addition, name its paragraph more often, and say "attention" more after it](figures/salience.jpg)
+
 With lists of single words, Qwen never say "Yes": 0 of 7,680 boosted trials. Forced to start "Yes, word [W", they pick the boosted word 47% of the time at the strongest boost (chance 12.5%), again with the boost still on while they pick.
 
 ![With single words, Qwen never say "Yes" to noticing a boost; forced to name a word, they pick the boosted one far above chance, with the boost still on](figures/words_told.png)
