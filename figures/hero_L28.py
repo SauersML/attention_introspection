@@ -1,6 +1,6 @@
 """Hero figure from the dose run (Qwen3-32B, 150 arithmetic contexts).
 Two columns: 'Focus your attention on paragraph [Pk].' and 'Completely ignore paragraph [Pk]. Do not look at it at all.'
-Layer 28 only. Violins are drawn on a log-ratio scale (log2 of attention ratio, hidden y axis); the big labels and p stay on the mean % change.
+Layer 28 only. Violins are drawn on a log-ratio scale (log2 of attention ratio, y axis labelled in % change); the big labels and p stay on the mean % change.
 Method box (top right): answer tokens attending to the named paragraph, and the per-layer mean % change curve (as layers3.py, vs the same control) with layer 28 marked.
 Each violin: per-context % change in attention on the named paragraph vs the mention-only line (control box, bottom left), at layer 28:
 attention weights averaged over heads, summed over the paragraph's tokens and divided by its token count, averaged over the query
@@ -115,8 +115,8 @@ def method_svg(w, h, cf, ci, rob):
         o.append(f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="5" stroke-linejoin="round"/>')
         o.append(f'<circle cx="{X(28):.1f}" cy="{Y(cv[28]):.1f}" r="11" fill="{col}" stroke="#fff" stroke-width="3"/>')
     LF = F + 12   # shrinks only if the label would run past the box's right edge
-    LF = min(LF, int((w - 16 - X(28) - 22) / (0.56 * len("violins below:"))))
-    for j, t in enumerate(["violins below:", "layer 28"]):
+    LF = min(LF, int((w - 16 - X(28) - 22) / (0.56 * len("violins:"))))
+    for j, t in enumerate(["violins:", "layer 28"]):
         o.append(f'<text x="{X(28) + 22:.1f}" y="{y0 - 6 + (LF + 8) * j:.1f}" font-size="{LF}" font-weight="700" fill="{INK}" text-anchor="start">{t}</text>')
     defs = f'<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{INK}"/></marker></defs>'
     return f'<svg width="{w:.0f}" height="{h:.0f}" viewBox="0 0 {w:.0f} {h:.0f}" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue,Helvetica,Arial,sans-serif">{defs}{"".join(o)}</svg>'
@@ -163,8 +163,10 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28_tall" if NARROW else 
             texts.append(a.annotate(eff, (x0, z.min()), xytext=(0, -26), textcoords="offset points", fontsize=100, fontweight="bold", color=colr, ha="center", va="top"))
             texts.append(a.annotate(pt, (x0, z.min()), xytext=(0, -138 - 100 * eff.count(chr(10))), textcoords="offset points", fontsize=44, color=colr, ha="center", va="top"))
     a.axhline(0, color=INK, lw=4, zorder=0.5)
-    a.set_xlim(-0.66, 2.01); a.set_xticks([]); a.set_yticks([])
+    a.set_xlim(-0.82, 2.01); a.set_xticks([]); a.set_yticks([])   # left margin holds the y-axis labels
     for s_ in a.spines.values(): s_.set_visible(False)
+    for v in [1, 2, 4, 8]:   # y axis: % change ticks at their log2 positions, drawn as in hero_inject (bold labels at the left edge); 0% sits on the axis line
+        a.text(-0.81, np.log2(v) + (0.03 if v == 1 else 0), ("%+d%%" % round(100 * (v - 1))).replace("+0", "0"), ha="left", va="bottom" if v == 1 else "center", fontsize=52, fontweight="bold", color=INK)
     lo, hi = min(allz.min(), 0), max(allz.max(), 0); a.set_ylim(lo, hi)
     for _ in range(6):   # grow y-limits until every label fits
         fig.canvas.draw(); rd = fig.canvas.get_renderer(); inv = a.transData.inverted()
