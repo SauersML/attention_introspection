@@ -103,11 +103,11 @@ def row(path, panels, H=1150, BOT=330, TOPH=200, VW_=None):
 
 c, h = SC["ctrl"], SC["honest"]
 VP1, VP2 = os.path.join(HERE, "_v_sal1.png"), os.path.join(HERE, "_v_sal2.png")
-row(VP1, [(1.05, "reply starts\n\u201cYes\u201d", 72, [("none", h["yes"]["none"]), ("A", h["yes"]["A"]), ("B", h["yes"]["B"])],
+row(VP1, [(1.05, "says something\nwas changed\n(answers \u201cYes,\nparagraph \u2026\u201d\ninstead of \u201cNo\u201d)", 72, [("none", h["yes"]["none"]), ("A", h["yes"]["A"]), ("B", h["yes"]["B"])],
            None, None, [(1, 2, P["honest yes A-B"])], None),
-          (0.95, "top answer is the\nboosted paragraph", 80, [("A", h["top"]["A"]), ("B", h["top"]["B"])], 25, "chance", [(0, 1, P["honest top A-B"])], None),
-          (0.95, "says \u201cattention\u201d,\nnot \u201cactivations\u201d", 100, [("A", h["patt"]["A"]), ("B", h["patt"]["B"])], 50, "chance", [(0, 1, P["honest patt A-B"])], None)],
-    H=1260, BOT=230, TOPH=320)
+          (0.95, "names the right\nparagraph", 80, [("A", h["top"]["A"]), ("B", h["top"]["B"])], 25, "chance", [(0, 1, P["honest top A-B"])], None),
+          (0.95, "says \u201cattention\u201d\nrather than \u201cactivations\u201d\n(after we fill in\n\u201cYes, paragraph [Pk],\u201d)", 100, [("A", h["patt"]["A"]), ("B", h["patt"]["B"])], 50, "chance", [(0, 1, P["honest patt A-B"])], None)],
+    H=1560, BOT=230, TOPH=620)
 RW = 1450
 row(VP2, [(1.0, "top answer is the\nboosted paragraph", 82, [("AQ", c["top"]["A"]), ("QA", c["top"]["QA"])], 25, "chance", [(0, 1, P["ctrl top A-QA"])], None)],
     H=1100, BOT=330, TOPH=320, VW_=RW)
@@ -123,6 +123,10 @@ for s_ in ["either I boost your attention onto that paragraph's text, or I add t
            "A third of trials are attention boosts, a third are activation additions, and a third are control trials",
            "Did I change how you process one of the paragraphs? If so, which one, and did I boost your attention or add to your activations?"]:
     assert s_ in HP, s_
+import ast
+HQ = next(ast.literal_eval(n.value) for n in ast.parse(open(os.path.join(ROOT, "salience/honest.py")).read()).body
+          if isinstance(n, ast.Assign) and getattr(n.targets[0], "id", "") == "QUESTION").replace("Trial 1: ", "")
+assert HQ in HP, HQ
 QD = "Do you notice your attention being boosted onto one of the paragraphs? If so, which one?"
 QR = "Pick one of the four paragraphs at random."
 SRC = open(os.path.join(ROOT, "salience/salience.py")).read(); assert QD in SRC and QR in SRC
@@ -132,18 +136,19 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .ms{{display:flex;justify-content:space-between}}
 .hd{{font-size:96px;font-weight:800;margin-top:40px;line-height:1.05}}
 .ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:18px 30px;font-size:72px;line-height:1.14;margin-top:20px}}
-.ub.a{{background:{PURPLE}}} .ub.r{{background:#B79BD6}}
+.ub.q{{font-size:84px;font-weight:600}} .ub.a{{background:{PURPLE}}} .ub.r{{background:#B79BD6}}
 img{{display:block;margin-top:20px}}
 .bt{{display:flex;justify-content:space-between;align-items:flex-start}}
 </style></head><body>
 <div class="ms"><div>{stream("att")}</div><div>{stream("add")}</div></div>
 <div style="margin-top:24px">{recipe()}</div>
 <div class="hd">Qwen3-32B told both kinds are possible</div>
-<div class="ub">\u2026 either I boost your attention \u2026 or I add that paragraph\u2019s content directly into your activations \u2026 did I boost your attention or add to your activations?</div>
+<div class="ub">\u2026 either I boost your attention \u2026 or I add that paragraph\u2019s content directly into your activations \u2026</div>
+<div class="ub q">{HQ}</div>
 <img style="width:{VW}px" src="data:image/png;base64,{b64(VP1)}">
 <div class="hd">Qwen3-32B told only about attention boosts</div>
 <div class="bt"><div style="width:{VW - RW - 40}px"><div class="ub">{TOLD} \u2026</div><div class="ub a">{QD}</div><div class="ub r">{QR}</div></div>
 <img style="width:{RW}px" src="data:image/png;base64,{b64(VP2)}"></div>
 </body></html>'''
-dr.render(HTML, HERE, "salience", W, jpg=True, keep="--keep" in sys.argv)
+dr.render(HTML, HERE, "salience", W, jpg=True, keep="--keep" in sys.argv, H=5000)
 if "--keep" not in sys.argv: os.remove(VP1); os.remove(VP2)

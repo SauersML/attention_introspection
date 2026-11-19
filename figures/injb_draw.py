@@ -192,9 +192,9 @@ document.getElementById('ov').innerHTML=s;
 </script></body></html>'''
 
 
-def render(HTML, here, out, W, jpg=False, keep=False):
+def render(HTML, here, out, W, jpg=False, keep=False, H=4000):
     hp = os.path.join(here, f"_{out}.html"); open(hp, "w").write(HTML); raw = os.path.join(here, f"_{out}_raw.png")
-    subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},4000",
+    subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},{H}",
                     "--force-device-scale-factor=1", "--virtual-time-budget=3000", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
     im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
     im = im.crop((0, 0, W, nz[-1] + 20)); im.save(os.path.join(here, out + ".png"))
