@@ -44,6 +44,10 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/monitor_logprob.png)
 
+A smaller reader does worse: Qwen3-8B ranks which paragraph Qwen3-32B attended to less accurately than Gemma 4 31B, reading the same 300 transcripts.
+
+![](figures/reader_size.jpg)
+
 10. The noticing test with word lists instead of paragraphs: eight single-word lines, one of them boosted, then "did you notice, and which one?". Left: Qwen never says Yes, with or without a boost. Right: when made to start "Yes, word [", how often their top answer is the boosted word's number, as change from no boost (12.5%), with the raw rates above each bar.
 
 ![](figures/words_told_pair.jpg)
