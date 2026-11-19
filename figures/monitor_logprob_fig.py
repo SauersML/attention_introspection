@@ -1,11 +1,12 @@
 """Figure for results/monitor_inorder/RESULT.md and results/monitor_shuffled/LOGPROB.md (Qwen3-32B, 300 prompts with four paragraphs).
-Top: one real prompt (id 173): the chat, the self-report question, the report's probabilities for P1..P4 (after the
-prefilled "P") beside the true attention (the preregistered primary truth: attention from answer tokens to each paragraph,
-per token of the paragraph, averaged over heads and layers 21-53, as percent of the four values' total). Bottom left: per-prompt Spearman between report score and true attention, asked
-right after answering, self vs the same model reading the transcript; black bar = 95% bootstrap CI of the mean.
+Top: one real prompt (id 173), drawn as the two setups: left, the self-report (the same chat, asked right after answering); right, the
+same model reading the transcript (the reader prompt's real opening line, the conversation quoted, the reader's question). Each reply
+shows that setup's probabilities for P1..P4 (after the prefilled "P"); under them the true attention (the preregistered primary truth:
+attention from answer tokens to each paragraph, per token of the paragraph, averaged over heads and layers 21-53, as percent of the
+four values' total). Bottom left: per-prompt Spearman between report score and true attention, asked right after answering, self vs
+reader; big number = mean; ringed dot = prompt 173; p = paired two-sided sign-flip test of self vs reader (200,000 flips).
 Bottom right: held-out gain in within-prompt rank correlation from adding the self score to a model that already has the
 reader's scores for every wording asked at that timing, plus position and length (logprob.py "gain_all"), dot + 95% bootstrap CI over prompts.
-Violins show the mean only (black line), with the paired sign-flip p of self vs reader under the self-report's mean.
 usage: monitor_logprob_fig.py results/monitor_inorder/logprob_results.json OUT.png SHARD_DIR [SHARD_DIR ...]"""
 import json, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
@@ -14,7 +15,8 @@ from scipy.stats import gaussian_kde
 from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, INK
-ORANGE = "#E07B24"
+from pfmt import pstr
+BLUE = "#2F7FC1"   # the reader: the blue end of the shared palette, darkened enough for text
 J = json.load(open(sys.argv[1])); OUTP = os.path.abspath(sys.argv[2]); DIRS = sys.argv[3:]
 TR = "norm"  # preregistered primary truth
 RES, PP, IDS = J["res"][TR], J["perprompt"][TR], J["ids"]
@@ -23,82 +25,88 @@ for d in DIRS:
     for c in json.load(open(os.path.join(d, "contexts.json"))): C[str(c["id"])] = c
     H.update(json.load(open(os.path.join(d, "hf1.json")))); G.update(json.load(open(os.path.join(d, "gen1.json"))))
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
-AMB = "#F2B53A"; W = 2400; PAD = 30
+AMB = "#F2B53A"; W = 2300; PAD = 26
 px = lambda v: v * 72 / 100
 
 # ---------------- example prompt ----------------
-EX = "173"; c = C[EX]
+EX = "173"; c = C[EX]; iex = IDS.index(EX)
 truth = np.array(H[EX]["truth"][TR])[21:54].mean(0); truth = truth / truth.sum()
-rep = np.array(H[EX]["rep"]["after|most|self"])
-r_ex = PP["after|most"]["self"][IDS.index(EX)]
-print("example", EX, "report", np.round(rep, 3), "truth", np.round(truth, 3), "rank corr", round(r_ex, 3))
-def short(p, n): return " ".join(p.split()[:n]) + " …"
+rep = {"self": np.array(H[EX]["rep"]["after|most|self"]), "reader": np.array(H[EX]["rep"]["after|most|reader"])}
+r_ex = {w: PP["after|most"][w][iex] for w in rep}
+print("example", EX, {w: np.round(v, 3) for w, v in rep.items()}, "truth", np.round(truth, 3), "rank corr", {w: round(v, 3) for w, v in r_ex.items()})
+def short(p, n): return " ".join(p.split()[:n]) + " \u2026"
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
-QTEXT = "Which paragraph did you attend to most while writing your answer?"
-def bars(p, col, pct=True):
-    w, h, bw, top = 860, 340, 150, 260; o = []
+QS = "Which paragraph did you attend to most while writing your answer?"
+QR = "Which paragraph did the assistant attend to most while writing its answer?"
+RINTRO = "Below is a conversation between a user and an AI assistant (Qwen3-32B)."
+def bars(p, col, w=600, h=250):
+    """four bars P1..P4, height = share, % above"""
+    bw = 104; gap = (w - 4 * bw) / 4; top = h - 64; o = []
     for k in range(4):
-        x = 40 + k * 205; hh = 200 * p[k] / max(p.max(), 1e-9)
-        o.append(f'<rect x="{x}" y="{top - hh:.1f}" width="{bw}" height="{hh:.1f}" rx="6" fill="{col}"/>')
-        o.append(f'<text x="{x + bw / 2}" y="{top + 56}" font-size="46" font-weight="700" text-anchor="middle" fill="{INK}">P{k + 1}</text>')
-        o.append(f'<text x="{x + bw / 2}" y="{top - hh - 12:.1f}" font-size="42" text-anchor="middle" fill="{INK}">{100 * p[k]:.0f}%</text>')
-    o.append(f'<line x1="10" x2="{w - 10}" y1="{top}" y2="{top}" stroke="{INK}" stroke-width="3"/>')
-    return f'<svg width="{w}" height="{h}" viewBox="0 -10 {w} {h}">{"".join(o)}</svg>'
+        x = gap / 2 + k * (bw + gap); hh = (top - 62) * p[k] / max(p.max(), 1e-9)
+        if hh > 0.5: o.append(f'<rect x="{x:.1f}" y="{top - hh:.1f}" width="{bw}" height="{hh:.1f}" rx="8" fill="{col}"/>')
+        o.append(f'<text x="{x + bw / 2:.1f}" y="{top + 52}" font-size="46" font-weight="800" text-anchor="middle" fill="{INK}">P{k + 1}</text>')
+        o.append(f'<text x="{x + bw / 2:.1f}" y="{top - hh - 12:.1f}" font-size="46" font-weight="700" text-anchor="middle" fill="{INK}">{100 * p[k]:.0f}%</text>')
+    o.append(f'<line x1="4" x2="{w - 4}" y1="{top}" y2="{top}" stroke="{INK}" stroke-width="3"/>')
+    return f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}" font-family="Helvetica Neue,Helvetica,Arial,sans-serif">{"".join(o)}</svg>'
 paras = "".join(f'<div class="pl"><b>[P{k + 1}]</b> {html.escape(short(p, 3))}</div>' for k, p in enumerate(c["paras"]))
-TOP = f'''<div class="top">
-<div class="chat"><div class="mname">Qwen3-32B, 300 prompts</div>
- <div class="ub">Here are four paragraphs.{paras}<div class="q">{html.escape(c["task"])}</div></div>
- <div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(G[EX]["ans_text"])}</div></div>
- <div class="ub ub2">{QTEXT} …</div>
- <div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb mp">P…</div></div>
-</div>
-<div class="right">
- <div class="box"><div class="bt" style="color:{PURPLE}">report probability</div>{bars(rep, PURPLE)}</div>
- <div class="box"><div class="bt">true attention</div>{bars(truth, AMB)}</div>
-</div></div>'''
+TASK = html.escape(c["task"]).replace("[P4]", "<b>[P4]</b>").replace("[P2]", "<b>[P2]</b>")
+ANS = html.escape(G[EX]["ans_text"])
+LEFT = f'''<div class="col"><div class="cname" style="color:{PURPLE}">self-report</div>
+ <div class="ub">Here are four paragraphs.{paras}<div class="tk">{TASK}</div></div>
+ <div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb">{ANS}</div></div>
+ <div class="ub q"><div class="var" style="color:{PURPLE}">{QS} \u2026</div></div>
+ <div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb rp" style="border-color:{PURPLE}">{bars(rep["self"], PURPLE)}</div></div></div>'''
+tparas = "".join(f'<div class="pl"><b>[P{k + 1}]</b> {html.escape(short(p, 3))}</div>' for k, p in enumerate(c["paras"]))
+RIGHT = f'''<div class="col"><div class="cname" style="color:{BLUE}">same model reading the transcript</div>
+ <div class="ub">{RINTRO}
+  <div class="tr"><div><b>User:</b> Here are four paragraphs.</div>{tparas}<div class="tk">{TASK}</div><div class="ta"><b>Assistant:</b> {ANS}</div></div>
+  <div class="var" style="color:{BLUE}">{QR} \u2026</div></div>
+ <div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb rp" style="border-color:{BLUE}">{bars(rep["reader"], BLUE)}</div></div></div>'''
 
-# ---------------- bottom panels ----------------
+# ---------------- bottom panels (matplotlib, px coordinates at dpi 100) ----------------
 ROWS = [("after|most", "right after"), ("before|most", "before answering"), ("later|most", "one turn later"), ("think|most", "with thinking"),
         ("fb4|most", "after 4 true examples"), ("fb16|most", "after 16 true examples"),
         ("after|rate", "right after"), ("before|rate", "before answering"), ("later|rate", "one turn later"),
         ("fb4|rate", "after 4 true examples"), ("fb16|rate", "after 16 true examples"),
         ("after|least", "least attended"), ("after|free", "free answer")]
 ROWS = [r for r in ROWS if r[0] in RES]
-GROUP = {0: "which paragraph most?", [k for k, _ in ROWS].index("after|rate"): "0–10 rating", [k for k, _ in ROWS].index("after|least"): "other questions"}
-BH = 1560
-plt.rcParams.update({"font.family": "Helvetica", "text.color": INK, "axes.edgecolor": INK, "xtick.color": INK, "ytick.color": INK})
-fig = plt.figure(figsize=(W / 100, BH / 100), dpi=100)
-F = lambda x, y: (x / W, y / BH)
-# left: violins
-L0, LW, B0, BHh = 190, 720, 300, 1160
-ax = fig.add_axes([L0 / W, B0 / BH, LW / W, BHh / BH])
+GROUP = {0: "which paragraph most?", [k for k, _ in ROWS].index("after|rate"): "0\u201310 rating", [k for k, _ in ROWS].index("after|least"): "other questions"}
+BW = W - 2 * PAD; BH = 1500
+plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
+fig = plt.figure(figsize=(BW / 100, BH / 100), dpi=100)
+# left: violins of per-prompt rank correlation
+L0, LW, B0, T0 = 0, 1100, 40, 420      # px: left edge, width, bottom margin, top band for the big numbers
+ax = fig.add_axes([L0 / BW, B0 / BH, LW / BW, (BH - B0 - T0) / BH])
 rng = np.random.default_rng(1)
 dsr = np.subtract(PP["after|most"]["self"], PP["after|most"]["reader"]); obs = abs(dsr.mean())
-PV = (sum(int((np.abs((np.random.default_rng(k).choice([-1.0, 1.0], (20000, len(dsr))) * dsr).mean(1)) >= obs - 1e-12).sum()) for k in range(10)) + 1) / 200001
-PTXT = ("p < 10\u207b\u2074" if PV < 1e-4 else (f"p < 10\u207b\u00b3" if PV < 1e-3 else f"p = {PV:.2g}")) + " vs reader"
-print("self - reader", round(dsr.mean(), 4), "p", PV)
-for j, (who, col, lab) in enumerate([("self", PURPLE, "self-report"), ("reader", ORANGE, "same model\nreading the\ntranscript")]):
-    z = np.array(PP["after|most"][who]); st = RES["after|most"][who]
-    kde = gaussian_kde(z, bw_method=0.3); yy = np.linspace(-1.05, 1.05, 300); dd = kde(yy); dd = dd / dd.max() * 0.42
-    ax.fill_betweenx(yy, j - dd, j + dd, color=col, alpha=0.12, lw=0); ax.plot(np.r_[j - dd, (j + dd)[::-1]], np.r_[yy, yy[::-1]], color=col, lw=2.5, alpha=0.6)
-    xj = j + rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.40; yj = z + rng.uniform(-0.035, 0.035, len(z))
-    ax.scatter(xj, yj, s=120, color=col, alpha=0.45, edgecolors="none", zorder=3); ax.scatter(xj, yj, s=4, color="black", zorder=4)
-    ax.plot([j - 0.17, j + 0.17], [st["mean"]] * 2, color=INK, lw=4, zorder=6)
-    ax.text(j + 0.2, st["mean"], f"{st['mean']:.2f}", ha="left", va="center", fontsize=px(54), fontweight="bold", color=col, zorder=7,
-            bbox=dict(fc="white", ec="none", alpha=0.85, pad=2))
-    if who == "self":
-        ax.text(j + 0.2, st["mean"] - 0.075, PTXT, ha="left", va="top", fontsize=px(40), color=col, zorder=7, fontweight="bold",
-                bbox=dict(fc="white", ec="none", alpha=0.95, pad=2))
-    ax.text(j, -1.16, lab, ha="center", va="top", fontsize=px(48), fontweight="bold", color=col, linespacing=1.05)
-ax.set_xlim(-0.55, 1.55); ax.set_ylim(-1.1, 1.1); ax.set_xticks([])
-ax.set_yticks([-1, 0, 1]); ax.set_yticklabels(["\u22121", "0", "1"], fontsize=px(46)); ax.tick_params(length=0, pad=10)
-for s_ in ["top", "right", "bottom"]: ax.spines[s_].set_visible(False)
-ax.spines["left"].set_linewidth(3); ax.axhline(0, color=INK, lw=2, zorder=0)
-fig.text(*F(50, B0 + BHh / 2), "rank correlation with true attention", rotation=90, ha="center", va="center", fontsize=px(48))
-fig.text(*F(L0 + LW / 2, BH - 14), "asked right after answering", ha="center", va="top", fontsize=px(50), fontweight="bold")
+NF = 200000
+PV = (sum(int((np.abs((np.random.default_rng(k).choice([-1.0, 1.0], (20000, len(dsr))) * dsr).mean(1)) >= obs - 1e-12).sum()) for k in range(10)) + 1) / (NF + 1)
+PTXT = pstr(PV, floor=1 / (NF + 1))
+print("self - reader", round(dsr.mean(), 4), "p", PV, PTXT)
+XC = [0.78, 1.78]; XL = (-0.05, 2.45)
+for j, (who, col) in enumerate([("self", PURPLE), ("reader", BLUE)]):
+    z = np.array(PP["after|most"][who]); st = RES["after|most"][who]; x0 = XC[j]
+    kde = gaussian_kde(z, bw_method=0.3); yy = np.linspace(-1.0, 1.0, 300); dd = kde(yy); dd = dd / dd.max() * 0.40
+    ax.fill_betweenx(yy, x0 - dd, x0 + dd, color=col, alpha=0.18, lw=0); ax.plot(np.r_[x0 - dd, (x0 + dd)[::-1], x0 - dd[:1]], np.r_[yy, yy[::-1], yy[:1]], color=col, lw=2.5)
+    xj = x0 + rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.36; yj = np.clip(z + rng.uniform(-0.03, 0.03, len(z)), -1, 1)
+    ax.scatter(xj, yj, s=330, color=col, alpha=0.40, edgecolors="none", zorder=3); ax.scatter(xj, yj, s=5, color="black", zorder=4)
+    fig.text((L0 + LW * (x0 - XL[0]) / (XL[1] - XL[0])) / BW, 1 - 262 / BH, f"{st['mean']:.2f}", ha="center", va="top", fontsize=px(100), fontweight="bold", color=col)
+ax.plot([0.27, XL[1]], [0, 0], color=INK, lw=4, ls=(0, (4, 3)), zorder=6)
+ax.text(1.27, -0.04, "no relation", ha="center", va="top", fontsize=px(56), color=INK, zorder=7)
+for t, s in [(-1, "\u22121"), (0, "0"), (1, "1")]:
+    ax.text(0.0, t, s, ha="left", va="center", fontsize=px(72), fontweight="bold", color=INK)
+ax.set_xlim(*XL); ax.set_ylim(-1.06, 1.06); ax.set_xticks([]); ax.set_yticks([])
+for s_ in ax.spines.values(): s_.set_visible(False)
+# p bracket between the two big numbers
+xl, xr = [(L0 + LW * (x - XL[0]) / (XL[1] - XL[0])) / BW for x in XC]; yb = 1 - 212 / BH
+fig.add_artist(plt.Line2D([xl, xl, xr, xr], [yb - 30 / BH, yb, yb, yb - 30 / BH], transform=fig.transFigure, color=INK, lw=4))
+fig.text((xl + xr) / 2, yb + 10 / BH, PTXT, ha="center", va="bottom", fontsize=px(56), color=INK,
+         bbox=dict(fc="white", ec="none", pad=4))
+fig.text((L0 + LW / 2) / BW, 1 - 10 / BH, "rank correlation with true attention,\nasked right after answering", ha="center", va="top", fontsize=px(50), fontweight="bold", color=INK, linespacing=1.1)
 # right: gains
-R0, RW = 1560, 760
-ax2 = fig.add_axes([R0 / W, B0 / BH, RW / W, BHh / BH])
+R0, RW = 1620, BW - 1620 - 20
+ax2 = fig.add_axes([R0 / BW, 190 / BH, RW / BW, (BH - 190 - 250) / BH])
 ys = []; y = 0
 for n, (k, _) in enumerate(ROWS):
     if n in GROUP: y += 1
@@ -107,42 +115,56 @@ YMAX = y
 lab_tr = matplotlib.transforms.blended_transform_factory(fig.transFigure, ax2.transData)
 for n, (k, lab) in enumerate(ROWS):
     q = RES[k]; yv = YMAX - ys[n]
-    ax2.plot([q["gain_all"]["lo"], q["gain_all"]["hi"]], [yv, yv], color=PURPLE, lw=7, solid_capstyle="round", zorder=3)
-    ax2.scatter([q["gain_all"]["mean"]], [yv], s=520, color=PURPLE, zorder=4, edgecolors="white", linewidths=2)
-    ax2.text((R0 - 24) / W, yv, lab, transform=lab_tr, ha="right", va="center", fontsize=px(46))
+    ax2.plot([q["gain_all"]["lo"], q["gain_all"]["hi"]], [yv, yv], color=PURPLE, lw=9, solid_capstyle="round", zorder=3, alpha=0.75)
+    ax2.scatter([q["gain_all"]["mean"]], [yv], s=700, color=PURPLE, zorder=4, edgecolors="white", linewidths=3)
+    ax2.text((R0 - 24) / BW, yv, lab, transform=lab_tr, ha="right", va="center", fontsize=px(46), color=INK)
 for n, g in GROUP.items():
-    ax2.text((R0 - 24) / W, YMAX - ys[n] + 1, g, transform=lab_tr, ha="right", va="center", fontsize=px(48), fontweight="bold")
-ax2.axvline(0, color=INK, lw=3, zorder=2)
-ax2.set_ylim(0.45, YMAX + 0.6); ax2.set_yticks([])
+    ax2.text((R0 - 24) / BW, YMAX - ys[n] + 1, g, transform=lab_tr, ha="right", va="center", fontsize=px(50), fontweight="bold", color=INK)
+ax2.axvline(0, color=INK, lw=4, ls=(0, (4, 3)), zorder=2)
+ax2.text(0.002, YMAX + 0.55, "no gain", ha="left", va="center", fontsize=px(56), color=INK)
+ax2.set_ylim(0.45, YMAX + 0.9); ax2.set_yticks([])
 lo = min(RES[k]["gain_all"]["lo"] for k, _ in ROWS); hi = max(RES[k]["gain_all"]["hi"] for k, _ in ROWS)
 ax2.set_xlim(min(lo, -0.02) - 0.004, hi + 0.004)
-ax2.set_xticks([-0.02, 0, 0.02]); ax2.set_xticklabels(["\u22120.02", "0", "+0.02"], fontsize=px(46)); ax2.tick_params(length=8, width=3, pad=8)
+ax2.set_xticks([-0.02, 0, 0.02]); ax2.set_xticklabels(["\u22120.02", "0", "+0.02"], fontsize=px(56), fontweight="bold"); ax2.tick_params(length=10, width=3, pad=10, colors=INK)
 for s_ in ["top", "right", "left"]: ax2.spines[s_].set_visible(False)
-ax2.spines["bottom"].set_linewidth(3)
-fig.text(*F(R0 + RW / 2, 18), "rank correlation the self-report adds over\nthe same model reading the transcript,\nasked every way at the same time", ha="center", va="bottom", fontsize=px(46), linespacing=1.1)
+ax2.spines["bottom"].set_linewidth(3); ax2.spines["bottom"].set_color(INK)
+fig.text((R0 + RW / 2 - 300) / BW, 1 - 10 / BH, "rank correlation the self-report adds\nto the same model reading the\ntranscript, asked every way", ha="center", va="top", fontsize=px(54), fontweight="bold", color=INK, linespacing=1.1)
 VP = os.path.join(HERE, "monitor_logprob_bottom.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
 VIO = base64.b64encode(open(VP, "rb").read()).decode()
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:24px {PAD}px 0}}
-.top{{display:flex;gap:40px;align-items:center}}
-.chat{{width:1330px}}
-.ub{{background:#1F8BFF;color:#fff;border-radius:30px;padding:16px 24px;font-size:44px;line-height:1.2;margin-left:100px}}
-.ub2{{margin-top:14px}} .pl{{white-space:nowrap}} .q{{margin-top:6px}}
-.mrow{{display:flex;align-items:center;gap:14px;margin-top:12px}}
-.rob{{width:86px;height:86px}}
-.mb{{background:#fff;border:3px solid #D9D9DE;border-radius:28px;padding:6px 28px;font-size:56px;font-weight:700}}
-.mname{{font-size:50px;font-weight:800;margin:0 0 10px 100px}} .mp{{border-color:{PURPLE};color:{PURPLE}}}
-.right{{display:flex;flex-direction:column;gap:26px}}
-.box{{border:4px solid {INK};border-radius:28px;padding:14px 22px 0}}
-.bt{{font-size:50px;font-weight:800}}
-.bot{{width:{W}px;display:block;margin:30px 0 0 -{PAD}px}}
-</style></head><body>{TOP}<img class="bot" src="data:image/png;base64,{VIO}"></body></html>'''
+body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px {PAD}px 10px}}
+.cols{{display:flex;gap:36px;align-items:stretch}}
+.col{{flex:1;min-width:0;display:flex;flex-direction:column}}
+.cname{{font-size:66px;font-weight:800;margin:0 0 12px 4px;white-space:nowrap}}
+.ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:20px 26px;font-size:46px;line-height:1.18;display:flex;flex-direction:column;gap:4px}}
+.ub.q{{margin-top:16px;padding:14px}}
+.pl{{white-space:nowrap;overflow:hidden}} .tk{{margin-top:4px}}
+.var{{background:#fff;border-radius:16px;padding:10px 16px;font-weight:700;line-height:1.18;margin-top:6px}}
+.tr{{border:3px solid rgba(255,255,255,.85);border-radius:20px;padding:12px 18px;margin:8px 0 2px;display:flex;flex-direction:column;gap:4px}}
+.ta{{margin-top:6px}}
+.mrow{{display:flex;align-items:center;gap:16px;margin-top:14px}}
+.col .mrow:last-child{{margin-top:auto;padding-top:16px}}
+.rob{{width:110px;height:110px}}
+.mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:8px 30px;font-size:58px;font-weight:700;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
+.mb.rp{{border-width:5px;padding:6px 14px 0}}
+.truth{{display:flex;align-items:center;justify-content:center;gap:40px;margin-top:26px}}
+.tl{{font-size:56px;font-weight:800;text-align:right;line-height:1.1}}
+.tbox{{border:4px solid {INK};border-radius:28px;padding:6px 14px 0}}
+.key{{display:flex;align-items:center;gap:14px;font-size:52px;font-weight:800;white-space:nowrap}}
+.dot{{display:inline-block;width:44px;height:44px;border-radius:50%;background:{PURPLE};opacity:.75;position:relative}}
+.dot::after{{content:"";position:absolute;left:19px;top:19px;width:6px;height:6px;border-radius:50%;background:#000}}
+.ring{{display:inline-block;width:46px;height:46px;border-radius:50%;border:5px solid {INK}}}
+.bot{{width:{W - 2 * PAD}px;display:block;margin-top:30px}}
+</style></head><body><div class="cols">{LEFT}{RIGHT}</div>
+<div class="truth"><div class="key" style="flex-direction:column;align-items:flex-start;gap:12px"><div class="key"><span class="dot"></span> = one prompt</div></div>
+ <div class="tl">true attention,<br>measured inside<br>the model</div><div class="tbox">{bars(truth, AMB)}</div></div>
+<img class="bot" src="data:image/png;base64,{VIO}"></body></html>'''
 hp = os.path.join(HERE, "monitor_logprob.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "monitor_logprob_raw.png")
-subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3200",
+subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3600",
                 "--force-device-scale-factor=1", "--virtual-time-budget=3000", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
 im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
-im = im.crop((0, 0, W, nz[-1] + 24)); im.save(OUTP); print(OUTP, im.size)
+im = im.crop((0, 0, W, nz[-1] + 24)); im.save(OUTP); print(OUTP, im.size, "aspect", round(im.size[1] / im.size[0], 2))
 os.remove(raw); os.remove(hp); os.remove(VP)
