@@ -1,0 +1,25 @@
+
+05:02:11 model Qwen/Qwen3-32B layers 64 band 21 53 peak layer 28
+05:02:11 categories 38 single-token words 205 dropped ['parrot', 'swan', 'stapler', 'willow', 'tulip', 'daisy', 'lily']
+05:02:11 shard 0 contexts 100 already done 0
+05:02:11 'Here is a list of eight words.\n\n[W1] triangle\n[W5] tomato\n[W4] moon\n[W6] rain\n[W2] wrench\n[W3] rose\n[W8] shark\n[W7] piano\n\nUnrelated question: what is 75 + 70? Answer with just the number.'
+05:02:11 '<|im_end|>\n<|im_start|>user\nWhich word did you attend to most while writing your answer? Answer with just one of [W1], [W8], [W2], [W6], [W7], [W5], [W3], or [W4].<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n[W'
+05:02:11 'Here is a list of eight words.\n\n[W6] fog\n[W7] rose\n[W2] balloon\n[W5] desk\n[W3] pilot\n[W1] morning\n[W4] fox\n[W8] torch\n\nUnrelated question: what is 20 + 68? Answer with just the number.'
+05:02:11 '<|im_end|>\n<|im_start|>user\nWhich word did you attend to most while writing your answer? Answer with just one of [W7], [W1], [W3], [W4], [W8], [W5], [W6], or [W2].<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n[W'
+[transformers] Calling `crop` with a positive value is deprecated and will be removed in version 5.18. Please use a negative integer to remove that number of tokens from the cache instead.
+05:02:12 cache check max |dlogp| 0.4891207819013106
+05:02:15 1/100 id 0 target both C x10 mass word 6.56x label 6.20x dlogp(own) +0.783 4.3s/ctx
+05:02:16 cache check max |dlogp| 0.4851251600798365
+05:02:19 2/100 id 1 target both C x10 mass word 6.58x label 6.21x dlogp(own) -0.579 4.0s/ctx
+05:02:22 3/100 id 2 target both C x10 mass word 6.64x label 6.07x dlogp(own) -0.931 3.9s/ctx
+05:02:48 10/100 id 9 target both C x10 mass word 6.81x label 6.17x dlogp(own) +0.703 3.7s/ctx
+05:03:24 20/100 id 19 target both C x10 mass word 6.43x label 6.16x dlogp(own) +1.122 3.7s/ctx
+05:04:01 30/100 id 29 target both C x10 mass word 6.68x label 6.21x dlogp(own) -0.099 3.7s/ctx
+05:04:37 40/100 id 39 target both C x10 mass word 6.77x label 6.16x dlogp(own) -0.160 3.7s/ctx
+05:05:14 50/100 id 49 target both C x10 mass word 6.54x label 6.20x dlogp(own) +1.264 3.7s/ctx
+05:05:50 60/100 id 59 target both C x10 mass word 6.74x label 6.02x dlogp(own) +1.107 3.7s/ctx
+05:06:27 70/100 id 69 target both C x10 mass word 6.50x label 6.07x dlogp(own) -0.260 3.7s/ctx
+05:07:03 80/100 id 79 target both C x10 mass word 6.59x label 6.06x dlogp(own) +0.225 3.7s/ctx
+05:07:40 90/100 id 89 target both C x10 mass word 6.58x label 6.08x dlogp(own) +0.833 3.7s/ctx
+05:08:16 100/100 id 99 target both C x10 mass word 6.58x label 6.12x dlogp(own) -0.673 3.7s/ctx
+05:08:16 done shard 0

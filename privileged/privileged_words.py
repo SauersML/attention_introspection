@@ -21,6 +21,9 @@ ap.add_argument("--nshard", type=int, default=1)
 ap.add_argument("--seed", type=int, default=11)
 ap.add_argument("--limit", type=int, default=0)
 ap.add_argument("--inorder", action="store_true", help="labels in order ([W1]..[WN] in slots 1..N) and report options listed in order")
+ap.add_argument("--target", choices=["word", "label", "both"], default="word",
+                help="tokens boosted for item k: the word's token (default), its label's tokens '[Wk]', or both")
+ap.add_argument("--conly", action="store_true", help="only the no-boost report and arm C (skip arms A/B, the reader and the instruction test)")
 args = ap.parse_args()
 os.makedirs(args.out, exist_ok=True)
 OUT = args.out
@@ -28,6 +31,7 @@ def log(*a): print(time.strftime("%H:%M:%S"), *a, flush=True)
 
 DOSES = [0.25, 0.5, 2.0, 5.0, 10.0]
 N = 8
+LABMASS = args.conly or args.target != "word"  # also record attention mass on the labels
 
 S = dict(bias=0.0, kmask=None, qlo=0, qhi=0, record=False, seg=None, nseg=0, acc=None, nacc=0, calls=0, forbid_bias=False,
          irec=False, irows=None, iseg=None, istore={})
@@ -141,14 +145,15 @@ INSTR = dict(none="", mention="Note that one of the words is labelled [W{l}].\n"
 
 def build(c, cond="none", l=0):
     lab = c["lab"]
-    parts, cspans, pos = [], [], 0
-    def add(s, seg=False):
+    parts, cspans, lspans, pos = [], [], [], 0
+    def add(s, seg=False, labseg=False):
         nonlocal pos
         if seg: cspans.append((pos, pos + len(s)))
+        if labseg: lspans.append((pos, pos + len(s)))
         parts.append(s); pos += len(s)
     add("Here is a list of eight words.\n\n")
     for i, s in enumerate(c["segs"]):
-        add(f"[W{lab[i]}] "); add(s, True); add("\n")
+        add(f"[W{lab[i]}]", labseg=True); add(" "); add(s, True); add("\n")
     add("\n")
     add(INSTR[cond].format(l=l) + QLINE.format(x=c["x"], y=c["y"]))
     user = "".join(parts)
@@ -163,8 +168,16 @@ def build(c, cond="none", l=0):
         assert tok.decode([ids[idx[0]]]).strip() == c["segs"][i], (tok.decode([ids[idx[0]]]), c["segs"][i])
         segtok.append(idx)
     assert len(set(t for s in segtok for t in s)) == N
+    labtok = []
+    for i, (a, b) in enumerate(lspans):  # the label's tokens "[W", "k", "]" (must not share a token with the word or the newline)
+        idx = [t for t, (x, y) in enumerate(om) if y > a + off and x < b + off and y > x]
+        assert tok.decode([ids[t] for t in idx]) == f"[W{lab[i]}]", (tok.decode([ids[t] for t in idx]), lab[i])
+        assert not set(idx) & set(segtok[i]), "label and word share a token"
+        labtok.append(idx)
+    LABTOK[tuple(ids)] = labtok
     return ids, segtok, user
 
+LABTOK = {}
 def opts(c): return ", ".join(f"[W{o}]" for o in c["opt"][:-1]) + f", or [W{c['opt'][-1]}]"
 W1 = "Which word did you attend to most while writing your answer?"
 READERQ = ("Below is a conversation between a user and an AI assistant.\n\n=== USER ===\n{u}\n=== ASSISTANT ===\n{a}\n=== END ===\n\n"
@@ -208,12 +221,13 @@ def sig(cache, P0):
 
 @torch.no_grad()
 def reports(c, cache, A_end, SUF, idx=None, logm=0.0, segt=None, record=False):
+    ns = 2 * N if LABMASS else N
     out, mass = {}, None
     for w, (kind, s) in SUF.items():
         assert cache.get_seq_length() == A_end
         if idx is not None: set_bias(logm, idx, A_end, A_end + len(s)); S["forbid_bias"] = False
         else: S["bias"] = 0.0; S["forbid_bias"] = True
-        if record: rec_on(segt, N)
+        if record: rec_on(segt, ns)
         lg = fwd(s, cache)
         if record: mass = rec_off()
         S["bias"] = 0.0; S["forbid_bias"] = False
@@ -255,13 +269,19 @@ def run_context(c, check=False):
     chunk = [ids[-1]] + ans
     A_end = P0 + len(chunk)
     SUF = suffixes(c)
-    segt = segids(segtok)
+    labtok = LABTOK[tuple(ids)]
+    tgt = {"word": segtok, "label": labtok, "both": [segtok[k] + labtok[k] for k in range(N)]}[args.target]
+    if LABMASS:  # segments 0..N-1 = words (as before), N..2N-1 = their labels
+        segt = segids(segtok + labtok); NS = 2 * N
+    else:
+        segt = segids(segtok); NS = N
     cache = DynamicCache()
     fwd(ids[:-1], cache)
     sig0 = sig(cache, P0)
     rec = dict(id=c["id"], setup="words", N=N, lab=c["lab"], opt=c["opt"], words=c["segs"], cats=c["cats"], ans=atext,
                correct=str(c["x"] + c["y"]) in atext, A={}, B={}, C={}, massA={}, massC={})
-    rec_on(segt, N); fwd(chunk, cache); rec["mass_none_ans"] = rec_off()
+    rec["target"] = args.target; rec["labtok"] = labtok
+    rec_on(segt, NS); fwd(chunk, cache); rec["mass_none_ans"] = rec_off()
     rec["none"], rec["mass_none_rep"] = reports(c, cache, A_end, SUF, segt=segt, record=True)
     if check:
         full = ids + ans + SUF["W1"][1]
@@ -270,18 +290,20 @@ def run_context(c, check=False):
         log("cache check max |dlogp|", rec["cache_check_maxdiff"])
     for k in range(N):
         for m in DOSES:
-            rec["C"][f"{k}|{m}"], rec["massC"][f"{k}|{m}"] = reports(c, cache, A_end, SUF, idx=segtok[k], logm=math.log(m), segt=segt, record=True)
+            rec["C"][f"{k}|{m}"], rec["massC"][f"{k}|{m}"] = reports(c, cache, A_end, SUF, idx=tgt[k], logm=math.log(m), segt=segt, record=True)
+    if args.conly:
+        del cache; return rec
     cache.crop(P0)
     assert sig(cache, P0) == sig0
     for k in range(N):
         for m in DOSES:
             key = f"{k}|{m}"
             assert cache.get_seq_length() == P0
-            set_bias(math.log(m), segtok[k], P0, A_end)
-            rec_on(segt, N); fwd(chunk, cache); rec["massA"][key] = rec_off()
+            set_bias(math.log(m), tgt[k], P0, A_end)
+            rec_on(segt, NS); fwd(chunk, cache); rec["massA"][key] = rec_off()
             S["bias"] = 0.0
             rec["A"][key], _ = reports(c, cache, A_end, SUF)
-            rec["B"][key], _ = reports(c, cache, A_end, SUF, idx=segtok[k], logm=math.log(m))
+            rec["B"][key], _ = reports(c, cache, A_end, SUF, idx=tgt[k], logm=math.log(m))
             cache.crop(P0)
         assert sig(cache, P0) == sig0, "prompt KV changed"
     q = READERQ.format(u=user, a=atext, o=opts(c))
@@ -311,10 +333,15 @@ with open(path, "a") as f:
         assert S["calls"] > 0
         if r is None: log("empty answer", c["id"]); continue
         f.write(json.dumps(r) + "\n"); f.flush(); nd += 1
-        if nd <= 3 or nd % 10 == 0:
+        if args.conly and (nd <= 3 or nd % 10 == 0):
+            mc = np.mean([r["massC"][f"{k}|10.0"][k] / r["mass_none_rep"][k] for k in range(N)])
+            ml = np.mean([r["massC"][f"{k}|10.0"][N + k] / r["mass_none_rep"][N + k] for k in range(N)])
+            sc = np.mean([(r["C"][f"{k}|10.0"]["W1"][k] - r["none"]["W1"][k]) for k in range(N)])
+            log(f"{nd}/{len(mine)} id {c['id']} target {args.target} C x10 mass word {mc:.2f}x label {ml:.2f}x dlogp(own) {sc:+.3f} {(time.time() - t0) / nd:.1f}s/ctx")
+        elif nd <= 3 or nd % 10 == 0:
             a = r["A"]["0|5.0"]["W1"]; n0 = r["none"]["W1"]
             fo = np.mean([r["instr"][f"focus{l}"]["L28"][r["lab"].index(l)] / r["instr"][f"mention{l}"]["L28"][r["lab"].index(l)] for l in range(1, N + 1)])
             log(f"{nd}/{len(mine)} id {c['id']} ans {r['ans']!r} massA k0 x5/none {r['massA']['0|5.0'][0] / r['mass_none_ans'][0]:.2f} "
                 f"dlogp seg0 {a[0] - n0[0]:+.3f} focus/mention L28 {fo:.2f} {(time.time() - t0) / nd:.1f}s/ctx")
-json.dump(dict(model=args.model, NL=NL, BAND=sorted(BAND), L28=L28, DOSES=DOSES, n=args.n, seed=args.seed, cats=POOL, instr=INSTR), open(os.path.join(OUT, "meta.json"), "w"))
+json.dump(dict(model=args.model, target=args.target, conly=args.conly, inorder=args.inorder, NL=NL, BAND=sorted(BAND), L28=L28, DOSES=DOSES, n=args.n, seed=args.seed, cats=POOL, instr=INSTR), open(os.path.join(OUT, "meta.json"), "w"))
 log("done shard", args.shard)

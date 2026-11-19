@@ -1,0 +1,27 @@
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+
+
+04:45:03 model Qwen/Qwen3-32B layers 64 band 21 53 peak layer 28
+04:45:03 categories 38 single-token words 205 dropped ['parrot', 'swan', 'stapler', 'willow', 'tulip', 'daisy', 'lily']
+04:45:03 shard 0 contexts 100 already done 0
+04:45:03 'Here is a list of eight words.\n\n[W1] triangle\n[W5] tomato\n[W4] moon\n[W6] rain\n[W2] wrench\n[W3] rose\n[W8] shark\n[W7] piano\n\nUnrelated question: what is 75 + 70? Answer with just the number.'
+04:45:03 '<|im_end|>\n<|im_start|>user\nWhich word did you attend to most while writing your answer? Answer with just one of [W1], [W8], [W2], [W6], [W7], [W5], [W3], or [W4].<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n[W'
+04:45:03 'Here is a list of eight words.\n\n[W6] fog\n[W7] rose\n[W2] balloon\n[W5] desk\n[W3] pilot\n[W1] morning\n[W4] fox\n[W8] torch\n\nUnrelated question: what is 20 + 68? Answer with just the number.'
+04:45:03 '<|im_end|>\n<|im_start|>user\nWhich word did you attend to most while writing your answer? Answer with just one of [W7], [W1], [W3], [W4], [W8], [W5], [W6], or [W2].<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n[W'
+[transformers] Calling `crop` with a positive value is deprecated and will be removed in version 5.18. Please use a negative integer to remove that number of tokens from the cache instead.
+04:45:04 cache check max |dlogp| 0.4891207819013106
+04:45:08 1/100 id 0 target word C x10 mass word 7.42x label 0.96x dlogp(own) +0.775 4.5s/ctx
+04:45:08 cache check max |dlogp| 0.4851251600798365
+04:45:11 2/100 id 1 target word C x10 mass word 7.43x label 0.96x dlogp(own) -0.449 4.1s/ctx
+04:45:15 3/100 id 2 target word C x10 mass word 7.55x label 0.96x dlogp(own) -0.213 4.0s/ctx
+04:45:41 10/100 id 9 target word C x10 mass word 7.68x label 0.96x dlogp(own) +0.531 3.8s/ctx
+04:46:17 20/100 id 19 target word C x10 mass word 7.37x label 0.96x dlogp(own) +0.838 3.7s/ctx
+04:46:54 30/100 id 29 target word C x10 mass word 7.42x label 0.96x dlogp(own) +0.265 3.7s/ctx
+04:47:30 40/100 id 39 target word C x10 mass word 7.63x label 0.96x dlogp(own) +0.507 3.7s/ctx
+04:48:06 50/100 id 49 target word C x10 mass word 7.50x label 0.97x dlogp(own) +0.863 3.7s/ctx
+04:48:42 60/100 id 59 target word C x10 mass word 7.64x label 0.96x dlogp(own) +0.293 3.7s/ctx
+04:49:19 70/100 id 69 target word C x10 mass word 7.45x label 0.96x dlogp(own) -0.097 3.6s/ctx
+04:49:55 80/100 id 79 target word C x10 mass word 7.54x label 0.96x dlogp(own) +0.683 3.6s/ctx
+04:50:31 90/100 id 89 target word C x10 mass word 7.53x label 0.97x dlogp(own) +0.468 3.6s/ctx
+04:51:08 100/100 id 99 target word C x10 mass word 7.41x label 0.96x dlogp(own) +0.095 3.6s/ctx
+04:51:08 done shard 0
