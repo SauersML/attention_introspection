@@ -51,7 +51,3 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 11. The instruction placed before the paragraphs instead of after: a much smaller effect.
 
 ![](figures/hero_before.jpg)
-
-12. Two typical questions, each with "Focus your attention on paragraph [Pk]." for each of the four paragraphs in turn: every token of all four paragraphs coloured by its change in attention at layer 28, compared to only mentioning the named paragraph.
-
-![](figures/grid_focus_L28.png)
