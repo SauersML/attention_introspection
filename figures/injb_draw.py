@@ -68,12 +68,14 @@ def key_svg(col):
     return f'<svg class="kbox" id="kb" width="{ww:.0f}" height="{2*r + 8:.0f}" viewBox="0 0 {ww:.0f} {2*r + 8:.0f}">{"".join(o)}</svg>'
 
 
-def page(W, bubble, rq, reply, titles, vio_png, VW, dose, key=None, pre="", PAD=26, inj="inject attention<br>toward paragraph 2", arrows=(("ry", "c1"),), tipdrop=None):
+def page(W, bubble, rq, reply, titles, vio_png, VW, dose, key=None, pre="", PAD=26, inj="inject attention<br>toward paragraph 2", arrows=(("ry", "c1"),), tipdrop=None, inj_px=None, inj_near=None):
     """bubble: inner html of the prompt bubble (one span id=p2t); rq: the report question; reply: inner html of the reply bubble
     (underlined parts as <span class=part id=...>); tipdrop: when set, each black arrow is an S-curve leaving the underline straight down and entering
     its title straight down, its tip tipdrop px below the title's line box top (on the cap height); titles: html of the column-title row (ids c1..); key: (left, top, colour) of the
     "= one prompt" key over the violin image; pre: html between the prompt bubble and the question (an element id=rob0 for the plain
-    robot's answer; the text ROBOT_PLAIN is replaced by the plain robot's image); arrows: (reply part id, title id) pairs joined by black arrows."""
+    robot's answer; the text ROBOT_PLAIN is replaced by the plain robot's image); arrows: (reply part id, title id) pairs joined by black arrows;
+    inj_px: font size of the purple label (default 66); inj_near: (gap, dy) to put the label just left of the syringe instead of above the
+    question, its right edge gap px from the syringe's bounding box and its top dy px below the box's top (default: off, the old placement)."""
     robot_inj = injected_robot(ROBOT)
     robot = base64.b64encode(open(ROBOT, "rb").read()).decode()
     VIO = base64.b64encode(open(vio_png, "rb").read()).decode()
@@ -82,6 +84,16 @@ def page(W, bubble, rq, reply, titles, vio_png, VW, dose, key=None, pre="", PAD=
     kjs = f"const kb=document.getElementById('kb'); kb.style.left='{key[0]:.0f}px'; kb.style.top='{key[1]:.0f}px';" if key else ""
     aj = ",".join(f"['{a}','{b}']" for a, b in arrows)
     above = "rowA" if "rowA" in pre else "ub"
+    injcss = f"#inj{{font-size:{inj_px}px}}" if inj_px else ""
+    if inj_near:
+        # the injected robot's row moves right / down until the label fits inside the page margin and below what is above it
+        injjs = f"""place(); {{ const mr=document.getElementById('mrow'), cs=getComputedStyle(mr);
+ const dx={PAD}-(R('syr').left-({inj_near[0]})-R('inj').width), dy=R('{above}').bottom+22-(R('syr').top+({inj_near[1]}));
+ if (dx>0) mr.style.marginLeft=(parseFloat(cs.marginLeft)+dx)+'px'; if (dy>0) mr.style.marginTop=(parseFloat(cs.marginTop)+dy)+'px'; place();
+ const s=R('syr'); inj.style.top=(s.top+({inj_near[1]}))+'px'; inj.style.left=(s.left-({inj_near[0]})-R('inj').width)+'px'; }}"""
+    else:
+        injjs = f"""inj.style.top=(Math.max(R('rq').top-46, R('{above}').bottom+22))+'px'; place();
+const gap=R('inj').bottom+14-R('syr').top; if (gap>0) {{ const mr=document.getElementById('mrow'); mr.style.marginTop=(parseFloat(getComputedStyle(mr).marginTop)+gap)+'px'; place(); }}"""
     return f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px {PAD}px 10px;position:relative}}
@@ -103,6 +115,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .vw{{position:relative;margin-top:34px}}
 .vio{{width:{VW}px;display:block}}
 .kbox{{position:absolute}}
+{injcss}
 </style></head><body>
 <div class="ub" id="ub">{bubble}</div>
 {pre}
@@ -119,8 +132,7 @@ const syr=document.getElementById('syr'), A=40, inj=document.getElementById('inj
 const place=()=>{{ const rb=R('rob1'); const tipx=rb.left+rb.width*0.29, tipy=rb.top+rb.height*0.72;
  syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='380px 80px'; syr.style.transform=`rotate(${{A}}deg) scale(1.38)`; }};
 // the label sits just under what is above it; the injected robot's row moves down until the syringe clears the label
-inj.style.top=(Math.max(R('rq').top-46, R('{above}').bottom+22))+'px'; place();
-const gap=R('inj').bottom+14-R('syr').top; if (gap>0) {{ const mr=document.getElementById('mrow'); mr.style.marginTop=(parseFloat(getComputedStyle(mr).marginTop)+gap)+'px'; place(); }}
+{injjs}
 const WW=document.body.scrollWidth, HH=document.body.scrollHeight;
 for(const id of ['gl','ov']){{const s=document.getElementById(id);s.setAttribute('width',WW);s.setAttribute('height',HH);}}
 const rq0=R('rq');
