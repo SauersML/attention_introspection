@@ -3,10 +3,10 @@ boost while the report question is read (arm C), largest boost only. Labels [P1]
 Top: one real prompt (the paragraphs-with-arithmetic prompt, whose answer fits the bubble, with specificity below nearest the median of all 100; text from privileged_inorder_ctx.json, checked
 against the record), Qwen's real answer, the report question, and the digit Qwen picks (greedy next token) after the prefilled "P"
 (first report wording) with attention to [P2] boosted while the question is read (nominal x10; measured attention mass from results.json).
-A hand-drawn purple syringe goes into the injected robot (purple eyes); a wavy purple aura marks the robot and the report question; the thick purple arrow runs from the report question to [P2], where the boost acts.
+Drawn as hero_inject.py (drawing code in inj_draw.py): the syringe with the dose goes into the injected robot (purple eyes); a wavy purple aura marks the report question, the reply and the robot; the light-purple wave arrow runs from the report question to [P2], where the boosted attention goes.
 Bottom: one violin, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for the
 other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as privileged_fig.py / analyze_priv.py. y on that log scale,
-ticks as % change = exp(.) - 1. Big label: exp(mean) - 1. Black line: the mean. p: two-sided sign-flip test over prompts (200,000 flips).
+ticks as % change = exp(.) - 1; dots coloured by exp(.) on pal.pct_colour; dashed line: no injection. Big label: exp(mean) - 1. p: two-sided sign-flip test over prompts (200,000 flips).
 The shuffled-label version (results/privileged_shuffled) is figures/shuffled/hero_question.png.
 usage: nice -n 19 python3 hero_question.py   (writes figures/hero_question.png)"""
 import json, glob, math, os, sys, html, base64, subprocess
@@ -22,7 +22,7 @@ R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f
 MANIP = json.load(open(os.path.join(ROOT, "results/privileged_inorder_full/results.json")))["manip"]
 ARM, M = "C", 10.0
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
-W = 1400; PAD = 26
+W = 2300; PAD = 26
 neg = lambda s: s.replace("-", "\u2212")
 pct = lambda v: 100 * (math.exp(v) - 1)
 
@@ -54,121 +54,85 @@ PICK = EX["lab"][int(np.argmax(prob))]   # the digit Qwen picks under injection 
 print("example P1..P4 none", np.round(prob0[order], 4), "injected", np.round(prob[order], 4), "pick", PICK)
 qline = EX["user"].split("\n\n")[-1]
 def short(s, n): return " ".join(s.split()[:n]) + " …"
-NW = [3, 3, 3, 2]
+NW = [2, 3, 3, 2]   # [P1] short so the arrowhead into [P2] clears it
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__))); from robot_injected import injected_robot
 robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
 DOSE = f'{MANIP[ARM][str(M)]["mean"]:.1f}'
 QTEXT = "Which paragraph did you attend to most while writing your answer? …"
 
-def syringe():
-    """hand-drawn syringe, needle tip at the right end (x=380, y=80); drawn 380 x 160, rotated about the tip by the page so the barrel rises to the upper left and the dose reads left to right"""
-    o = []
-    o.append(f'<path d="M380,80 L364,76 L364,84 Z" fill="{INK}"/>')                                    # needle point
-    o.append(f'<rect x="314" y="76" width="50" height="8" fill="{INK}"/>')                             # needle
-    o.append(f'<path d="M314,68 L292,58 L292,102 L314,92 Z" fill="{INK}"/>')                           # hub
-    o.append(f'<rect x="80" y="22" width="212" height="116" rx="14" fill="#fff" stroke="{INK}" stroke-width="7"/>')   # barrel
-    o.append(f'<rect x="109" y="29" width="176" height="102" fill="{LIL}"/>')                           # fluid
-    o.append(f'<rect x="87" y="29" width="22" height="102" fill="{INK}"/>')                             # plunger seal
-    o.append(f'<rect x="62" y="4" width="18" height="152" rx="7" fill="{INK}"/>')                      # finger flange
-    o.append(f'<rect x="26" y="71" width="36" height="18" fill="{INK}"/>')                              # plunger rod
-    o.append(f'<rect x="2" y="40" width="24" height="80" rx="7" fill="{INK}"/>')                       # thumb rest
-    o.append(f'<text x="197" y="108" font-size="82" font-weight="800" text-anchor="middle" fill="#fff">\u00d7{DOSE}</text>')
-    return f'<svg id="syr" width="380" height="160" viewBox="0 0 380 160">{"".join(o)}</svg>'
+from inj_draw import syringe, JS, violin, render
+from pfmt import pstr
+from inj_draw import mtext
+ROBOT0 = robot; ROBOTI = robot_inj
 
-# ---------------- violin ----------------
-VH = 670; px = lambda v: v * 72 / 100
-plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
-fig = plt.figure(figsize=(W / 100, VH / 100), dpi=100)
-AXL, AXR = 540, W - 30
-ax = fig.add_axes([AXL / W, 30 / VH, (AXR - AXL) / W, (VH - 40) / VH])
-kde = gaussian_kde(z, bw_method=0.35); yy = np.linspace(z.min() - 0.05, z.max() + 0.05, 300); ylo, yhi = yy.min() - 0.04, yy.max() + 0.04; dd = kde(yy); dd = dd / dd.max() * 0.42
-ax.fill_betweenx(yy, -dd, dd, color=COL, alpha=0.16, lw=0); ax.plot(np.r_[-dd, dd[::-1]], np.r_[yy, yy[::-1]], color=COL, lw=3, alpha=0.75)
-rng = np.random.default_rng(1); xj = rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.40
-ax.scatter(xj, z, s=330, color=COL, alpha=0.38, edgecolors="none", zorder=3)
-ax.plot([-0.24, 0.24], [mu] * 2, color=INK, lw=5, zorder=7, solid_capstyle="butt")
-ax.axhline(0, color=INK, lw=4, zorder=0)
-ax.text(1.25, 0.02, "no injection", ha="right", va="bottom", fontsize=px(46), color=INK)
-ps = "p < 0.0001" if p < 1e-4 else f"p = {p:.2g}"
-ax.text(0.47, mu + 0.30, neg(f"{pct(mu):+.0f}%"), ha="left", va="bottom", fontsize=px(110), fontweight="bold", color=COL)
-ax.text(0.47, mu + 0.30, ps, ha="left", va="top", fontsize=px(50), color=COL)
-ax.set_xlim(-0.55, 1.25); ax.set_ylim(ylo, yhi); ax.set_xticks([]); ax.set_yticks([])
-for s_ in ax.spines.values(): s_.set_visible(False)
-ov = fig.add_axes([0, 0, 1, 1], facecolor="none"); ov.set_xlim(0, W); ov.set_ylim(0, VH); ov.axis("off")
-YP = lambda v: ax.transData.transform((0, v))[1]
-TV = [-50, 0, 100, 300, 700]
-for t in TV:
+# ---------------- violin (hero_inject style: shared log-ratio y, dashed baseline, big % and p beside) ----------------
+VW = W - 2 * PAD; VH = 1060; px = lambda v: v * 72 / 100
+plt.rcParams.update({"font.family": "Helvetica", "text.color": INK, "mathtext.fontset": "custom", "mathtext.rm": "Helvetica", "mathtext.it": "Helvetica", "mathtext.default": "regular"})
+fig = plt.figure(figsize=(VW / 100, VH / 100), dpi=100)
+ax = fig.add_axes([0, 20 / VH, 1, (VH - 40) / VH])
+ylo, yhi = z.min() - 0.16, z.max() + 0.12
+XV = 0.0   # violin centre; x range chosen so the violin sits left of centre and the big label fills the right
+violin(ax, XV, z, mu > 0, ylo, yhi, width=0.30, dot=760, spec=6, bw=0.33)
+ax.axhline(0, color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
+ax.text(0.985, 0.03, "no injection", ha="right", va="bottom", fontsize=px(62), color=INK, zorder=6, transform=ax.get_yaxis_transform())
+for t in (700, 100, 0, -50):   # y labels: % change, on the log scale the dots are drawn on
     y = math.log(1 + t / 100)
-    if ylo < y < yhi: ov.text(AXL - 14, YP(y), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
-yt = [math.log(1 + t / 100) for t in TV if ylo < math.log(1 + t / 100) < yhi]
-ov.plot([AXL] * 2, [YP(min(yt)), YP(max(yt))], color=INK, lw=3)
-ov.text(AXL - 195, VH / 2 + 6, "change vs\nno injection\nin how often\nthe report\nsays the\nboosted\nparagraph,\nminus the\nother\nparagraphs\u2019\nchange", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
-KX = ax.transData.transform((0.47, 0))[0]; KY = YP(-0.78)
-ov.scatter([KX], [KY], s=330, color=COL, alpha=0.38, edgecolors="none")
-ov.text(KX + 28, KY, "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
-VP = os.path.join(HERE, "hero_question_violin.png"); fig.savefig(VP, dpi=200, facecolor="white"); plt.close(fig)
+    ax.text(0.004, y, neg(f"{t:+d}%") if t else "0%", ha="left", va="bottom" if t == 0 else "center", fontsize=px(80), fontweight="bold", color=INK, transform=ax.get_yaxis_transform())
+ax.set_xlim(-0.78, 1.2); ax.set_ylim(ylo, yhi); ax.set_xticks([]); ax.set_yticks([])
+for s_ in ax.spines.values(): s_.set_visible(False)
+ax.text(0.70, mu + 0.06, neg(f"{pct(mu):+.0f}%"), ha="center", va="bottom", fontsize=px(150), fontweight="bold", color=PURPLE, zorder=7)
+ax.text(0.70, mu - 0.02, mtext(pstr(p, floor=1 / 200001)), ha="center", va="top", fontsize=px(70), color=PURPLE, zorder=7)
+VP = os.path.join(HERE, "_hq_violin.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
+KEYX = ax.transData.transform((0.36, 0))[0] if False else None
+VIO = base64.b64encode(open(VP, "rb").read()).decode()
 
 # ---------------- page ----------------
-VIO = base64.b64encode(open(VP, "rb").read()).decode()
-pl = "".join(f'<div class="pl"><b {"id=p2c" if pos == K else ""}>[P{EX["lab"][pos]}]</b> '
+pl = "".join(f'<div class="pl"><b>[P{EX["lab"][pos]}]</b> '
              f'<span {"class=k id=p2t" if pos == K else ""}>{html.escape(short(EX["segs"][pos], NW[pos]))}</span></div>' for pos in range(4))
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:22px {PAD}px 0;position:relative}}
-.ub{{background:#1F8BFF;color:#fff;border-radius:32px;padding:18px 26px;font-size:50px;line-height:1.2;margin:0 110px 0 130px}}
+body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px {PAD}px 10px;position:relative}}
+.ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;margin-right:150px;display:flex;flex-direction:column;gap:8px}}
 .pl{{white-space:nowrap}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
-.ub2{{background:#1F8BFF;color:#fff;border-radius:32px;padding:16px 26px;font-size:50px;line-height:1.2;margin:4px 110px 0 650px}}
-.when{{font-size:50px;font-weight:800;text-align:right;margin:14px 110px 0 0}}
-#rq{{margin-top:56px}}
-#pp{{padding:0 6px}}
-.mrow{{display:flex;align-items:center;gap:14px;margin-top:14px;margin-left:330px}}
-.rob{{width:130px;height:130px}}
-.mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:8px 32px;font-size:68px;font-weight:700}}
-.bb{{display:flex;align-items:flex-end;gap:6px;padding:6px 18px 8px}} .pp{{font-size:64px;font-weight:700;margin-bottom:34px;margin-right:24px}}
-.who{{font-size:50px;font-weight:800;margin:0 0 10px 4px}}
-#syr{{position:absolute;transform-origin:0 0}}
-.inj{{position:absolute;left:34px;font-size:56px;font-weight:800;line-height:1.12;color:{PURPLE}}}
+.arow{{display:flex;align-items:center;gap:18px;margin-top:22px;margin-left:30px}}
+.rob0{{width:150px;height:150px}}
+#rq{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;margin:10px 150px 0 880px;position:relative;z-index:2}}
+.mrow{{display:flex;align-items:center;gap:18px;margin-top:56px;margin-left:420px}}
+.rob{{width:260px;height:260px}}
+.mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:14px 38px;font-size:84px;font-weight:700;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
+.mb0{{font-size:70px;padding:12px 34px}}
+.inj{{position:absolute;left:30px;font-size:66px;font-weight:800;line-height:1.12;color:{PURPLE}}}
 #gl{{position:absolute;left:0;top:0;z-index:-1;pointer-events:none}}
-.vio{{width:{W}px;display:block;margin:44px 0 0 -{PAD}px}}
-#ov{{position:absolute;left:0;top:0;pointer-events:none}}
+#ov{{position:absolute;left:0;top:0;pointer-events:none;z-index:1}}
+.ct{{text-align:center;margin-top:60px}}
+.cn{{display:inline-block;font-size:76px;font-weight:800;line-height:1.05}}
+.vw{{position:relative;margin-top:20px}}
+.vio{{width:{VW}px;display:block}}
+.key{{position:absolute;display:flex;align-items:center;gap:16px;font-size:54px;font-weight:800;white-space:nowrap}}
+.dot{{display:inline-block;width:60px;height:60px;border-radius:50%;background:#7A55C9;opacity:.6;position:relative}}
+.dot::after{{content:"";position:absolute;left:27px;top:27px;width:6px;height:6px;border-radius:50%;background:#000}}
 </style></head><body>
-<div class="ub">Here are four paragraphs.{pl}<div>{html.escape(qline)}</div></div>
-<div class="mrow"><img class="rob" id="rob0" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
-<div class="ub2" id="rq">{QTEXT}</div>
-<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb">P{PICK}</div></div>
-{syringe()}<div class="inj" id="inj">inject attention<br>into paragraph 2</div>
-<img class="vio" src="data:image/png;base64,{VIO}">
+<div class="ub" id="ub"><div>Here are four paragraphs.</div>{pl}<div><span id="ql">{html.escape(qline).replace("? ", "?<br>", 1)}</span></div></div>
+<div class="arow"><img class="rob0" src="data:image/png;base64,{ROBOT0}"><div class="mb mb0">{html.escape(rec["ans"])}</div></div>
+<div id="rq">{QTEXT}</div>
+<div class="inj" id="inj">inject attention<br>toward paragraph 2</div>
+<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{ROBOTI}"><div class="mb" id="mb">P{PICK}</div></div>
+{syringe(DOSE)}
+<div class="ct"><span class="cn" id="c1">says the injected paragraph, relative to the others</span></div>
+<div class="vw" id="vw"><img class="vio" src="data:image/png;base64,{VIO}">
+<div class="key" id="key" style="left:{VW*0.555:.0f}px;top:{VH*0.80:.0f}px"><span class="dot"></span>= one prompt</div></div>
 <svg id="gl"></svg><svg id="ov"></svg>
-<script>
-const ov=document.getElementById('ov');ov.setAttribute('width',document.body.scrollWidth);ov.setAttribute('height',document.body.scrollHeight);
-const R=e=>document.getElementById(e).getBoundingClientRect();
-// syringe: barrel tilted 28 deg up to the right so the dose reads left to right; needle tip into the lower left of the injected robot's screen, clear of the eyes
-const rb=R('rob1'), syr=document.getElementById('syr'), A=30, SC=1.0;
-const tipx=rb.left+rb.width*0.29, tipy=rb.top+rb.height*0.72;
-syr.style.left=(tipx-380)+'px'; syr.style.top=(tipy-80)+'px'; syr.style.transformOrigin='380px 80px'; syr.style.transform=`rotate(${{A}}deg) scale(${{SC}})`;
-const inj=document.getElementById('inj'), r0=R('rob0'); inj.style.top=(r0.bottom+70)+'px';
-// wavy purple aura: layered rings, each rippled by turbulence and blurred
-const gl=document.getElementById('gl'); gl.setAttribute('width',document.body.scrollWidth); gl.setAttribute('height',document.body.scrollHeight);
-let g=`<defs>`;
-[[0.004,0.010,36,7,1],[0.006,0.014,28,4.5,2],[0.008,0.02,18,2.5,3]].forEach(([fx,fy,sc,bl,i])=>{{
- g+=`<filter id="w${{i}}" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="turbulence" baseFrequency="${{fx}} ${{fy}}" numOctaves="2" seed="${{5*i+1}}" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="${{sc}}" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation="${{bl}}"/></filter>`;}});
-g+=`<filter id="haze" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter></defs>`;
-// a soft filled haze hugging the shape, then three rippled rings fading outward, like a shimmering aura
-const aura=(r,rad)=>{{ const S=(d,st,col,op,f,fill)=>`<rect x="${{r.left-d}}" y="${{r.top-d}}" width="${{r.width+2*d}}" height="${{r.height+2*d}}" rx="${{rad+d}}" fill="${{fill?col:'none'}}" stroke="${{fill?'none':col}}" stroke-width="${{st}}" opacity="${{op}}" filter="url(#${{f}})"/>`;
- return S(8,0,'#B994FF',0.75,'haze',1)+S(50,5,'#C9A8FF',0.45,'w1')+S(32,7,'{LIL}',0.6,'w2')+S(15,9,'#7B3FE4',0.75,'w3')+S(2,8,'{PURPLE}',0.55,'w3'); }};
-const q0=R('rq'); g+=aura(q0,32); const ro=R('rob1'); g+=aura({{left:ro.left+6,top:ro.top+10,width:ro.width-12,height:ro.height-16}},58);
-gl.innerHTML=g;
-// report question -> [P2], thick: the boost acts on attention from the question tokens to [P2]
-const c=R('p2c'), t=R('p2t'), q=R('rq'); const yP=(c.top+c.bottom)/2;
-const xq=q.right+46, yq=(q.top+q.bottom)/2;
-let s=`<defs><marker id="mT" markerUnits="userSpaceOnUse" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="38" markerHeight="38" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="{PURPLE}"/></marker></defs>`;
-s+=`<path d="M${{q.right+2}},${{yq}} L${{xq-26}},${{yq}} Q${{xq}},${{yq}} ${{xq}},${{yq-26}} L${{xq}},${{yP+26}} Q${{xq}},${{yP}} ${{xq-26}},${{yP}} L${{t.right+12}},${{yP}}" fill="none" stroke="{PURPLE}" stroke-width="16" marker-end="url(#mT)"/>`;
-ov.innerHTML=s;
+<script>{JS}
+placeSyr('syr','rob1',40,1.38);
+const inj=document.getElementById('inj'), rq0=R('rq'); const mb0=R('mb'); inj.style.left=(mb0.right+90)+'px'; inj.style.top=(mb0.top+(mb0.height-inj.offsetHeight)/2)+'px';
+let g=AURADEFS+aura(rq0,34)+aura(R('mb'),30)+roboAura('rob1',64);
+document.getElementById('gl').innerHTML=g;
+// light-purple wave arrow: up out of the report question's top edge, one quarter-turn, into the right end of [P2]
+const t=R('p2t'), q=R('rq'); const P0=[Math.max(q.left+300, R('ql').right+120), q.top+50], T=[t.right+12, (t.top+t.bottom)/2];
+document.getElementById('ov').innerHTML=arrow(P0, [P0[0], P0[1]-0.55*(P0[1]-T[1])], [T[0]+0.55*(P0[0]-T[0]), T[1]], T, '#A98BD6', 1);
 </script></body></html>'''
-hp = os.path.join(HERE, "hero_question.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "hero_question_raw.png")
-subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3400",
-                "--force-device-scale-factor=2", "--virtual-time-budget=3000", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
-im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
-im = im.crop((0, 0, 2 * W, nz[-1] + 48)); im.save(os.path.join(HERE, "hero_question.png")); print("hero_question.png", im.size)
-os.remove(raw); os.remove(hp); os.remove(VP)
+sz = render(HTML, [os.path.join(HERE, "hero_question.png")], W, HERE, "hero_question", keep="--keep" in sys.argv)
+print("hero_question.png", sz, "aspect", round(sz[1] / sz[0], 2))
+if "--keep" not in sys.argv: os.remove(VP)

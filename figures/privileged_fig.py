@@ -1,7 +1,9 @@
 """Privileged-channel figure (Qwen3-32B), paragraph setups only (100 prompts: 60 arithmetic, 40 question about one paragraph).
 Top: one real prompt (context 29, chosen near both arms' median effect at x6.5 (ranks 64 and 59 of 100), so the [P2] bar changes as is typical; labels [P1]..[P4] in order; text from privileged_inorder_ctx.json, or EXAMPLE) in three copies with identical text:
 no boost; attention to paragraph [P2] x10 while the answer is written (arm A); x10 while the report question is read (arm C).
-Arrows: answer -> [P2] and report question -> [P2]; the thick arrow marks where the x10 boost is applied.
+Drawn as hero_inject.py (inj_draw.py): wavy purple aura + syringe (measured attention mass x6.5) on the queries the x10 boost acts from: arm A the answer
+tokens; arm C the whole report turn (question, assistant header and the prefilled "P" whose next-token probabilities are the bars); light-purple wave arrow
+from there to [P2]. Violin % and p labels sit in two staggered rows above the violins.
 Reply bars (pair_bars.py): the model's real next-token probabilities after the prefilled "P" (W1), log y 0.1%-100%; grey = no boost, purple = that column's boost (no-boost column: grey only).
 Bottom: violins, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for
 the other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as analyze_priv.py; y drawn on that log scale,
@@ -35,7 +37,7 @@ MANIP = json.load(open(os.path.join(DD, "results.json")))["manip"]
 TICKS = {a: ["×" + (f"{MANIP[a][str(m)]['mean']:.2f}" if MANIP[a][str(m)]['mean'] < 1 else f"{MANIP[a][str(m)]['mean']:.1f}") for m in DOSES] for a in "AC"}
 PAR = ("par_arith", "par_qa"); OTHER = [("list", "lists"), ("code", "code"), ("document", "document sections"), ("sentences", "sentences"), ("dialogue", "dialogue")]
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
-AMB = "#F2B53A"; W = 2410; PAD = 24; GAP = 28; CW = (W - 2 * PAD - 2 * GAP) // 3
+AMB = "#F2B53A"; W = 2410; PAD = 20; GAP = 24; CW = (W - 2 * PAD - 2 * GAP) // 3
 neg = lambda s: s.replace("-", "\u2212")
 
 def spec(r, arm, m, w="W1"):
@@ -87,116 +89,114 @@ NW = [3, 3, 2, 2]
 robot = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
 QTEXT = "Which paragraph did you attend to most while writing your answer?"
 
-import re
-BTOP = min(float(re.search(r'viewBox="0 (-?[\d.]+)', pair_bars(probs['none'], None if k == 'none' else probs[k], order, K, bw=30, gw=120, x0=116)).group(1)) for k in probs)   # one height for all three bar panels
-def column(i, title, sub, key, tcol=INK):
-    pl = "".join(f'<div class="pl"><b class="{"k" if pos == K else "lb"}" {"id=p2c" + str(i) if pos == K else ""}>[P{EX["lab"][pos]}]</b> '
+from inj_draw import syringe, JS, violin, bars, bars_top, render, mtext
+from robot_injected import injected_robot
+from pfmt import pstr
+robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
+DOSE = {a: f"{MANIP[a]['10.0']['mean']:.1f}" for a in "AC"}
+BKW = dict(bw=28, gw=80, x0=132, F=44, H=200)
+BTOP = bars_top(probs["none"], [None, probs["A"], probs["C"]], order, K, **BKW)   # one height for all three bar panels
+def column(i, title, key):
+    """key: 'none' | 'A' (boost acts from the answer tokens) | 'C' (boost acts from the report-question tokens)"""
+    pl = "".join(f'<div class="pl"><b class="{"k" if pos == K else "lb"}">[P{EX["lab"][pos]}]</b> '
                  f'<span {"id=p2t" + str(i) if pos == K else ""}>{html.escape(short(EX["segs"][pos], NW[pos]))}</span></div>' for pos in range(4))
-    return f'''<div class="col"><div class="t1" style="color:{tcol}">{title}</div><div class="t2">{sub}</div>
-<div class="ub">Here are four paragraphs.{pl}<div class="q">{html.escape(qline)}</div></div>
-<div class="mrow"><img class="rob" id="rob{i}" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(rec["ans"])}</div></div>
+    ra = robot_inj if key == "A" else robot; rc = robot_inj if key == "C" else robot
+    sub = "Qwen3-32B" if key == "none" else "inject attention toward paragraph 2"
+    return f'''<div class="col"><div class="t1">{title}</div><div class="t2{"" if key == "none" else " ti"}">{sub}</div>
+<div class="ub" id="ub{i}">Here are four paragraphs.{pl}<div class="q">{html.escape(qline)}</div></div>
+<div class="mrow"><img class="rob" id="ra{i}" src="data:image/png;base64,{ra}"><div class="mb" id="ma{i}">{html.escape(rec["ans"])}</div></div>
 <div class="ub2" id="rq{i}">{QTEXT} …</div>
-<div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb bb"><span class="pp">P</span>{pair_bars(probs['none'], None if key == 'none' else probs[key], order, K, bw=30, gw=120, x0=116, top=BTOP)}</div></div></div>'''
+<div class="mrow"><img class="rob" id="rc{i}" src="data:image/png;base64,{rc}"><div class="mb bb" id="mc{i}"><span class="pp">P</span>{bars(probs['none'], None if key == 'none' else probs[key], order, K, top=BTOP, **BKW)}</div></div>
+{syringe(DOSE[key], "syr" + str(i)) if key != "none" else ""}</div>'''
 
 # ---------------- violins ----------------
-VH = 1250; px = lambda v: v * 72 / 100   # px -> pt at dpi 100
+VH = 1500; px = lambda v: v * 72 / 100   # px -> pt at dpi 100
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK, "mathtext.fontset": "custom", "mathtext.rm": "Helvetica", "mathtext.it": "Helvetica", "mathtext.default": "regular"})
 fig = plt.figure(figsize=(W / 100, VH / 100), dpi=100)
 allz = np.concatenate(list(Z.values()))
-ylo, yhi = min(allz.min() - 0.35, math.log(0.25) - 0.22), allz.max() + 0.5
-axs = []
+axs = []; AXB = 150; AXH = VH - AXB - 30   # axes height, px
+# the % and p labels sit in a band above all the violins, in two staggered rows (neighbouring doses alternate rows so wide labels never touch)
+BLK = px(64) * 1.12 + px(50) * 1.25; BANDPX = 2 * BLK / 0.72 + 40      # one label block, pt; the band, px
+ylo = min(allz.min(), math.log(0.25)) - 0.25; ZTOP = allz.max() + 0.3
+a_ = BANDPX / AXH; yhi = (ZTOP - a_ * ylo) / (1 - a_)
 for j, (a, _) in enumerate(ARMS):
     x0 = PAD + (j + 1) * (CW + GAP)
-    ax = fig.add_axes([x0 / W, 230 / VH, CW / W, (VH - 250) / VH]); axs.append(ax)
-    rng = np.random.default_rng(1)
+    ax = fig.add_axes([x0 / W, AXB / VH, CW / W, AXH / VH]); axs.append(ax)
     for i, m in enumerate(DOSES):
-        z = Z[a, m]; st = ST[a, m]; up = st["mean"] > 0; col = ACOL[a]
-        kde = gaussian_kde(z, bw_method=0.35); yy = np.linspace(z.min() - 0.05, z.max() + 0.05, 200); dd = kde(yy); dd = dd / dd.max() * 0.40
-        ax.fill_betweenx(yy, i - dd, i + dd, color=col, alpha=0.16, lw=0); ax.plot(np.r_[i - dd, (i + dd)[::-1]], np.r_[yy, yy[::-1]], color=col, lw=2.5, alpha=0.7)
-        xj = i + rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.38
-        ax.scatter(xj, z, s=200, c=pct_colour(np.exp(z)), alpha=0.35, edgecolors="none", zorder=3); ax.scatter(xj, z, s=2, color="black", zorder=4)
-        ax.plot([i - 0.17, i + 0.17], [st["mean"]] * 2, color=INK, lw=3, zorder=7, solid_capstyle="butt")             # mean
-        lab = neg(f"{pct(st['mean']):+.0f}%")
-        ps = "$p<10^{-4}$" if st["p"] < 1e-4 else ("$p<10^{-3}$" if st["p"] < 1e-3 else "$p<0.01$" if st["p"] < 0.01 else f"$p={st['p']:.2f}$")
-        # one block per violin, the same for all ten: the % label with its p directly under it,
-        # the block above the violin when the mean is up, below it when down
-        yb = z.max() + 0.05 if up else z.min() - 0.05; PH = px(40) * 1.2   # p line height in points
-        ax.annotate(lab, (i, yb), xytext=(0, PH if up else 0), textcoords="offset points", ha="center", va="bottom" if up else "top", fontsize=px(54), fontweight="bold", color=col, zorder=7)
-        ax.annotate(ps, (i, yb), xytext=(0, 0 if up else -px(54) * 1.15), textcoords="offset points", ha="center", va="bottom" if up else "top", fontsize=px(40), color=col, zorder=7)
-    ax.set_xlim(-0.6, len(DOSES) - 0.4); ax.set_ylim(ylo, yhi)
-    ax.set_xticks(range(len(DOSES))); ax.set_xticklabels(TICKS[a], fontsize=px(50)); ax.tick_params(length=0, pad=14, colors=INK)
+        z = Z[a, m]; st = ST[a, m]; up = st["mean"] > 0; col = PURPLE if up else RED
+        violin(ax, i, z, up, ylo, yhi, width=0.44, dot=230, spec=2, bw=0.35, seed=1 + i, lw=2.5)
+        ax.plot([i - 0.2, i + 0.2], [st["mean"]] * 2, color=INK, lw=4, zorder=7, solid_capstyle="butt")             # mean
+        lab = neg(f"{pct(st['mean']):+.0f}%"); ps = mtext(pstr(st["p"], floor=1 / 200001)).replace(" ", "")
+        # one block per violin in the band: the % label with its p under it; rows alternate
+        SH = BLK * (1 - (i + j) % 2)   # parity flips per panel, so the two panels' neighbouring labels sit in different rows
+        ax.annotate(lab, (i, ZTOP), xytext=(0, px(50) * 1.25 + SH), textcoords="offset points", ha="center", va="bottom", fontsize=px(64), fontweight="bold", color=col, zorder=7)
+        ax.annotate(ps, (i, ZTOP), xytext=(0, SH), textcoords="offset points", ha="center", va="bottom", fontsize=px(50), color=col, zorder=7)
+    ax.set_xlim(-0.55, len(DOSES) - 0.45); ax.set_ylim(ylo, yhi)
+    ax.set_xticks(range(len(DOSES))); ax.set_xticklabels(TICKS[a], fontsize=px(52), fontweight="bold"); ax.tick_params(length=0, pad=16, colors=INK)
     for s_ in ax.spines.values(): s_.set_visible(False)
     ax.set_yticks([])
-# zero line across both panels, ticks on the first
-zl = fig.add_axes([axs[0].get_position().x0, axs[0].get_position().y0, axs[1].get_position().x1 - axs[0].get_position().x0, axs[0].get_position().height], facecolor="none")
-zl.set_xlim(0, 1); zl.set_ylim(ylo, yhi); zl.axhline(0, color=INK, lw=4, zorder=0); zl.axis("off")
-TV = [-75, -50, 0, 100, 300, 700]   # x1/4, x1/2, x1, x2, x4, x8: evenly spaced on the log axis, symmetric about x1
-AX0 = PAD + CW + GAP; F = lambda x, y: (x / W, y / VH)   # px (from left, from bottom) -> figure coords
 YP = lambda v: axs[0].transData.transform((0, v))[1]       # data -> px from bottom
+AX0 = PAD + CW + GAP; F = lambda x, y: (x / W, y / VH)
+# dashed no-boost line across both panels and under the left column, labelled there
+zl = fig.add_axes([PAD / W, axs[0].get_position().y0, (W - 2 * PAD) / W, axs[0].get_position().height], facecolor="none")
+zl.set_xlim(0, 1); zl.set_ylim(ylo, yhi); zl.axhline(0, color=INK, lw=4, ls=(0, (4, 3)), zorder=0); zl.axis("off")
+fig.text(*F(PAD + 4, YP(0) + 10), "no boost", ha="left", va="bottom", fontsize=px(62), color=INK)
+TV = [-75, -50, 100, 300, 700]   # x1/4, x1/2, x2, x4, x8: evenly spaced on the log axis, symmetric about x1
 for t in TV:
     y = math.log(1 + t / 100)
-    if ylo < y < yhi: fig.text(*F(AX0 - 14, YP(y)), neg(f"{t:+d}%") if t else "0%", ha="right", va="center", fontsize=px(46), color=INK)
-fig.add_artist(matplotlib.lines.Line2D([AX0 / W] * 2, [YP(math.log(0.25)) / VH, YP(math.log(8)) / VH], color=INK, lw=3))
-LXp = AX0 - 200
-fig.text(*F(LXp, YP(math.log(6))), "report says the\nboosted paragraph\nmore often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
-TY0 = axs[0].get_position().y0 * VH - 58   # centre of the "attention on boosted paragraph" label
-fig.text(*F(LXp, max(YP(math.log(0.45)), TY0 + 215)), "report says the\nboosted paragraph\nless often than\nthe others", ha="right", va="center", fontsize=px(52), fontweight="bold", color=INK, linespacing=1.1)
-TY = axs[0].get_position().y0 * VH - 58
-fig.text(*F(AX0 - 14, TY), "attention on\nboosted\nparagraph", ha="right", va="center", fontsize=px(44), color=INK, linespacing=1.1)
-KY = (YP(math.log(0.45)) + TY) / 2 - 10
-KY = YP(math.log(11)) - 20
-for j, (a, nm) in enumerate(ARMS):
-    p0 = axs[j].get_position()
-    fig.text((p0.x0 + p0.x1) / 2 - (0.0 if j == 0 else 0.045), YP(math.log(11)) / VH, "boost " + nm.replace("reading the", "reading the\n"), ha="center", va="top", linespacing=1.1, fontsize=px(52), fontweight="bold", color=ACOL[a])
+    if ylo < y < yhi: fig.text(*F(AX0 - 16, YP(y)), neg(f"{t:+d}%"), ha="right", va="center", fontsize=px(56), fontweight="bold", color=INK)
+fig.text(*F(AX0 - 16, YP(0) + 10), "0%", ha="right", va="bottom", fontsize=px(56), fontweight="bold", color=INK)
+LXp = AX0 - 230
+fig.text(*F(LXp, YP(math.log(4.6))), "report says the\nboosted paragraph\nmore often than\nthe others", ha="right", va="center", fontsize=px(54), fontweight="bold", color=PURPLE, linespacing=1.1)
+fig.text(*F(LXp, YP(math.log(0.42))), "report says the\nboosted paragraph\nless often than\nthe others", ha="right", va="center", fontsize=px(54), fontweight="bold", color=RED, linespacing=1.1)
+TY = axs[0].get_position().y0 * VH - 62
+fig.text(*F(AX0 - 16, TY), "attention on\nboosted paragraph", ha="right", va="center", fontsize=px(48), fontweight="bold", color=INK, linespacing=1.1)
+# no panel titles here: the violins sit under their columns, whose titles name the arm
 ov = fig.add_axes([0, 0, 1, 1], facecolor="none"); ov.set_xlim(0, W); ov.set_ylim(0, VH); ov.axis("off")
-p0 = axs[0].get_position(); KX = (p0.x0 + p0.x1) / 2 * W - 130; KY = YP(math.log(4.5))   # key in the empty space above the blue violins
-ov.scatter([KX], [KY], s=330, c=pct_colour([2.0]), alpha=0.35, edgecolors="none"); ov.scatter([KX], [KY], s=3, color="black")
-fig.text(*F(KX + 30, KY), "= one prompt", ha="left", va="center", fontsize=px(46), color=INK)
-VP = os.path.join(HERE, "privileged_violins.png"); fig.savefig(VP, dpi=200, facecolor="white"); plt.close(fig)
+p0 = axs[0].get_position(); KX = PAD + 30; KY = YP(ZTOP) + BANDPX / 2   # key at the band's height, left of the panels
+ov.scatter([KX], [KY], s=400, c=pct_colour([2.0]), alpha=0.45, edgecolors="none"); ov.scatter([KX], [KY], s=3, color="black")
+fig.text(*F(KX + 30, KY), "= one prompt", ha="left", va="center", fontsize=px(52), fontweight="bold", color=INK)
+VP = os.path.join(HERE, "_privileged_violins.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
 VIO = base64.b64encode(open(VP, "rb").read()).decode()
-cols = column(0, "no boost", "Qwen3-32B", "none") + column(1, "while answering", "attention to paragraph [P2] ×" + f"{MANIP['A']['10.0']['mean']:.1f}", "A", ACOL["A"]) + column(2, "while reading the question", "attention to paragraph [P2] ×" + f"{MANIP['C']['10.0']['mean']:.1f}", "C", ACOL["C"])
+cols = column(0, "no boost", "none") + column(1, "while answering", "A") + column(2, "while reading the question", "C")
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:18px {PAD}px 0;position:relative}}
+.rob{{position:relative;z-index:2}}
 .cols{{display:flex;gap:{GAP}px}}
 .col{{width:{CW}px;display:flex;flex-direction:column}}
-.t1{{font-size:56px;font-weight:800;white-space:nowrap}} .t2{{font-size:44px;margin:2px 0 12px;white-space:nowrap}}
-.ub{{background:#1F8BFF;color:#fff;border-radius:30px;padding:16px 22px;font-size:44px;line-height:1.2;margin:0 64px 0 96px}}
+.t1{{font-size:60px;font-weight:800;white-space:nowrap}} .t2{{font-size:46px;margin:2px 0 14px;white-space:nowrap;font-weight:700}} .ti{{color:{PURPLE};font-weight:800}}
+.ub{{background:#1F8BFF;color:#fff;border-radius:30px;padding:16px 22px;font-size:46px;line-height:1.18;margin:0 84px 0 96px;position:relative;z-index:1}}
 .pl{{white-space:nowrap}} .q{{margin-top:4px}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 5px}}
-.ub2{{background:#1F8BFF;color:#fff;border-radius:30px;padding:14px 22px;font-size:44px;line-height:1.2;margin:14px 64px 0 96px}}
-.mrow{{display:flex;align-items:center;gap:12px;margin-top:12px}}
-.rob{{width:84px;height:84px}}
-.mb{{background:#fff;border:3px solid #D9D9DE;border-radius:28px;padding:8px 28px;font-size:60px;font-weight:700}}
-.bb{{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:8px 18px 8px}} .pp{{font-size:60px;font-weight:700;margin-left:10px}}
-.vio{{width:{W}px;display:block;margin-left:-{PAD}px}}
-#ov{{position:absolute;left:0;top:0;pointer-events:none}}
+.ub2{{background:#1F8BFF;color:#fff;border-radius:30px;padding:14px 22px;font-size:46px;line-height:1.18;margin:26px 84px 0 96px;position:relative;z-index:1}}
+.mrow{{display:flex;align-items:center;gap:12px;margin-top:30px;margin-left:136px}}
+.rob{{width:96px;height:96px}}
+.mb{{background:#fff;border:3px solid #D9D9DE;border-radius:28px;padding:8px 28px;font-size:62px;font-weight:700;position:relative;z-index:2}}
+.bb{{display:flex;flex-direction:column;align-items:flex-start;gap:0;padding:6px 10px 6px}} .pp{{font-size:62px;font-weight:700;margin-left:12px;line-height:1}}
+.vio{{width:{W}px;display:block;margin:30px 0 0 -{PAD}px}}
+#gl{{position:absolute;left:0;top:0;z-index:0;pointer-events:none}}
+#ov{{position:absolute;left:0;top:0;pointer-events:none;z-index:1}}
+.syr{{z-index:3}}
 </style></head><body><div class="cols">{cols}</div><img class="vio" src="data:image/png;base64,{VIO}">
-<svg id="ov"></svg>
-<script>
-const ov=document.getElementById('ov');ov.setAttribute('width',document.body.scrollWidth);ov.setAttribute('height',document.body.scrollHeight);
-const R=e=>document.getElementById(e).getBoundingClientRect();
-let s='<defs>';for(const [n,w] of [['t',4],['T',16]]){{const a=n=='t'?16:34;s+=`<marker id="m${{n}}" markerUnits="userSpaceOnUse" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="${{a}}" markerHeight="${{a}}" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="{INK}"/></marker>`}}s+='</defs>';
-const BOOST=[null,'a','q'];
-for(let i=0;i<3;i++){{
-  const rob=R('rob'+i), c=R('p2c'+i), t=R('p2t'+i), q=R('rq'+i);
-  const ub=c; const yP=(c.top+c.bottom)/2;
-  // answer -> [P2]: from the robot's head, up the left margin, into the label
-  let w=BOOST[i]=='a'?16:4, m=BOOST[i]=='a'?'T':'t';
-  const xa=rob.left+rob.width/2;
-  s+=`<path d="M${{xa}},${{rob.top+2}} L${{xa}},${{yP+24}} Q${{xa}},${{yP}} ${{xa+24}},${{yP}} L${{c.left-10}},${{yP}}" fill="none" stroke="{INK}" stroke-width="${{w}}" marker-end="url(#m${{m}})"/>`;
-  // report question -> [P2]: from the question bubble, up the right margin, into the paragraph's end
-  w=BOOST[i]=='q'?16:4; m=BOOST[i]=='q'?'T':'t';
-  const xq=q.right+34, yq=(q.top+q.bottom)/2;
-  s+=`<path d="M${{q.right+2}},${{yq}} L${{xq-24}},${{yq}} Q${{xq}},${{yq}} ${{xq}},${{yq-24}} L${{xq}},${{yP+24}} Q${{xq}},${{yP}} ${{xq-24}},${{yP}} L${{t.right+14}},${{yP}}" fill="none" stroke="{INK}" stroke-width="${{w}}" marker-end="url(#m${{m}})"/>`;
-}}
-ov.innerHTML=s;
+<svg id="gl"></svg><svg id="ov"></svg>
+<script>{JS}
+placeSyr('syr1','ra1',28,0.6); placeSyr('syr2','rc2',28,0.6);
+const SX=window.scrollX, SY=window.scrollY;
+let g=AURADEFS;
+// where the boost acts: answer tokens (column 2) or report-question tokens (column 3); the injected robot glows in both
+g+=aura(R('ma1'),28,0.6)+roboAura('ra1',30,0.6);
+// arm C boosts every query of the report turn: the question, the assistant header and the prefilled "P" whose next-token probabilities are the bars
+{{const q=R('rq2'), ro=R('rc2'), mb=R('mc2'); g+='<g opacity="0.6">'+aura({{left:ro.left+4,top:q.top,width:Math.min(q.right,mb.right)-ro.left-4,height:mb.bottom-q.top}},30,0.5)+'</g>';}}
+document.getElementById('gl').innerHTML=g;
+// light-purple wave arrows: from where the boost acts to the right end of [P2]
+let s='';
+// each runs right out of its bubble into the white lane right of the bubbles, up the lane, and left into [P2]'s line (empty right of the text)
+const lane=(src,tid,ub)=>{{ const a=R(src), t=R(tid), lx=R(ub).right+42; return laneArrow([a.right-4, a.top+a.height/2], lx, [t.right+14,(t.top+t.bottom)/2], 11, 34); }};
+s+=lane('ma1','p2t1','ub1'); s+=lane('rq2','p2t2','ub2');
+document.getElementById('ov').innerHTML=s;
 </script></body></html>'''
-hp = os.path.join(HERE, "privileged.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "privileged_raw.png")
-subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3400",
-                "--force-device-scale-factor=1", "--virtual-time-budget=3000", f"--screenshot={raw}", "file://" + hp], check=True, capture_output=True)
-im = Image.open(raw).convert("RGB"); ar = np.asarray(im); nz = np.where((ar < 250).any(2).any(1))[0]
-im = im.crop((0, 0, W, nz[-1] + 24)); im.save(OUTPNG); print(OUTPNG, im.size)
-os.remove(raw); os.remove(hp); os.remove(VP)
+print(OUTPNG, render(HTML, [OUTPNG], W, HERE, "privileged", keep="--keep" in sys.argv, H=3600, pad=24))
+if "--keep" not in sys.argv: os.remove(VP)
