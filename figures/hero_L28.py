@@ -215,7 +215,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .mbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;overflow:hidden}}
 </style></head><body><div class="cols">{"".join(cols)}</div><div class="vw"><img class="vio" src="data:image/png;base64,{VIO}">
   <div class="cbox" style="left:{CB['left']*sc:.0f}px;width:{(CB['right']-CB['left'])*sc:.0f}px;top:{CB['top']*sc:.0f}px;height:{(CB['bottom']-CB['top'])*sc:.0f}px">
-    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}"><span class="dot"></span> = one prompt's change</div><div class="cl1{" nw" if NARROW else ""}">compared to only mentioning the paragraph:</div></div>
+    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}">one dot <span class="dot"></span> = one prompt</div><div class="cl1{" nw" if NARROW else ""}">its % change in attention to the named paragraph, compared to only mentioning it:</div></div>
     <div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][0].format(k=K))}</div></div></div>
   <div class="mbox" style="left:{(VW + 36) / 2:.0f}px;width:{(VW - 36) / 2:.0f}px;top:{BOX['top']*FH*sc:.0f}px;height:{SVGH:.0f}px">{SVG}</div></div></body></html>'''
     hp = os.path.join(HERE, f"{out}_dose.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, f"{out}_dose_raw.png")

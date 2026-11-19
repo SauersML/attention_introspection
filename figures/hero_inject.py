@@ -187,8 +187,8 @@ const aura=(r,rad)=>{{ const S=(d,st,col,op,f,fill)=>`<rect x="${{r.left-d}}" y=
 g+=aura(rq0,34); g+=aura(R('mb'),30); const ro=R('rob1'); g+=aura({{left:ro.left+6,top:ro.top+10,width:ro.width-12,height:ro.height-16}},64);
 gl.innerHTML=g;
 // hand-shaped arrows: one cubic each, explicit control points; the head is drawn along the end tangent (last control -> tip)
-const SW=20;
-const arrow=(p0,c1,c2,tip,col,ol)=>{{ const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2[0], uy=tip[1]-c2[1]; const n=Math.hypot(ux,uy); ux/=n; uy/=n;
+const SW0=20, SW=20;
+const arrow=(p0,c1,c2,tip,col,ol)=>{{ const SW=ol?SW0*1.7:SW0; const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2[0], uy=tip[1]-c2[1]; const n=Math.hypot(ux,uy); ux/=n; uy/=n;
  const e=[tip[0]-L*ux, tip[1]-L*uy], b=[e[0]+1.5*ux, e[1]+1.5*uy];
  const d=`M${{p0}} C${{c1}} ${{c2}} ${{e}}`, h=`M${{tip}} L${{b[0]-H*uy}},${{b[1]+H*ux}} L${{b[0]+H*uy}},${{b[1]-H*ux}} Z`;
  const o=ol?`<path d="${{d}}" fill="none" stroke="{INK}" stroke-width="${{SW+6}}" stroke-linecap="round"/><path d="${{h}}" fill="{INK}" stroke="{INK}" stroke-width="6" stroke-linejoin="round"/>`:'';
@@ -200,7 +200,7 @@ const arrow=(p0,c1,c2,tip,col,ol)=>{{ const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2
   for (let k=1;k<=40;k++) P.push([e[0]+ux*L*1.15*k/40, e[1]+uy*L*1.15*k/40]);   // on through the head
   const S=[0]; for (let k=1;k<P.length;k++) S.push(S[k-1]+Math.hypot(P[k][0]-P[k-1][0],P[k][1]-P[k-1][1]));
   const lam=SW*1.9, half=H*1.05, rows=8, bend=SW*0.9;
-  const lerp=(a,b,f)=>Math.round(a+(b-a)*f), C1=[0xC9,0xB2,0xEC], C2=[0x6A,0x3D,0xB5];
+  const lerp=(a,b,f)=>Math.round(a+(b-a)*f), C1=[0xE6,0xDB,0xF7], C2=[0x9C,0x7B,0xD8];
   let q='';
   for (let k=0;k<P.length-1;k++){{
    const a=P[Math.max(k-1,0)], b=P[Math.min(k+2,P.length-1)]; let tx=b[0]-a[0], ty=b[1]-a[1]; const m=Math.hypot(tx,ty)||1; tx/=m; ty/=m; const nx=-ty, ny=tx;
