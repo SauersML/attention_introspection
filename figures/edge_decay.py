@@ -103,8 +103,6 @@ for ax, key, (x0, x1) in ((a1, "S", spanS), (a2, "E", spanE)):
     ax.add_patch(Rectangle((inside[0] - .5 if key == "S" else inside[0], lo), inside[1] - inside[0] + .5, hi - lo, color=CREAM, zorder=-2, lw=0))
     g0 = -4.5 if key == "S" else -.5  # 5 unmeasured tokens: S -4..0 (first word at 0), E 0..4 (the end token at 0)
     ax.add_patch(Rectangle((g0, lo), 5, hi - lo, facecolor="white", edgecolor=PURPLE, hatch="//", lw=0, alpha=.5, zorder=-1))
-    ax.text(g0 + 2.5, 270, "[P3] label: not measured", rotation=90, ha="center", va="center", fontsize=21, color=PURPLE,
-            bbox=dict(facecolor="white", edgecolor="none", pad=2))
     band(ax, PD["focus"][key][0], PD["focus"][key][1], PURPLE)
     m = (xw <= 0) if key == "S" else (xw >= 0)  # single words: one dot per word (words are 5 tokens apart), 95% CI as bars
     ax.errorbar(xw[m], Yw[m, 0], yerr=[Yw[m, 0] - Yw[m, 1], Yw[m, 2] - Yw[m, 0]], fmt="o", color=TEAL, ms=11, elinewidth=2, capsize=0, zorder=3)
