@@ -16,6 +16,10 @@ That looks like noticing, but the boost is still on while Qwen read the question
 
 Two controls separate noticing from that pull. With the same boost, asked only to pick a paragraph at random, Qwen's top answer is the boosted paragraph 37% of the time, against 58% when asked which one was boosted. And when we tell Qwen that either their attention may be boosted or a paragraph's meaning may be added straight into their activations (at the same size of change), they say something changed more after the attention boost (55%, against 45% with nothing changed) and less after the meaning addition (38%), name the right paragraph more often (54% vs 36%), and say "attention" more often after the attention boost (73% vs 64%).
 
+With only the attention boost, asked to pick a paragraph at random, Qwen's top answer is still the boosted paragraph more often than chance, but much less often than when asked which one was boosted.
+
+![With the same attention boost, Qwen's top answer is the boosted paragraph 58% of the time when asked which one was boosted and 37% when asked to pick at random](figures/pick_random.jpg)
+
 ![Told both kinds of change are possible, Qwen notice an attention boost more than a size-matched meaning addition, name its paragraph more often, and say "attention" more after it](figures/salience.jpg)
 
 With lists of single words, Qwen never say "Yes": 0 of 7,680 boosted trials. Forced to start "Yes, word [W", they pick the boosted word 47% of the time at the strongest boost (chance 12.5%), again with the boost still on while they pick.
