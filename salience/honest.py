@@ -214,7 +214,7 @@ def run_context(c):
     PM = {L: (torch.stack([R["pre"][L][s].mean(0) for s in segtok]), R["pre"][L][allb].mean(0)) for L in BAND}
     R["pre"] = None
     r0, s0 = trial(ids, Q0, PF, cache, segt)
-    rec = dict(id=c["id"], ntok=[len(s) for s in segtok], nq=len(ids) - Q0, none=r0, A={}, B={}, resnorm=[float(s0["res"][L].norm(dim=-1).mean()) for L in RL])
+    rec = dict(id=c["id"], ntok=[len(s) for s in segtok], nq=len(ids) - Q0, none=r0, A={}, B={}, Bs={}, resnorm=[float(s0["res"][L].norm(dim=-1).mean()) for L in RL])
     for k in range(4):
         U = {L: (PM[L][0][k] - PM[L][1]) / (PM[L][0][k] - PM[L][1]).norm() for L in BAND}
         ra, sa = trial(ids, Q0, PF, cache, segt, kidx=segtok[k], kk=k)
@@ -228,7 +228,7 @@ def run_context(c):
         ra["dres_B_uncal"] = dB1; ra["s"] = [sL[L] for L in sorted(BAND)]
         g = torch.Generator(device="cuda").manual_seed(1000 * int(c["id"]) + k)  # random direction per layer, same size as B (control)
         RU = {L: (lambda v: v / v.norm())(torch.randn(U[L].shape, generator=g, device=U[L].device, dtype=torch.float32).to(U[L].dtype)) for L in BAND}
-        for name, f, D in (("B", 1.0, U),):
+        for name, f, D in (("B", 1.0, U), ("Bs", float(os.environ.get("BSCALE", "0.8")), U)):
             add = {L: (f * sL[L]) * D[L] for L in BAND}
             rb, sb = trial(ids, Q0, PF, cache, segt, add=add, kk=k)
             rb["dres"], rb["cos"] = diffs(sb, s0, U)
