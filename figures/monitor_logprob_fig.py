@@ -72,11 +72,11 @@ ROWS = [("after|most", "right after"), ("before|most", "before answering"), ("la
         ("after|least", "least attended"), ("after|free", "free answer")]
 ROWS = [r for r in ROWS if r[0] in RES]
 GROUP = {0: "which paragraph most?", [k for k, _ in ROWS].index("after|rate"): "0\u201310 rating", [k for k, _ in ROWS].index("after|least"): "other questions"}
-BW = W - 2 * PAD; BH = 1500
+BW = W - 2 * PAD; BH = 1300
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 fig = plt.figure(figsize=(BW / 100, BH / 100), dpi=100)
 # left: violins of per-prompt rank correlation
-L0, LW, B0, T0 = 0, 1100, 40, 420      # px: left edge, width, bottom margin, top band for the big numbers
+L0, LW, B0, T0 = 0, BW, 40, 420      # px: left edge, width, bottom margin, top band for the big numbers
 ax = fig.add_axes([L0 / BW, B0 / BH, LW / BW, (BH - B0 - T0) / BH])
 rng = np.random.default_rng(1)
 dsr = np.subtract(PP["after|most"]["self"], PP["after|most"]["reader"]); obs = abs(dsr.mean())
@@ -84,7 +84,7 @@ NF = 200000
 PV = (sum(int((np.abs((np.random.default_rng(k).choice([-1.0, 1.0], (20000, len(dsr))) * dsr).mean(1)) >= obs - 1e-12).sum()) for k in range(10)) + 1) / (NF + 1)
 PTXT = pstr(PV, floor=1 / (NF + 1))
 print("self - reader", round(dsr.mean(), 4), "p", PV, PTXT)
-XC = [0.78, 1.78]; XL = (-0.05, 2.45)
+XC = [0.5, 1.5]; XL = (0.0, 2.0)   # each violin under its own setup's column
 for j, (who, col) in enumerate([("self", PURPLE), ("reader", BLUE)]):
     z = np.array(PP["after|most"][who]); st = RES["after|most"][who]; x0 = XC[j]
     kde = gaussian_kde(z, bw_method=0.3); yy = np.linspace(-1.0, 1.0, 300); dd = kde(yy); dd = dd / dd.max() * 0.40
@@ -92,8 +92,8 @@ for j, (who, col) in enumerate([("self", PURPLE), ("reader", BLUE)]):
     xj = x0 + rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.36; yj = np.clip(z + rng.uniform(-0.03, 0.03, len(z)), -1, 1)
     ax.scatter(xj, yj, s=330, color=col, alpha=0.40, edgecolors="none", zorder=3); ax.scatter(xj, yj, s=5, color="black", zorder=4)
     fig.text((L0 + LW * (x0 - XL[0]) / (XL[1] - XL[0])) / BW, 1 - 262 / BH, f"{st['mean']:.2f}", ha="center", va="top", fontsize=px(100), fontweight="bold", color=col)
-ax.plot([0.27, XL[1]], [0, 0], color=INK, lw=4, ls=(0, (4, 3)), zorder=6)
-ax.text(1.27, -0.04, "no relation", ha="center", va="top", fontsize=px(56), color=INK, zorder=7)
+ax.plot([0.12, XL[1]], [0, 0], color=INK, lw=4, ls=(0, (4, 3)), zorder=6)
+ax.text(1.0, -0.04, "no relation", ha="center", va="top", fontsize=px(56), color=INK, zorder=7)
 for t, s in [(-1, "\u22121"), (0, "0"), (1, "1")]:
     ax.text(0.0, t, s, ha="left", va="center", fontsize=px(72), fontweight="bold", color=INK)
 ax.set_xlim(*XL); ax.set_ylim(-1.06, 1.06); ax.set_xticks([]); ax.set_yticks([])
@@ -104,31 +104,6 @@ fig.add_artist(plt.Line2D([xl, xl, xr, xr], [yb - 30 / BH, yb, yb, yb - 30 / BH]
 fig.text((xl + xr) / 2, yb + 10 / BH, PTXT, ha="center", va="bottom", fontsize=px(56), color=INK,
          bbox=dict(fc="white", ec="none", pad=4))
 fig.text((L0 + LW / 2) / BW, 1 - 10 / BH, "rank correlation with true attention,\nasked right after answering", ha="center", va="top", fontsize=px(50), fontweight="bold", color=INK, linespacing=1.1)
-# right: gains
-R0, RW = 1620, BW - 1620 - 20
-ax2 = fig.add_axes([R0 / BW, 190 / BH, RW / BW, (BH - 190 - 250) / BH])
-ys = []; y = 0
-for n, (k, _) in enumerate(ROWS):
-    if n in GROUP: y += 1
-    ys.append(y); y += 1
-YMAX = y
-lab_tr = matplotlib.transforms.blended_transform_factory(fig.transFigure, ax2.transData)
-for n, (k, lab) in enumerate(ROWS):
-    q = RES[k]; yv = YMAX - ys[n]
-    ax2.plot([q["gain_all"]["lo"], q["gain_all"]["hi"]], [yv, yv], color=PURPLE, lw=9, solid_capstyle="round", zorder=3, alpha=0.75)
-    ax2.scatter([q["gain_all"]["mean"]], [yv], s=700, color=PURPLE, zorder=4, edgecolors="white", linewidths=3)
-    ax2.text((R0 - 24) / BW, yv, lab, transform=lab_tr, ha="right", va="center", fontsize=px(46), color=INK)
-for n, g in GROUP.items():
-    ax2.text((R0 - 24) / BW, YMAX - ys[n] + 1, g, transform=lab_tr, ha="right", va="center", fontsize=px(50), fontweight="bold", color=INK)
-ax2.axvline(0, color=INK, lw=4, ls=(0, (4, 3)), zorder=2)
-ax2.text(0.002, YMAX + 0.55, "no gain", ha="left", va="center", fontsize=px(56), color=INK)
-ax2.set_ylim(0.45, YMAX + 0.9); ax2.set_yticks([])
-lo = min(RES[k]["gain_all"]["lo"] for k, _ in ROWS); hi = max(RES[k]["gain_all"]["hi"] for k, _ in ROWS)
-ax2.set_xlim(min(lo, -0.02) - 0.004, hi + 0.004)
-ax2.set_xticks([-0.02, 0, 0.02]); ax2.set_xticklabels(["\u22120.02", "0", "+0.02"], fontsize=px(56), fontweight="bold"); ax2.tick_params(length=10, width=3, pad=10, colors=INK)
-for s_ in ["top", "right", "left"]: ax2.spines[s_].set_visible(False)
-ax2.spines["bottom"].set_linewidth(3); ax2.spines["bottom"].set_color(INK)
-fig.text((R0 + RW / 2 - 300) / BW, 1 - 10 / BH, "rank correlation the self-report adds\nto the same model reading the\ntranscript, asked every way", ha="center", va="top", fontsize=px(54), fontweight="bold", color=INK, linespacing=1.1)
 VP = os.path.join(HERE, "monitor_logprob_bottom.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
