@@ -8,7 +8,7 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/hero_pair.jpg)
 
-2. We tell Qwen their attention may be pushed, push it onto paragraph 2, and ask "did you notice, and which one?" Left: how often they say Yes. Right: when made to start "Yes, paragraph [", how often their top answer is the pushed paragraph. Both as change from no push.
+2. We tell Qwen their attention may be pushed, push it onto paragraph 2, and ask "did you notice, and which one?" Left: how often their reply starts with Yes. Right: when made to start "Yes, paragraph [", how often their top answer is the pushed paragraph's number. Both as change from no push, with the raw rates (no push, then this strength) above each bar.
 
 ![](figures/told_pair.jpg)
 
