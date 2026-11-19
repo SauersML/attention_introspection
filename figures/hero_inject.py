@@ -135,7 +135,8 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 #syr{{position:absolute}}
 .inj{{position:absolute;left:30px;font-size:66px;font-weight:800;line-height:1.12;color:{PURPLE}}}
 #gl{{position:absolute;left:0;top:0;z-index:-1;pointer-events:none}}
-#ov{{position:absolute;left:0;top:0;pointer-events:none}}
+#ov{{position:absolute;left:0;top:0;pointer-events:none;z-index:1}}
+#rq{{position:relative;z-index:2}}
 .cols{{display:flex;gap:{GAP}px;margin-top:150px}}
 .ct{{flex:1;min-width:0;text-align:center}}
 .cn{{display:inline-block;font-size:76px;font-weight:800;line-height:1.05;white-space:nowrap}}
@@ -186,8 +187,9 @@ const arrow=(p0,c1,c2,tip,col,ol)=>{{ const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2
  return o+`<path d="${{d}}" fill="none" stroke="${{col}}" stroke-width="${{SW}}" stroke-linecap="round"/>`+
   `<path d="${{h}}" fill="${{col}}"/>`; }};
 // purple: up out of the report question's top edge, one quarter-turn, into the right end of [P2]
-const t=R('p2t'), q=R('rq'); const P0=[q.left+260, q.top-6], T=[t.right+12, (t.top+t.bottom)/2];
-let s=arrow(P0, [P0[0], P0[1]-0.55*(P0[1]-T[1])], [T[0]+0.55*(P0[0]-T[0]), T[1]], T, '#A98BD6', 1);
+const t=R('p2t'), q=R('rq'); const P0=[q.left+260, q.top+50], T=[t.right+12, (t.top+t.bottom)/2];
+const sp=arrow(P0, [P0[0], P0[1]-0.55*(P0[1]-T[1])], [T[0]+0.55*(P0[0]-T[0]), T[1]], T, '#A98BD6', 1);  // drawn in #ov (above the paragraphs) but under the question bubble (z-index), so it rises from under it
+let s=sp;
 // black: from under each underlined part of the reply, a gentle bow down to its column title
 const ry=R('ry'), rp=R('rp'), c1=R('c1'), c2=R('c2');
 // quadratic control point Q (no inflection possible), written as the equivalent cubic
