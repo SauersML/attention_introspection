@@ -23,7 +23,7 @@ W = 2248
 fig = plt.figure(figsize=(W / 100, 16.6))
 axs = [fig.add_axes([0.085, 0.215, 0.405, 0.605]), fig.add_axes([0.59, 0.215, 0.405, 0.605])]
 fmt = lambda v: MN(f"{v:+.0f}%") if round(v) else "0%"
-for a, c, title, col, verb in zip(axs, ["focus", "ignore"], ["focus your attention", "completely ignore"], [PURPLE, RED], ["gains", "loses"]):
+for a, c, title, col, verb, ylab in zip(axs, ["focus", "ignore"], ["focus your attention", "completely ignore"], [PURPLE, RED], ["gains", "loses"], ["paragraph to focus on", "paragraph to ignore"]):
     a.imshow(L2[c], cmap=DIV, norm=PCTNORM, aspect="auto")
     for k in range(4):
         for m in range(4):
@@ -34,7 +34,7 @@ for a, c, title, col, verb in zip(axs, ["focus", "ignore"], ["focus your attenti
     a.xaxis.tick_top(); a.xaxis.set_label_position("top"); a.tick_params(length=0, pad=8, labelsize=48)
     for t in a.get_xticklabels() + a.get_yticklabels(): t.set_fontweight("bold")
     a.set_xlabel("attention to paragraph", fontsize=54, fontweight="bold", labelpad=10)
-    a.set_ylabel("paragraph mentioned", fontsize=54, fontweight="bold", labelpad=10)
+    a.set_ylabel(ylab, fontsize=54, fontweight="bold", labelpad=10)
     for s_ in a.spines.values(): s_.set_visible(False)
     x0 = a.get_position().x0; xc = x0 + a.get_position().width / 2
     a.text(0.5, 1.165, title, transform=a.transAxes, ha="center", va="bottom", fontsize=62, fontweight="bold", color=col)
