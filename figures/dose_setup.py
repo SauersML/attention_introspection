@@ -45,9 +45,9 @@ def signflip(z, NF=200000, seed=0):   # two-sided sign-flip test over prompts on
     return pstr((hits + 1) / (NF + 1), floor=1 / (NF + 1))
 COL = {c: tcol(VM[c]["mean"][0]) for c, _ in CS}
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK, "axes.labelcolor": INK, "xtick.color": INK, "ytick.color": INK, "axes.edgecolor": INK})
-FH_IN = 18.3
+FH_IN = 16.6; BT, BH = 152, 30   # top band of wording boxes (data units, % change)
 fig = plt.figure(figsize=(VW / 100, FH_IN))
-a = fig.add_axes([0.004, 0.192, 0.994, 0.805])
+a = fig.add_axes([0.004, 0.005, 0.994, 0.99])
 rng = np.random.default_rng(1); PV = {}
 for p, (c, lab) in enumerate(CS):
     z = np.array(VM[c]["z"]); m = VM[c]["mean"][0]; up = m > 0; oc = PURPLE if up else RED
@@ -66,30 +66,25 @@ for p, (c, lab) in enumerate(CS):
     else:
         a.text(p, z.min() - 2.0, MN(f"{m:+.0f}%"), fontsize=72, fontweight="bold", color=COL[c], ha="center", va="top", zorder=7)
         a.text(p, z.min() - 15.0, pt, fontsize=44, color=COL[c], ha="center", va="top", zorder=7)
-    a.text(p, -61.5, lab, fontsize=35, fontweight="bold", color=COL[c], ha="center", va="top", linespacing=1.0, zorder=7, clip_on=False)
-    # the boxed words of the prompt, one equal box per wording (dashed, as in the bubble)
-    a.add_patch(FancyBboxPatch((p - 0.43, -85.5), 0.86, 25.5, boxstyle="round,pad=0,rounding_size=0.12", mutation_aspect=25.5 / 0.86 * 0.22,
+    # the boxed words of the prompt, one equal box per wording (dashed, as in the bubble), in a band at the top: wording above its result
+    a.text(p, BT - 1.2, lab, fontsize=38, fontweight="bold", color=COL[c], ha="center", va="top", linespacing=1.0, zorder=7, clip_on=False)
+    a.add_patch(FancyBboxPatch((p - 0.45, BT - BH), 0.90, BH, boxstyle="round,pad=0,rounding_size=0.12", mutation_aspect=BH / 0.90 * 0.22,
                                fc="white", ec=INK, lw=3.5, ls=(0, (4, 3)), zorder=6, clip_on=False))
 a.axhline(0, color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
 nm = VM["0_none"]["mean"][0]
 a.axhline(nm, color=INK, lw=2.5, ls=(0, (1.5, 2)), zorder=5)
 a.text(-1.03, 1.4, "mention\nonly\n= 0%", fontsize=40, fontweight="bold", ha="left", va="bottom", linespacing=1.0, zorder=8)
 a.text(-1.03, nm - 1.4, MN(f"no instruction line {nm:+.0f}%"), fontsize=40, fontweight="bold", ha="left", va="top", zorder=8)
-a.set_xlim(-1.05, len(CS) - 0.43); a.set_ylim(-56, 117)
+a.set_xlim(-1.05, len(CS) - 0.43); a.set_ylim(-52, BT + 1)
 a.set_yticks([]); a.set_xticks([])   # no y axis (as the hero): the dashed 0% line and the big means carry the scale
 for s in a.spines.values(): s.set_visible(False)
-# inset: each wording per layer, the averaged band bracketed
-ins = a.inset_axes([3.62, 30, 2.86, 76], transform=a.transData)
-NL = len(PLY["3_focus"])
-for c, _ in CS[::-1]: ins.plot(range(NL), PLY[c], color=COL[c], lw=4.5, solid_joinstyle="round")
-ins.axhline(0, color=INK, lw=3, ls=(0, (4, 3)))
-yl = ins.get_ylim(); span = yl[1] - yl[0]; top = yl[1] + 0.06 * span; ins.set_ylim(yl[0], yl[1] + 0.55 * span)
-ins.plot([B0, B0, B1, B1], [top - 0.05 * span, top, top, top - 0.05 * span], color=INK, lw=4)
-ins.text((B0 + B1) / 2, top + 0.04 * span, "averaged over\nthese layers", fontsize=48, linespacing=1.0, fontweight="bold", ha="center", va="bottom")
-ins.set_xticks([0, NL - 1]); ins.set_yticks([]); ins.tick_params(labelsize=50, length=0, pad=6)
-for t in ins.get_xticklabels(): t.set_fontweight("bold")
-ins.text((NL - 1) / 2, yl[0] - 0.02 * span, "layer", fontsize=50, fontweight="bold", ha="center", va="top")
-for s_ in ins.spines.values(): s_.set_linewidth(4); s_.set_color(INK)
+# key, in the free space above the near-zero wordings: what a dot is and what 0% is
+KX = 3.58; dotc = pct_colour([1.4])
+a.scatter([KX + 0.08], [103], s=900, c=dotc, alpha=0.6, edgecolors="none", zorder=8); a.scatter([KX + 0.08], [103], s=10, color="black", zorder=9)
+a.text(KX + 0.22, 103, "= one prompt", fontsize=44, fontweight="bold", ha="left", va="center", zorder=8)
+a.text(KX, 90, "% change in attention to the\nnamed paragraph, compared to:", fontsize=38, fontweight="bold", ha="left", va="top", linespacing=1.1, zorder=8)
+a.text(KX + 0.06, 62, ment.replace("paragraphs ", "paragraphs\n"), fontsize=36, fontweight="bold", ha="left", va="top", linespacing=1.1, zorder=8,
+       bbox=dict(boxstyle="round,pad=0.45,rounding_size=0.6", fc="white", ec="#1F8BFF", lw=9))
 LAD = os.path.join(TMP, "_dose_ladder.png"); fig.savefig(LAD, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- method on top + ladder, rendered with headless Chrome
@@ -101,12 +96,13 @@ def para(p):
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px 26px 10px}}
-.ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 28px;font-size:54px;line-height:1.18;display:flex;flex-direction:column;gap:8px}}
+.ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 28px;width:max-content;font-size:54px;line-height:1.18;display:flex;flex-direction:column;gap:8px}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
 .var{{background:#fff;color:{INK};border-radius:16px;padding:10px 16px;font-weight:800;font-size:54px;line-height:1.18}}
 .dv{{border:5px dashed {INK};border-radius:12px;padding:0 8px}}
 .vrow{{display:flex;align-items:center;gap:22px;margin:4px 0}} .lab{{font-size:50px;font-weight:800;color:#fff;white-space:nowrap}}
-.mrow{{display:flex;align-items:center;gap:16px;margin-top:14px}}
+.mrow{{display:flex;align-items:center;gap:16px;margin-bottom:6px}}
+.top{{display:flex;align-items:flex-end;gap:26px}}
 .rob{{width:110px;height:110px;flex-shrink:0}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:12px 34px;font-size:70px;font-weight:700;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
 .ref{{margin-left:34px;display:flex;flex-direction:column;gap:10px}}
@@ -117,12 +113,10 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .cub .var{{font-size:46px;padding:6px 14px}}
 .dose{{width:100%;display:block;margin-top:18px}}
 </style></head><body>
-<div class="ub"><div>{html.escape(parts[0].strip())}</div>{"".join(para(p) for p in paras)}
-<div class="vrow"><div class="var"><span class="dv">{html.escape(VAR)}</span>{html.escape(line[len(VAR):])}</div><div class="lab">← boxed words: 7 wordings, below</div></div><div>{html.escape(post.strip())}</div></div>
+<div class="top"><div class="ub"><div>{html.escape(parts[0].strip())}</div>{"".join(para(p) for p in paras)}
+<div class="vrow"><div class="var"><span class="dv">{html.escape(VAR)}</span>{html.escape(line[len(VAR):])}</div></div><div>{html.escape(post.strip())}</div></div>
 <div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(ex["ans_free"].strip())}</div>
-<div class="ref"><div class="r1"><span style="font-size:60px">one dot</span> <span class="dot"></span> <span style="font-size:60px">= one prompt</span></div>
-<div class="r1">% change in attention from the answer to [P{K}], compared to the line:</div>
-<div class="cub"><div class="var">{html.escape(ment)}</div></div></div></div>
+</div></div>
 <img class="dose" src="data:image/png;base64,{DOSE}"></body></html>'''
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 hp = os.path.join(HERE, "dose_setup.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "dose_setup_raw.png")
