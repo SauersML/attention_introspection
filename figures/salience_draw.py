@@ -78,7 +78,7 @@ def recipe(w=2948):
         for i, l in enumerate(t):
             o.append(f'<text x="{(a + b) / 2}" y="{y + ch + 88 + 90 * i}" font-size="{F}" font-weight="800" text-anchor="middle" fill="{GREEN if a == b else INK}">{l}</text>')
     xt = x + 400
-    for i, l in enumerate(["scaled to the", "same size as the", "attention boost\u2019s change"]):
+    for i, l in enumerate(["scaled so its change to", "the activations equals", "the attention boost\u2019s"]):
         o.append(f'<text x="{xt}" y="{y + 64 + 90 * i}" font-size="{F}" font-weight="800" fill="{GREEN}">{l}</text>')
     h = y + ch + 200
     return f'<svg width="{w}" height="{h}" viewBox="0 0 {w} {h}">{"".join(o)}</svg>'

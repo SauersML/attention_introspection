@@ -1,8 +1,8 @@
-"""Salience vs attention (Qwen3-32B, 240 contexts each, paired per context; reads results/salience_honest/data and results/salience_ctrl/data).
+"""Salience vs attention (Qwen3-32B, 240 contexts each, paired per context; reads results/salience_honest_sized/data and results/salience_ctrl/data).
 Only arms where the prompt told Qwen the truth about what we might do.
 Method (salience_draw.py): token row [P1]..[P4] ([P2] amber), question and answer tokens, band of layers 21-53. Attention boost x20 onto [P2]
 (purple); [P2]'s meaning added to activations at the question and answer tokens (green): mean residual over [P2]'s tokens minus mean over all
-four paragraphs' tokens, scaled per layer so the residual change matches the attention boost's.
+four paragraphs' tokens, scaled per layer so the residual change matches the attention boost's, times 0.8 (arm Bs; size ratio to the attention boost 0.99).
 Top, the honest prompt (attention boost, meaning addition or nothing, a third each): greedy reply starts "Yes"; top digit after "Yes, paragraph [P"
 is the boosted paragraph; P(attention) = 1/(1+exp(lp_act-lp_att)) after the prefill "Yes, paragraph [Pk],".
 Bottom, the prompt that mentions only attention boosts, attention-boost arm only: top digit is the boosted paragraph when asked about the boost
@@ -41,13 +41,13 @@ def signflip(d):
 
 
 from salience_draw import GREEN
-C, H = load("salience_ctrl"), load("salience_honest")
+C, H = load("salience_ctrl"), load("salience_honest_sized")
 assert len(C) == 240 and len(H) == 240
 X = dict(ctrl=dict(top={a: arm(C, a, top) for a in ["A", "QA"]}),
-         honest=dict(yes={a: arm(H, a, yes) for a in ["none", "A", "B"]}, top={a: arm(H, a, top) for a in ["A", "B"]}, patt={a: arm(H, a, patt) for a in ["A", "B"]}))
+         honest=dict(yes={a: arm(H, a, yes) for a in ["none", "A", "Bs"]}, top={a: arm(H, a, top) for a in ["A", "Bs"]}, patt={a: arm(H, a, patt) for a in ["A", "Bs"]}))
 SC = {e: {rd: {a: ci(v) for a, v in d.items()} for rd, d in E.items()} for e, E in X.items()}
-PV = {"ctrl top A-QA": ("ctrl", "top", "A", "QA"), "honest yes A-B": ("honest", "yes", "A", "B"), "honest yes A-none": ("honest", "yes", "A", "none"),
-      "honest yes B-none": ("honest", "yes", "B", "none"), "honest top A-B": ("honest", "top", "A", "B"), "honest patt A-B": ("honest", "patt", "A", "B")}
+PV = {"ctrl top A-QA": ("ctrl", "top", "A", "QA"), "honest yes A-B": ("honest", "yes", "A", "Bs"), "honest yes A-none": ("honest", "yes", "A", "none"),
+      "honest yes B-none": ("honest", "yes", "Bs", "none"), "honest top A-B": ("honest", "top", "A", "Bs"), "honest patt A-B": ("honest", "patt", "A", "Bs")}
 P = {k: signflip(X[e][rd][a] - X[e][rd][b]) for k, (e, rd, a, b) in PV.items()}
 for e in SC:
     for rd in SC[e]: print(e, rd, {a: [round(100 * x, 1) for x in v] for a, v in SC[e][rd].items()})
@@ -57,7 +57,7 @@ print({k: f"{v:.2g}" for k, v in P.items()})
 W = 3000; PAD = 26; VW = W - 2 * PAD
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 NONE = ("none", "white", 1.0, "nothing\nchanged", INK)
-LAB = dict(A=(PURPLE, 0.8, "attention\nboost", PURPLE), B=(GREEN, 0.8, "meaning\nadded", GREEN),
+LAB = dict(A=(PURPLE, 0.8, "attention\nboost", PURPLE), B=(GREEN, 0.8, "meaning\nadded", GREEN), Bs=(GREEN, 0.8, "meaning\nadded", GREEN),
            QA=(PURPLE, 0.35, "asked to\npick at\nrandom", PURPLE), AQ=(PURPLE, 0.8, "asked\n\u201cwhich\none?\u201d", PURPLE))
 FB, FV, FT, FP = 74, 112, 104, 84   # bar labels, bar values, panel titles, p and chance
 
@@ -69,7 +69,7 @@ def row(path, panels, H=1150, BOT=330, TOPH=200, VW_=None):
     tot = sum(p[0] for p in panels); GAP = 30
     x0 = 0
     for share, title, ytop, bars, chance, clab, brs, sep in panels:
-        pw = (VW - GAP * (len(panels) - 1)) * share / tot; LM = 10; RM = 300 if chance is not None else 10
+        pw = (VW - GAP * (len(panels) - 1)) * share / tot; LM = 10; RM = 360 if chance is not None else 10
         ax = fig.add_axes([(x0 + LM) / VW, BOT / H, (pw - LM - RM) / VW, (H - BOT - TOPH) / H])
         nb = len(bars) + (0.5 if sep is not None else 0); ax.set_xlim(-0.5, nb - 0.5); ax.set_ylim(0, ytop)
         xs = [i + (0.5 if sep is not None and i > sep else 0) for i in range(len(bars))]
@@ -103,10 +103,10 @@ def row(path, panels, H=1150, BOT=330, TOPH=200, VW_=None):
 
 c, h = SC["ctrl"], SC["honest"]
 VP1, VP2 = os.path.join(HERE, "_v_sal1.png"), os.path.join(HERE, "_v_sal2.png")
-row(VP1, [(1.05, "says something\nwas changed\n(answers \u201cYes,\nparagraph \u2026\u201d\ninstead of \u201cNo\u201d)", 72, [("none", h["yes"]["none"]), ("A", h["yes"]["A"]), ("B", h["yes"]["B"])],
+row(VP1, [(1.05, "says\nsomething\nchanged", 72, [("none", h["yes"]["none"]), ("A", h["yes"]["A"]), ("B", h["yes"]["Bs"])],
            None, None, [(1, 2, P["honest yes A-B"])], None),
-          (0.95, "names the right\nparagraph", 80, [("A", h["top"]["A"]), ("B", h["top"]["B"])], 25, "chance", [(0, 1, P["honest top A-B"])], None),
-          (0.95, "says \u201cattention\u201d\nrather than \u201cactivations\u201d\n(after we fill in\n\u201cYes, paragraph [Pk],\u201d)", 100, [("A", h["patt"]["A"]), ("B", h["patt"]["B"])], 50, "chance", [(0, 1, P["honest patt A-B"])], None)],
+          (0.95, "names the right\nparagraph", 80, [("A", h["top"]["A"]), ("B", h["top"]["Bs"])], 25, "chance", [(0, 1, P["honest top A-B"])], None),
+          (0.95, "says \u201cattention\u201d\nrather than \u201cactivations\u201d\n(after we fill in\n\u201cYes, paragraph [Pk],\u201d)", 100, [("A", h["patt"]["A"]), ("B", h["patt"]["Bs"])], 50, "chance", [(0, 1, P["honest patt A-B"])], None)],
     H=1560, BOT=230, TOPH=620)
 RW = 1450
 row(VP2, [(1.0, "top answer is the\nboosted paragraph", 82, [("AQ", c["top"]["A"]), ("QA", c["top"]["QA"])], 25, "chance", [(0, 1, P["ctrl top A-QA"])], None)],
