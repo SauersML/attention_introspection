@@ -16,6 +16,10 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/salience.jpg)
 
+3b. Controls for item 3: a random direction of the same size raises Yes least and leaves the paragraph choice at chance, the boost biases a "pick at random" answer much less than the question about the boost, and when told both kinds are possible Qwen says Yes less after a content addition, still picks the boosted paragraph mainly after the attention boost, and says "attention" only slightly more after an attention boost than after a content addition.
+
+![](figures/salience_controls.jpg)
+
 4. When does the push matter? We push either while Qwen answers or only while they read the question "which did you attend to most?", for paragraphs and for single words. Only the push at question time raises naming the pushed one.
 
 ![](figures/privileged_both.png)
