@@ -3,6 +3,7 @@
 ![Left: told to focus on a paragraph, Qwen3-32B put more attention on it, and told to ignore it, less, while giving the same answer. Right: boosted onto a paragraph and asked if they noticed, they say "Yes" more often and name it above chance](figures/hero_pair.jpg)
 
 We asked Qwen3-32B to focus on, or ignore, one of four paragraphs, and measured their attention weights. They can steer their attention on request without changing their answer. But they can't tell you where it went: their report follows their attention at the moment of reporting, not the attention they used to answer.
+
 Let's start with introspection. We boost one paragraph only while Qwen write their answer, then ask which paragraph they attended to most, with the report running unboosted on identical text. The boost leaves a trace, pointing the wrong way: at 6.5× the attention, they become 18% less likely to name the boosted paragraph than the others, growing smoothly with the dose. Boost the same paragraph while they read the report question instead, and they become 97% more likely to name it; with lists of single words, 580%.
 
 ![Boosting a paragraph or single word while Qwen answer leaves the later report unchanged or lower; the same boost while they read the report question raises the probability that the report names it, by 97% for paragraphs and 580% for single words. Each dot is one prompt: the change against no boost, relative to the other options, averaged over boosting each option in turn](figures/privileged_both.png)
