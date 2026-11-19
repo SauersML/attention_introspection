@@ -42,7 +42,7 @@ a.text(L28 - 0.9, LG(mi[L28]) - 0.03, MN(f"{mi[L28]:+.0f}%"), fontsize=80, fontw
 a.text(L28, LG(345), "layer 28", fontsize=56, fontweight="bold", ha="center", va="bottom", zorder=7,
        bbox=dict(boxstyle="round,pad=0.15", fc="white", ec="none"))
 a.text(0.2, -0.03, "mention only = 0%", fontsize=48, fontweight="bold", ha="left", va="top", zorder=7)
-a.text(0.5, LG(330), "% change in attention\nfrom the answer to\nthe named paragraph", fontsize=52, fontweight="bold", ha="left", va="top", linespacing=1.05, zorder=7)
+a.text(0.5, LG(330), "% change in how\nmuch Qwen's\nanswer attends to\nthe mentioned\nparagraph", fontsize=50, fontweight="bold", ha="left", va="top", linespacing=1.05, zorder=7)
 for s_ in ["top", "right"]: a.spines[s_].set_visible(False)
 a.spines["left"].set_linewidth(3.5); a.spines["bottom"].set_linewidth(3.5)
 a.tick_params(width=3.5, length=12, labelsize=64, pad=10)
