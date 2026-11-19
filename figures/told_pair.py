@@ -62,7 +62,7 @@ assert EXTXT == f"Yes, paragraph [P{PICK}]" and PICK == K + 1, (EXTXT, PICK)
 
 sys.exit() if "--nums" in sys.argv else None
 # ---------------- two panels in one image ----------------
-VW = W - 2 * PAD; GAP = 60; PW = (VW - GAP) / 2; LM = 330; VH = 1300; TOPH = 250; BOT = 200
+VW = W - 2 * PAD; GAP = 60; PW = (VW - GAP) / 2; LM = 330; VH = 1380; TOPH = 250; BOT = 280
 CW = (PW - LM) / 4; ylo, yhi = -0.28, 1.50   # one shared relative-change axis for both panels
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 fig = plt.figure(figsize=(VW / 100, VH / 100), dpi=100)
@@ -82,12 +82,12 @@ def panel(x0, rel, p):
         if m == MS[-1]:
             fig.text(cxf, 1 - 122 / VH, pstr(p, floor=1 / (NF + 1)), ha="center", va="top", fontsize=56, color=PURPLE)
         fig.text(cxf, 1 - 6 / VH, f"{100*mu:+.0f}%".replace("-", "\u2212"), ha="center", va="top", fontsize=78, fontweight="bold", color=PURPLE)
-        fig.text(cxf, 78 / VH, f"\u00d7{MASSES[m]:.1f}", ha="center", va="center", fontsize=dr.px(84), fontweight="bold", color=PURPLE if m == M else INK)
+        fig.text(cxf, 196 / VH, f"\u00d7{MASSES[m]:.1f}", ha="center", va="center", fontsize=78, fontweight="bold", color=PURPLE if m == M else INK)
+    fig.text((x0 + LM + 2 * CW) / VW, 52 / VH, "attention on the boosted paragraph", ha="center", va="center", fontsize=dr.px(76), fontweight="bold", color=INK)
 panel(0, RY, PY)
 panel(PW + GAP, RN, PN)
 ax.set_xticks([]); ax.set_yticks([])
 for s_ in ax.spines.values(): s_.set_visible(False)
-fig.text(8 / VW, 78 / VH, "attention\nboost", ha="left", va="center", fontsize=dr.px(56), fontweight="bold", color=INK, linespacing=1.0)
 VP = os.path.join(HERE, "_v_told_pair.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
@@ -95,7 +95,7 @@ bubble = dr.told_bubble(META, CTX[EXID]["segs"], K)
 reply = f'<span class="part" id="ry">Yes</span>, paragraph [P<span class="part" id="rn">{PICK}</span>]'
 titles = (f'<div class="cols"><div class="ct" style="flex:none;width:{PW - LM:.0f}px;margin-left:{LM}px"><span class="cn" id="c1">change in how often<br>Qwen says \u201cYes\u201d</span></div>'
           f'<div class="ct" style="flex:none;width:{PW - LM:.0f}px;margin-left:{GAP + LM:.0f}px"><span class="cn" id="c2">change in how often Qwen\u2019s top<br>answer is the boosted paragraph</span></div></div>')
-HTML = dr.page(W, bubble, "Do you notice your attention being boosted onto one of the paragraphs? If so, which one?", reply, titles, VP, VW, f"{MASSES[M]:.1f}", inj="boost attention<br>toward paragraph 2", arrows=(("ry", "c1"), ("rn", "c2")))
-HTML = HTML.replace("</style>", ".ub{margin-right:700px;font-size:62px}#rq{margin-left:1500px;margin-right:500px;font-size:62px}.mrow{margin-left:1250px}.mb{font-size:96px}.cn{font-size:86px}.inj{font-size:72px}.cols{margin-top:110px}</style>", 1)
+HTML = dr.page(W, bubble, "Do you notice your attention being boosted onto one of the paragraphs? If so, which one?", reply, titles, VP, VW, f"{MASSES[M]:.1f}", inj="boost attention<br>toward paragraph 2", arrows=(("ry", "c1"), ("rn", "c2")), tipdrop=-2)
+HTML = HTML.replace("</style>", ".ub{margin-right:700px;font-size:62px}#rq{margin-left:1500px;margin-right:500px;font-size:62px}.mrow{margin-left:1250px}.mb{font-size:96px}.cn{font-size:86px}.inj{font-size:72px}.cols{margin-top:250px}</style>", 1)
 dr.render(HTML, HERE, "told_pair", W, jpg=True, keep="--keep" in sys.argv)
 if "--keep" not in sys.argv: os.remove(VP)
