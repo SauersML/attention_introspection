@@ -12,13 +12,9 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/told_pair.jpg)
 
-3. Same question, but instead of boosting attention we add paragraph 2's content into the residual stream at the same layers, at the same size or twice the size: the content addition raises Yes as much as the attention boost, but only the attention boost makes Qwen pick the right paragraph.
+3. We add paragraph 2's meaning (its tokens' activations averaged, minus all four paragraphs averaged) into the activations at the question and answer tokens, at the same size as the attention boost's change, and tell Qwen that either kind may happen. Qwen says Yes more after the attention boost and less after the meaning addition, picks the boosted paragraph mainly after the attention boost, and says "attention" more often after the attention boost than after the meaning addition (73% vs 67%, a real difference). Bottom: with the prompt that mentions only attention boosts, the same attention boost makes the boosted paragraph Qwen's top answer far more often when asked which paragraph was boosted than when asked to pick one at random.
 
 ![](figures/salience.jpg)
-
-3b. Controls for item 3: a random direction of the same size raises Yes least and leaves the paragraph choice at chance, the boost biases a "pick at random" answer much less than the question about the boost, and when told both kinds are possible Qwen says Yes less after a content addition, still picks the boosted paragraph mainly after the attention boost, and says "attention" only slightly more after an attention boost than after a content addition.
-
-![](figures/salience_controls.jpg)
 
 4. When does the push matter? We push either while Qwen answers or only while they read the question "which did you attend to most?", for paragraphs and for single words. Only the push at question time raises naming the pushed one.
 

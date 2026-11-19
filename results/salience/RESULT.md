@@ -1,5 +1,7 @@
 # Salience vs attention (Qwen3-32B, 240 contexts)
 
+**Misleading prompt, not used:** this prompt tells Qwen that only attention boosts happen, so the content-addition (B, B2) and random-direction (R) arms here misled Qwen; their data stay in data/ but are not used in any figure or claim. Only the honest arms (none, A, and the pick-at-random question QA) are used, in figures/salience.py.
+
 Same told prompt as told_inject ("I am capable of artificially boosting your attention onto one of the four paragraphs below … Do you notice …? If so, which one?"). Arms, each paragraph k boosted in turn, layers 21–53, at the question and answer tokens:
 - none: no boost.
 - A: attention boost ×20 onto paragraph k (log 20 added to the pre-softmax scores, all heads).
@@ -27,4 +29,4 @@ Geometry: A's residual change is almost orthogonal to the content direction (cos
 
 Reading: detection is not attention-specific. A same-size addition of paragraph content into the residual stream raises "Yes" exactly as much as the attention boost. Localisation is attention-specific: the attention boost makes Qwen pick the boosted paragraph far more often than the content addition at the same size, or at twice the size.
 
-Figure: figures/salience.py → figures/salience.png / .jpg.
+Figure: figures/salience.py → figures/salience.png / .jpg (only the honest arms).

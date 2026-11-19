@@ -1,14 +1,17 @@
-"""Salience vs attention (Qwen3-32B, 240 contexts; results/salience, numbers from salience/score.py's scores.json, which this script reads).
-Top: the told prompt shortened (blue bubble) and two method drawings on the same token row ([P1]..[P4] cells, [P2] amber, then the question and
-answer cells) inside the band of layers 21-53. Left: attention boost x20 from the question and answer tokens onto paragraph 2 (purple arrows).
-Right: paragraph 2's content direction (mean residual over paragraph 2 minus mean over all four paragraphs) added into the residual stream at the
-question and answer tokens, sized so the residual change per layer matches the attention boost's (green, plus 2x).
-Bottom, two panels, one bar per arm: relative change of the mean over contexts from no boost (dashed 0 line), whiskers = the scorer's 95%
-bootstrap CI (10,000 resamples), big relative % above with the raw rates under it, p bracket attention boost vs same-size content addition
-(two-sided sign-flip over contexts, 20,000 flips). LEFT: greedy reply starts with "Yes". RIGHT: top digit after the prefill "Yes, paragraph [P"
-is the boosted paragraph.
-usage: OMP_NUM_THREADS=2 nice -n 19 python3 figures/salience.py [--keep]   (writes figures/salience.png and .jpg)"""
-import json, os, sys
+"""Salience vs attention (Qwen3-32B, 240 contexts each, paired per context; reads results/salience_honest/data and results/salience_ctrl/data).
+Only arms where the prompt told Qwen the truth about what we might do.
+Method (salience_draw.py): token row [P1]..[P4] ([P2] amber), question and answer tokens, band of layers 21-53. Attention boost x20 onto [P2]
+(purple); [P2]'s meaning added to activations at the question and answer tokens (green): mean residual over [P2]'s tokens minus mean over all
+four paragraphs' tokens, scaled per layer so the residual change matches the attention boost's.
+Top, the honest prompt (attention boost, meaning addition or nothing, a third each): greedy reply starts "Yes"; top digit after "Yes, paragraph [P"
+is the boosted paragraph; P(attention) = 1/(1+exp(lp_act-lp_att)) after the prefill "Yes, paragraph [Pk],".
+Bottom, the prompt that mentions only attention boosts, attention-boost arm only: top digit is the boosted paragraph when asked about the boost
+vs when asked "Pick one of the four paragraphs at random" (prefill "paragraph [P"). The meaning and random arms of that run are not used
+(the prompt said only attention boosts happen).
+Boosted arms averaged over k = P1..P4 per context. Bars = mean over contexts, whiskers = 95% bootstrap CI (10,000 resamples), p = two-sided
+sign-flip over contexts on paired differences (20,000 flips).
+usage: OMP_NUM_THREADS=2 nice -n 19 ~/.venv/bin/python figures/salience.py [--keep]   (writes figures/salience.png and .jpg)"""
+import json, glob, os, sys, base64
 import numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
@@ -16,99 +19,131 @@ from pal import INK, PURPLE
 from pfmt import pstr
 import injb_draw as dr
 ROOT = os.path.dirname(HERE)
-S = json.load(open(os.path.join(ROOT, "results/salience/scores.json"))); META = json.load(open(os.path.join(ROOT, "results/salience/data/meta.json")))
-assert S["n"] == 240 and META["BAND"][0] == 21 and META["BAND"][-1] == 53 and META["M"] == 20.0
-GREEN = "#1A9E77"; NF = 20000
-ARMS = [("A", PURPLE, 0.75, "attention\nboost"), ("B", GREEN, 0.75, "content\nadded,\nsame size"), ("B2", GREEN, 0.4, "content\nadded,\n2\u00d7")]
-READS = ["greedy_yes", "top_is_k"]
-W = 3000; PAD = 26; VW = W - 2 * PAD; GAP = 70; PW = (VW - GAP) / 2; LM = 330; VH = 1500; TOPH = 40; BOT = 300
-CW = (PW - LM) / 3; ylo, yhi = -0.12, 2.05
-rl = lambda v: f"{100 * v:+.0f}%".replace("-", "\u2212")
+NF = 20000; NB = 10000
 
+
+def load(d):
+    return sorted((json.loads(l) for f in glob.glob(os.path.join(ROOT, f"results/{d}/data/recs_*.jsonl")) for l in open(f)), key=lambda r: r["id"])
+
+
+yes = lambda t, k: float(t["text"].strip().startswith("Yes"))
+top = lambda t, k: float(int(np.argmax(t["lp_par"])) == k)
+patt = lambda t, k: 1 / (1 + np.exp(t["lp_act"] - t["lp_att"]))
+def arm(recs, a, f):
+    return np.array([f(r[a], 0) if "lp_par" in r[a] else np.mean([f(r[a][str(k)], k) for k in range(4)]) for r in recs])
+
+
+rng = np.random.default_rng(0)
+def ci(v):
+    b = v[rng.integers(0, len(v), (NB, len(v)))].mean(1); return [float(v.mean()), float(np.percentile(b, 2.5)), float(np.percentile(b, 97.5))]
+def signflip(d):
+    s = rng.choice([-1, 1], (NF, len(d))); null = np.abs((s * d).mean(1)); return float((np.sum(null >= abs(d.mean())) + 1) / (NF + 1))
+
+
+from salience_draw import GREEN
+C, H = load("salience_ctrl"), load("salience_honest")
+assert len(C) == 240 and len(H) == 240
+X = dict(ctrl=dict(top={a: arm(C, a, top) for a in ["A", "QA"]}),
+         honest=dict(yes={a: arm(H, a, yes) for a in ["none", "A", "B"]}, top={a: arm(H, a, top) for a in ["A", "B"]}, patt={a: arm(H, a, patt) for a in ["A", "B"]}))
+SC = {e: {rd: {a: ci(v) for a, v in d.items()} for rd, d in E.items()} for e, E in X.items()}
+PV = {"ctrl top A-QA": ("ctrl", "top", "A", "QA"), "honest yes A-B": ("honest", "yes", "A", "B"), "honest yes A-none": ("honest", "yes", "A", "none"),
+      "honest yes B-none": ("honest", "yes", "B", "none"), "honest top A-B": ("honest", "top", "A", "B"), "honest patt A-B": ("honest", "patt", "A", "B")}
+P = {k: signflip(X[e][rd][a] - X[e][rd][b]) for k, (e, rd, a, b) in PV.items()}
+for e in SC:
+    for rd in SC[e]: print(e, rd, {a: [round(100 * x, 1) for x in v] for a, v in SC[e][rd].items()})
+print({k: f"{v:.2g}" for k, v in P.items()})
+
+# ---------- bar panels (one matplotlib image per row) ----------
+W = 3000; PAD = 26; VW = W - 2 * PAD
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
-fig = plt.figure(figsize=(VW / 100, VH / 100), dpi=100)
-ax = fig.add_axes([0, BOT / VH, 1, (VH - TOPH - BOT) / VH]); ax.set_xlim(0, VW); ax.set_ylim(ylo, yhi)
-for pi, rd in enumerate(READS):
-    o = S["reads"][rd]; x0 = pi * (PW + GAP); base = o["none"][0]
-    ax.plot([x0 + LM - 20, x0 + PW], [0, 0], color=INK, lw=4, ls=(0, (4, 3)), zorder=2)
-    ax.text(x0 + LM - 30, 0, "0% =\nno boost", ha="right", va="center", fontsize=dr.px(60), fontweight="bold", color=INK, linespacing=1.0)
-    for t in (0.5, 1.0, 1.5): ax.text(x0 + LM - 30, t, f"+{100 * t:.0f}%", ha="right", va="center", fontsize=dr.px(68), fontweight="bold", color=INK)
-    ax.text(x0 + 30, 0.85, "change from no boost", rotation=90, ha="center", va="center", fontsize=dr.px(62), fontweight="bold", color=INK)
-    tops = {}
-    for i, (a, col, al, lab) in enumerate(ARMS):
-        xc = x0 + LM + (i + 0.5) * CW; hw = 0.36 * CW
-        mu, lo, hi = (v / 100 for v in o[a]["rel_vs_none"]); rate = o[a]["rate"][0]
-        ax.bar(xc, mu, width=2 * hw, color=col, alpha=al, lw=0, zorder=3)
-        ax.plot([xc, xc], [lo, hi], color=INK, lw=6, zorder=5, solid_capstyle="butt")
-        for yy in (lo, hi): ax.plot([xc - 0.25 * hw, xc + 0.25 * hw], [yy, yy], color=INK, lw=6, zorder=5, solid_capstyle="butt")
-        ax.text(xc, hi + 0.04, f"{100 * base:.0f}% \u2192 {100 * rate:.0f}%", ha="center", va="bottom", fontsize=dr.px(48), fontweight="bold", color=INK, family=["Helvetica", "Arial Unicode MS"])
-        ax.text(xc, hi + 0.13, rl(mu), ha="center", va="bottom", fontsize=dr.px(84), fontweight="bold", color=col)
-        tops[a] = hi + 0.13 + 0.17
-        fig.text((xc) / VW, (BOT - 18) / VH, lab, ha="center", va="top", fontsize=dr.px(56), fontweight="bold", color=col, linespacing=1.0)
-    # p bracket: attention boost vs same-size content addition
-    yb = max(tops["A"], tops["B"]) + 0.04; xa = x0 + LM + 0.5 * CW; xb = x0 + LM + 1.5 * CW
-    ax.plot([xa, xa, xb, xb], [yb - 0.04, yb, yb, yb - 0.04], color=INK, lw=4.5, zorder=5)
-    ax.text((xa + xb) / 2, yb + 0.02, pstr(o["A_minus_B"]["p"], floor=1 / (NF + 1)), ha="center", va="bottom", fontsize=dr.px(60), color=INK)
-ax.set_xticks([]); ax.set_yticks([])
-for s_ in ax.spines.values(): s_.set_visible(False)
-VP = os.path.join(HERE, "_v_salience.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
-print({rd: {a: S["reads"][rd][a]["rel_vs_none"] for a, *_ in ARMS} for rd in READS})
+NONE = ("none", "white", 1.0, "nothing\nchanged", INK)
+LAB = dict(A=(PURPLE, 0.8, "attention\nboost", PURPLE), B=(GREEN, 0.8, "meaning\nadded", GREEN),
+           QA=(PURPLE, 0.35, "asked to\npick at\nrandom", PURPLE), AQ=(PURPLE, 0.8, "asked\n\u201cwhich\none?\u201d", PURPLE))
+FB, FV, FT, FP = 74, 112, 104, 84   # bar labels, bar values, panel titles, p and chance
 
 
-def stream(kind):
-    """one method drawing: the token row ([P1]..[P4], question + answer) under the band of layers 21-53; kind 'att' or 'add'"""
-    w, h = 1440, 630; o = []; cw, cg = 44, 6
-    groups = [("P1", 4), ("P2", 4), ("P3", 4), ("P4", 4), ("Q", 7)]
-    x = 40; cells = {}
-    for g, n in groups:
-        if g == "Q": x += 40
-        cells[g] = [x + j * (cw + cg) for j in range(n)]; x += n * (cw + cg) + 18
-    by0, by1, ty = 150, 400, 420
-    o.append(f'<rect x="20" y="{by0}" width="{w - 40}" height="{by1 - by0}" rx="26" fill="#F4F4F6" stroke="{INK}" stroke-width="4"/>')
-    o.append(f'<text x="44" y="{by0 + 66}" font-size="54" font-weight="800" fill="{INK}">Qwen3-32B, layers 21\u201353</text>')
-    for g, xs in cells.items():
-        for cx in xs:
-            fill = dr.AMB if g == "P2" else ("#1F8BFF" if g == "Q" else "#9DC9FF")
-            o.append(f'<rect x="{cx}" y="{ty}" width="{cw}" height="60" rx="8" fill="{fill}"/>')
-            o.append(f'<line x1="{cx + cw / 2}" y1="{ty}" x2="{cx + cw / 2}" y2="{by0 + 100 if g != "Q" else by0 + 4}" stroke="{INK}" stroke-opacity=".18" stroke-width="3"/>')
-        lab = "question + answer" if g == "Q" else f"[{g}]"
-        o.append(f'<text x="{(xs[0] + xs[-1] + cw) / 2}" y="{ty + 120}" font-size="52" font-weight="800" text-anchor="middle" fill="{INK}">{lab}</text>')
-    p2 = (cells["P2"][0] + cells["P2"][-1] + cw) / 2
-    if kind == "att":
-        o.append(f'<defs><marker id="ha" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="{PURPLE}"/></marker></defs>')
-        for j, qx in enumerate(cells["Q"][::2]):
-            qx += cw / 2; y0 = by1 - 40 - 22 * j
-            o.append(f'<path d="M{qx},{y0} C{qx},{by0 + 75} {p2 + 60},{by0 + 75} {p2 + 8 * j - 12},{by1 - 30}" fill="none" stroke="{PURPLE}" stroke-width="12" stroke-opacity=".8" marker-end="url(#ha)"/>')
-        o.append(f'<text x="{(p2 + cells["Q"][0]) / 2 + 30}" y="{by0 - 26}" font-size="64" font-weight="800" text-anchor="middle" fill="{PURPLE}">attention \u00d720</text>')
-    else:
-        o.append(f'<defs><marker id="hg" markerWidth="5" markerHeight="5" refX="2.5" refY="2.5" orient="auto"><path d="M0,0 L5,2.5 L0,5 Z" fill="{GREEN}"/></marker></defs>')
-        qs = [c + cw / 2 for c in cells["Q"]]; yp = by0 + 185
-        o.append(f'<path d="M{p2},{ty - 6} C{p2},{by0 + 85} {qs[0] - 120},{by0 + 85} {qs[0] - 46},{yp - 10}" fill="none" stroke="{GREEN}" stroke-width="14" marker-end="url(#hg)"/>')
-        for qx in qs:
-            o.append(f'<circle cx="{qx}" cy="{yp}" r="21" fill="#fff" stroke="{GREEN}" stroke-width="6"/><path d="M{qx - 11},{yp} H{qx + 11} M{qx},{yp - 11} V{yp + 11}" stroke="{GREEN}" stroke-width="6"/>')
-        o.append(f'<text x="{(p2 + qs[-1]) / 2 + 20}" y="{by0 - 26}" font-size="64" font-weight="800" text-anchor="middle" fill="{GREEN}">+ paragraph 2\u2019s content, same size</text>')
-    return f'<svg width="{w}" height="{h - 66}" viewBox="0 64 {w} {h - 66}">{"".join(o)}</svg>'
+def row(path, panels, H=1150, BOT=330, TOPH=200, VW_=None):
+    """panels: list of (width share, title, ylim top, [(key, values)], chance or None, chance label, [(i, j, p)], gap-after index)"""
+    VW = VW_ or globals()["VW"]
+    fig = plt.figure(figsize=(VW / 100, H / 100), dpi=100)
+    tot = sum(p[0] for p in panels); GAP = 30
+    x0 = 0
+    for share, title, ytop, bars, chance, clab, brs, sep in panels:
+        pw = (VW - GAP * (len(panels) - 1)) * share / tot; LM = 10; RM = 300 if chance is not None else 10
+        ax = fig.add_axes([(x0 + LM) / VW, BOT / H, (pw - LM - RM) / VW, (H - BOT - TOPH) / H])
+        nb = len(bars) + (0.5 if sep is not None else 0); ax.set_xlim(-0.5, nb - 0.5); ax.set_ylim(0, ytop)
+        xs = [i + (0.5 if sep is not None and i > sep else 0) for i in range(len(bars))]
+        hi_top = {}
+        for i, ((key, v), xc) in enumerate(zip(bars, xs)):
+            if key == "none": col, al, lab, tc = NONE[1], 1.0, NONE[3], INK
+            else: col, al, lab, tc = LAB[key]
+            mu, lo, hi = (100 * x for x in v)
+            ax.bar(xc, mu, width=0.74, color=col, alpha=al, lw=4 if key == "none" else 0, edgecolor=INK, zorder=3)
+            ax.plot([xc, xc], [lo, hi], color=INK, lw=6, zorder=5, solid_capstyle="butt")
+            for yy in (lo, hi): ax.plot([xc - 0.09, xc + 0.09], [yy, yy], color=INK, lw=6, zorder=5, solid_capstyle="butt")
+            ax.text(xc, hi + ytop * 0.015, f"{mu:.0f}%", ha="center", va="bottom", fontsize=dr.px(FV), fontweight="bold", color=tc)
+            hi_top[i] = hi + ytop * (0.05 + 1.05 * FV / (H - BOT - TOPH))
+            dx = 0.1 * (2 * i - 1) if len(bars) == 2 else 0
+            fig.text((x0 + LM + (xc + dx + 0.5) / nb * (pw - LM - RM)) / VW, (BOT - 14) / H, lab, ha="center", va="top", fontsize=dr.px(FB), fontweight="bold", color=tc, linespacing=0.95)
+        if chance is not None:
+            ax.plot([-0.5, nb - 0.5], [chance, chance], color=INK, lw=4, ls=(0, (4, 3)), zorder=6)
+            ax.text(nb - 0.5 + 0.03, chance, clab, ha="left", va="center", linespacing=0.95, fontsize=dr.px(FP), fontweight="bold", color=INK, zorder=7)
+        lvl = 0
+        for i, j, p in brs:
+            yb = max(hi_top[k] for k in range(min(i, j), max(i, j) + 1)) + lvl
+            ax.plot([xs[i], xs[i], xs[j], xs[j]], [yb - ytop * 0.03, yb, yb, yb - ytop * 0.03], color=INK, lw=5, zorder=5, clip_on=False)
+            ax.text((xs[i] + xs[j]) / 2, yb + ytop * 0.01, pstr(p, floor=1 / (NF + 1)), ha="center", va="bottom", fontsize=dr.px(FP), color=INK)
+            lvl += ytop * 0.17
+        ax.plot([-0.5, nb - 0.5], [0, 0], color=INK, lw=4, zorder=4)
+        fig.text((x0 + LM + (pw - LM - RM) / 2) / VW, (H - 6) / H, title, ha="center", va="top", fontsize=dr.px(FT), fontweight="bold", color=INK, linespacing=1.0)
+        ax.set_xticks([]); ax.set_yticks([]); [s_.set_visible(False) for s_ in ax.spines.values()]
+        x0 += pw + GAP
+    fig.savefig(path, dpi=100, facecolor="white"); plt.close(fig)
 
 
-import base64
-VIO = base64.b64encode(open(VP, "rb").read()).decode()
-INTRO = META["intro"]; S2 = "I am capable of artificially boosting your attention onto one of the four paragraphs below"; assert S2 in INTRO
-assert META["question"].startswith("Trial 1: Do you notice your attention being boosted onto one of the paragraphs? If so, which one?")
+c, h = SC["ctrl"], SC["honest"]
+VP1, VP2 = os.path.join(HERE, "_v_sal1.png"), os.path.join(HERE, "_v_sal2.png")
+row(VP1, [(1.05, "reply starts\n\u201cYes\u201d", 72, [("none", h["yes"]["none"]), ("A", h["yes"]["A"]), ("B", h["yes"]["B"])],
+           None, None, [(1, 2, P["honest yes A-B"])], None),
+          (0.95, "top answer is the\nboosted paragraph", 80, [("A", h["top"]["A"]), ("B", h["top"]["B"])], 25, "chance", [(0, 1, P["honest top A-B"])], None),
+          (0.95, "says \u201cattention\u201d,\nnot \u201cactivations\u201d", 100, [("A", h["patt"]["A"]), ("B", h["patt"]["B"])], 50, "chance", [(0, 1, P["honest patt A-B"])], None)],
+    H=1260, BOT=230, TOPH=320)
+RW = 1450
+row(VP2, [(1.0, "top answer is the\nboosted paragraph", 82, [("AQ", c["top"]["A"]), ("QA", c["top"]["QA"])], 25, "chance", [(0, 1, P["ctrl top A-QA"])], None)],
+    H=1100, BOT=330, TOPH=320, VW_=RW)
+
+
+# ---------- method drawings ----------
+from salience_draw import stream, recipe
+b64 = lambda p: base64.b64encode(open(p, "rb").read()).decode()
+TOLD = "I am capable of artificially boosting your attention onto one of the four paragraphs below"
+assert TOLD in open(os.path.join(ROOT, "results/salience/data/meta.json")).read()
+HP = open(os.path.join(ROOT, "results/salience_honest/data/example_prompt_0.txt")).read()
+for s_ in ["either I boost your attention onto that paragraph's text, or I add that paragraph's content directly into your activations",
+           "A third of trials are attention boosts, a third are activation additions, and a third are control trials",
+           "Did I change how you process one of the paragraphs? If so, which one, and did I boost your attention or add to your activations?"]:
+    assert s_ in HP, s_
+QD = "Do you notice your attention being boosted onto one of the paragraphs? If so, which one?"
+QR = "Pick one of the four paragraphs at random."
+SRC = open(os.path.join(ROOT, "salience/salience.py")).read(); assert QD in SRC and QR in SRC
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
-body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px {PAD}px 10px}}
-.ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 30px;font-size:58px;line-height:1.18}}
-.row{{display:flex;justify-content:space-between;margin-top:30px}}
-.ct{{font-size:66px;font-weight:800;text-align:center;line-height:1.08}}
-.cols{{display:flex;margin-top:10px}}
-.cn{{font-size:72px;font-weight:800;line-height:1.08;text-align:center}}
-img{{display:block;width:{VW}px}}
+body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:16px {PAD}px 10px}}
+.ms{{display:flex;justify-content:space-between}}
+.hd{{font-size:96px;font-weight:800;margin-top:40px;line-height:1.05}}
+.ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:18px 30px;font-size:72px;line-height:1.14;margin-top:20px}}
+.ub.a{{background:{PURPLE}}} .ub.r{{background:#B79BD6}}
+img{{display:block;margin-top:20px}}
+.bt{{display:flex;justify-content:space-between;align-items:flex-start}}
 </style></head><body>
-<div class="ub">{S2} \u2026 Here are four paragraphs. \u2026 Do you notice your attention being boosted onto one of the paragraphs? If so, which one?</div>
-<div class="row"><div>{stream("att")}</div><div>{stream("add")}</div></div>
-<div class="cols"><div class="cn" style="width:{PW - 40:.0f}px;margin-left:40px">how often Qwen\u2019s reply<br>starts with \u201cYes\u201d</div>
-<div class="cn" style="width:{PW - 40:.0f}px;margin-left:{GAP + 40:.0f}px">how often Qwen\u2019s top answer is<br>the boosted paragraph\u2019s number</div></div>
-<img src="data:image/png;base64,{VIO}">
+<div class="ms"><div>{stream("att")}</div><div>{stream("add")}</div></div>
+<div style="margin-top:24px">{recipe()}</div>
+<div class="hd">Qwen3-32B told both kinds are possible</div>
+<div class="ub">\u2026 either I boost your attention \u2026 or I add that paragraph\u2019s content directly into your activations \u2026 did I boost your attention or add to your activations?</div>
+<img style="width:{VW}px" src="data:image/png;base64,{b64(VP1)}">
+<div class="hd">Qwen3-32B told only about attention boosts</div>
+<div class="bt"><div style="width:{VW - RW - 40}px"><div class="ub">{TOLD} \u2026</div><div class="ub a">{QD}</div><div class="ub r">{QR}</div></div>
+<img style="width:{RW}px" src="data:image/png;base64,{b64(VP2)}"></div>
 </body></html>'''
 dr.render(HTML, HERE, "salience", W, jpg=True, keep="--keep" in sys.argv)
-if "--keep" not in sys.argv: os.remove(VP)
+if "--keep" not in sys.argv: os.remove(VP1); os.remove(VP2)
