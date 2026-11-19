@@ -3,18 +3,19 @@
 same height; any small difference is evened out by scaling both to the taller one.
 Above each column: a horizontal curly brace spanning the whole column (tips down, centre point up), drawn as a filled calligraphic stroke
 (thin at the tips and the centre point, thick in between), with "attention control" / "attention introspection" centred above it."""
-import os
+import os, sys
 import numpy as np
 from PIL import Image
 import matplotlib; matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from matplotlib.patches import Polygon
 H = os.path.dirname(os.path.abspath(__file__))
 INK = "#1D1D1F"
-a, b = (Image.open(os.path.join(H, f)).convert("RGB") for f in ("hero_L28_tall.png", "hero_inject_tall.png"))
+a, b = (Image.open(os.path.join(H, f)).convert("RGB") for f in (sys.argv[1:3] if len(sys.argv) > 3 else ("hero_L28_tall.png", "hero_inject_tall.png")))
+OUT = sys.argv[3] if len(sys.argv) > 3 else "hero_pair"
 h = max(a.height, b.height)
 a, b = (im if im.height == h else im.resize((round(im.width * h / im.height), h), Image.LANCZOS) for im in (a, b))
 gap = 80; Wt = a.width + gap + b.width
-BAND = 340   # px for label + brace
+BAND = 395   # px for label + brace
 
 def brace(x0, x1, yb, ht, wmax=26.0, wtip=3.0, n=600):
     """classic typeset curly brace, horizontal, tips down at y=yb, sharp centre point up at y=yb+ht (y up). Each arm: a quarter
@@ -36,12 +37,17 @@ def brace(x0, x1, yb, ht, wmax=26.0, wtip=3.0, n=600):
     rarm = np.c_[2 * xm - arm[::-1, 0], arm[::-1, 1]]; R1, R2 = outline(rarm, w[::-1])
     return np.r_[L1, R1, R2[::-1], L2[::-1]]   # left outer, right outer, back along right inner and left inner
 
+# label size: as big as both fit over their columns (one shared size), at most 138 pt = 1.5x the heroes' big % labels (89 pt)
+_f = plt.figure(dpi=100); _r = _f.canvas.get_renderer()
+FS = min([138] + [138 * (w - 40) / _f.text(0, 0, l, fontsize=138, fontweight="bold", family="Helvetica").get_window_extent(_r).width
+                  for w, l in ((a.width - 60, "attention control"), (b.width - 60, "attention introspection"))]); plt.close(_f); print("label pt", round(FS))
 fig = plt.figure(figsize=(Wt / 100, BAND / 100), dpi=100); ax = fig.add_axes([0, 0, 1, 1]); ax.set_xlim(0, Wt); ax.set_ylim(0, BAND); ax.axis("off")
 for (x0, x1), lab in (((30, a.width - 30), "attention control"), ((a.width + gap + 30, Wt - 30), "attention introspection")):
     ax.add_patch(Polygon(brace(x0, x1, 14, 124), closed=True, fc=INK, ec=INK, lw=1.0, joinstyle="miter"))
-    ax.text((x0 + x1) / 2, 156, lab, ha="center", va="bottom", fontsize=92, fontweight="bold", color=INK, family="Helvetica")   # 92 pt = 128 px, at least the heroes' big % labels (89 pt)
+    t = ax.text((x0 + x1) / 2, 132, lab, ha="center", va="bottom", fontsize=FS, fontweight="bold", color=INK, family="Helvetica")
 bp = os.path.join(H, "_braces.png"); fig.savefig(bp, dpi=100, facecolor="white"); plt.close(fig)
 band = Image.open(bp).convert("RGB"); os.remove(bp)
+_rows = np.where((np.asarray(band) < 250).any(2).any(1))[0]; band = band.crop((0, max(_rows[0] - 14, 0), Wt, BAND)); BAND = band.height   # no white above the labels
 out = Image.new("RGB", (Wt, BAND + h), "white"); out.paste(band, (0, 0)); out.paste(a, (0, BAND)); out.paste(b, (a.width + gap, BAND))
-out.save(os.path.join(H, "hero_pair.png")); out.save(os.path.join(H, "hero_pair.jpg"), quality=90)
+out.save(os.path.join(H, OUT + ".png")); out.save(os.path.join(H, OUT + ".jpg"), quality=90)
 print(out.size, "width/height", round(out.width / out.height, 2))
