@@ -103,6 +103,10 @@ fig.add_artist(plt.Line2D([xl, xl, xr, xr], [yb - 30 / BH, yb, yb, yb - 30 / BH]
 fig.text((xl + xr) / 2, yb + 10 / BH, PTXT, ha="center", va="bottom", fontsize=px(56), color=INK,
          bbox=dict(fc="white", ec="none", pad=4))
 fig.text((L0 + LW / 2) / BW, 1 - 10 / BH, "rank correlation with true attention,\nasked right after answering", ha="center", va="top", fontsize=px(50), fontweight="bold", color=INK, linespacing=1.1)
+# key for the dots, top left of the violin panel, level with the big numbers
+kx = fig.add_axes([0, 0, 1, 1], facecolor="none"); kx.set_xlim(0, BW); kx.set_ylim(BH, 0); kx.axis("off")
+ky = 318; kx.scatter([30], [ky], s=px(44) ** 2, color=PURPLE, alpha=0.75, edgecolors="none"); kx.scatter([30], [ky], s=px(6) ** 2, color="black")
+kx.text(66, ky, "= one prompt", ha="left", va="center", fontsize=px(52), fontweight="bold", color=INK)
 VP = os.path.join(HERE, "monitor_logprob_bottom.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
@@ -133,8 +137,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .ring{{display:inline-block;width:46px;height:46px;border-radius:50%;border:5px solid {INK}}}
 .bot{{width:{W - 2 * PAD}px;display:block;margin-top:30px}}
 </style></head><body><div class="cols">{LEFT}{RIGHT}</div>
-<div class="truth"><div class="key" style="flex-direction:column;align-items:flex-start;gap:12px"><div class="key"><span class="dot"></span> = one prompt</div></div>
- <div class="tl">true attention,<br>measured inside<br>the model</div><div class="tbox">{bars(truth, AMB)}</div></div>
+<div class="truth"><div class="tl">true attention,<br>measured inside<br>the model</div><div class="tbox">{bars(truth, AMB)}</div></div>
 <img class="bot" src="data:image/png;base64,{VIO}"></body></html>'''
 hp = os.path.join(HERE, "monitor_logprob.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "monitor_logprob_raw.png")
 subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3600",
