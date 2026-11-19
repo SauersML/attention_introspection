@@ -26,15 +26,15 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/grid_focus_one.jpg)
 
-6. Telling Qwen to focus on (left) or ignore (right) each paragraph in turn: which paragraph's attention moves.
-
-![](figures/rotate2.jpg)
-
-7. Focus and ignore on lists of single words instead of paragraphs.
+6. Focus and ignore on lists of single words instead of paragraphs.
 
 ![](figures/words_control.png)
 
 ## More
+
+7. Telling Qwen to focus on (left) or ignore (right) each paragraph in turn: which paragraph's attention moves.
+
+![](figures/rotate2.jpg)
 
 8. The focus/ignore effect at every one of the 64 layers.
 
