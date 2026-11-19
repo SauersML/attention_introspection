@@ -7,7 +7,7 @@
 ![](figures/hero_pair.jpg)
 
 
-2. The same told run as one wide figure: on the left how often Qwen says "Yes" (they notice a boost), on the right, after making Qwen start their answer with "Yes, paragraph [", the probability Qwen gives the boosted paragraph's number (chance 25%), with no boost and at each boost strength.
+2. The same told run as one wide figure, both panels as % change from no boost at each boost strength: on the left, how often Qwen's reply says "Yes" (they notice a boost); on the right, after making Qwen start their answer with "Yes, paragraph [P", how often Qwen's top answer is the boosted paragraph's number (no boost: 25%, chance).
 
 ![](figures/told_pair.jpg)
 
