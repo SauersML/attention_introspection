@@ -88,9 +88,9 @@ titles = (f'<div class="cols"><div class="ct" style="flex:none;width:{PWL - LM:.
 HTML = dr.page(W, bubble, "Do you notice your attention being boosted onto one of the words? If so, which one?", reply, titles, VP, VW, f"{MASSES[M]:.1f}",
                pre=pre, inj=f"boost attention<br>toward word {K + 1}", arrows=(("ry", "c1"), ("rp", "c2")), tipdrop=-2, inj_px=105, inj_near=(-18, -60))
 mb2 = f'<div class="mb" id="mb2"><span class="pfb">Yes, word [W</span><span class="part" id="rp">{PICK}</span>]</div>'
-HTML = HTML.replace('<span class="part" id="ry">No</span></div>', '<span class="part" id="ry">No</span></div>' + mb2, 1)
+HTML = HTML.replace('<span class="part" id="ry">No</span></div>', '<span class="part" id="ry">No</span></div><div class="orx">(or)</div>' + mb2, 1)   # Sauers: "(or)", not "No Yes"
 HTML = HTML.replace("g+=aura(R('mb'),30);", "g+=aura(R('mb'),30); g+=aura(R('mb2'),30);", 1)
-HTML = HTML.replace("</style>", ".ub{margin-right:700px;font-size:62px}#rq{margin-left:1500px;margin-right:500px;font-size:62px}.mrow{margin-left:1250px;gap:40px}.mb{font-size:96px}.cn{font-size:86px}.cols{margin-top:250px}"
+HTML = HTML.replace("</style>", ".ub{margin-right:700px;font-size:62px}#rq{margin-left:1500px;margin-right:500px;font-size:62px}.mrow{margin-left:1250px;gap:40px}.orx{font-size:50px;font-weight:800;color:"+INK+";align-self:center;white-space:nowrap}.mb{font-size:96px}.cn{font-size:86px}.cols{margin-top:250px}"
                     f".pfb{{border:5px dashed {INK};border-radius:14px;padding:0 10px;margin-right:6px;position:relative}}"
                     ".pfb::after{content:'prefilled';position:absolute;left:50%;transform:translateX(-50%);top:100%;margin-top:30px;font-size:72px;font-weight:800;white-space:nowrap}"
                     ".arow{display:flex;align-items:center;gap:16px;margin-top:14px} .rob0{width:150px;height:150px} .mb0{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:6px 30px;font-size:80px;font-weight:700}</style>", 1)
