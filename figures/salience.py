@@ -146,8 +146,7 @@ img{{display:block;margin-top:20px}}
 <div class="ub">\u2026 either I boost your attention \u2026 or I add that paragraph\u2019s content directly into your activations \u2026</div>
 <div class="ub q">{HQ}</div>
 <img style="width:{VW}px" src="data:image/png;base64,{b64(VP1)}">
-<div class="hd">Qwen3-32B told only about attention boosts</div>
-<div class="bt"><div style="width:{VW - RW - 40}px"><div class="ub">{TOLD} \u2026</div><div class="ub a">{QD}</div><div class="ub r">{QR}</div></div>
+<div class="bt" style="margin-top:50px"><div style="width:{VW - RW - 40}px"><div class="ub">{TOLD} \u2026</div><div class="ub a">{QD}</div><div class="ub r">{QR}</div></div>
 <img style="width:{RW}px" src="data:image/png;base64,{b64(VP2)}"></div>
 </body></html>'''
 dr.render(HTML, HERE, "salience", W, jpg=True, keep="--keep" in sys.argv, H=5000)
