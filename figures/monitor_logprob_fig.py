@@ -6,8 +6,8 @@ attention from answer tokens to each paragraph, per token of the paragraph, aver
 four values' total). Bottom left: per-prompt Spearman between report score and true attention, asked right after answering, self vs
 reader, one violin under each setup; big number = mean; p = paired two-sided sign-flip test of self vs reader (200,000 flips).
 (The held-out gain over every wording, logprob.py "gain_all", is reported in LOGPROB.md, not drawn.)
-Third violin: a model of another family reading the same transcript (monitor/reader_xmodel.py, results/monitor_inorder/reader_xmodel_scored.json).
-usage: monitor_logprob_fig.py results/monitor_inorder/logprob_results.json OUT.png results/monitor_inorder/reader_xmodel_scored.json SHARD_DIR [SHARD_DIR ...]"""
+Third violin: a model of another family reading the same transcript (monitor/reader_xmodel.py, results/monitor_inorder/reader_xmodel_gemma4_scored.json).
+usage: monitor_logprob_fig.py results/monitor_inorder/logprob_results.json OUT.png results/monitor_inorder/reader_xmodel_gemma4_scored.json SHARD_DIR [SHARD_DIR ...]"""
 import json, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
@@ -100,7 +100,7 @@ ARMS = [("self", PURPLE, "Qwen3-32B\nself-report", PP["after|most"]["self"]), ("
         ]
 if X:
     assert np.allclose(X["perprompt"]["self"], PP["after|most"]["self"]) and np.allclose(X["perprompt"]["qwen_reader"], PP["after|most"]["reader"])
-    ARMS.append(("x", GREEN, X["model"].split("/")[-1].replace("-it", "").replace("gemma", "Gemma") + "\nreading the text", X["perprompt"]["x_reader"]))
+    ARMS.append(("x", GREEN, {"google/gemma-4-31B-it": "Gemma 4 31B"}.get(X["model"], X["model"].split("/")[-1]) + "\nreading the text", X["perprompt"]["x_reader"]))
 XC = [0.5 + j for j in range(len(ARMS))]; XL = (0.0, float(len(ARMS)))
 X2P = lambda x: AXL + AXW * (x - XL[0]) / (XL[1] - XL[0])          # data x -> page px
 for j, (who, col, name, z) in enumerate(ARMS):
@@ -127,6 +127,9 @@ for j, yb, ptxt in [(1, Y_BR1, PTXT), (2, Y_BR2, PTXT2)][:len(ARMS) - 1]:
     xl, xr = X2P(XC[0]), X2P(XC[j])
     kx.plot([xl, xl, xr, xr], [yb + 26, yb, yb, yb + 26], color=INK, lw=4)
     kx.text((xl + xr) / 2 + (0 if j == 1 else (xr - xl) / 4), yb - 6, ptxt, ha="center", va="bottom", fontsize=px(52), color=INK, bbox=dict(fc="white", ec="none", pad=3))
+# key for the dots, top left of the violin panel, left of the first name
+KY = Y_NAME + 34; kx.scatter([40], [KY], s=330, color=PURPLE, alpha=0.75, edgecolors="none"); kx.scatter([40], [KY], s=5, color="black")
+kx.text(70, KY, "= one prompt", ha="left", va="center", fontsize=px(52), fontweight="bold", color=INK)
 kx.text(BW / 2, 6, "which paragraph did the model attend to most? asked right after answering", ha="center", va="top", fontsize=px(52), fontweight="bold", color=INK)
 VP = os.path.join(HERE, "monitor_logprob_bottom.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 

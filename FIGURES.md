@@ -40,7 +40,7 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/layers.jpg)
 
-9. Qwen rates how much they attended to each paragraph; a separate model guesses the same from the text alone. Qwen tracks it, but no better than the reader.
+9. Qwen rates how much they attended to each paragraph; two readers guess the same from the transcript alone: Qwen reading it as someone else's chat, and Gemma 4 31B. Qwen's self-report tracks their attention, but both readers do slightly better.
 
 ![](figures/monitor_logprob.png)
 
