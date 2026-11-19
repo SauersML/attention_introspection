@@ -128,7 +128,9 @@ def card(i, a, nm):
     return f'''<div class="col"><div class="t1">boost {nm}</div><div class="t2">attention to the boosted word ×{ST[a]["att"]:.1f}</div>
 <div class="ub" id="ub{i}">Here is a list of eight words.<div class="wl">{wl}</div><div>{html.escape(QLINE)}</div></div>
 <div class="mrow"><img class="rob" id="rob{i}" src="data:image/png;base64,{rob}"><div class="mb" id="mb{i}">{html.escape(rec["ans"].strip())}</div></div>
-<div class="ub2" id="rq{i}">{QTEXT} …</div></div>'''
+<div class="ub2" id="rq{i}">{QTEXT} …</div>
+<div class="mrow fr"><img class="rob" id="frob{i}" src="data:image/png;base64,{robot_inj if a == "C" else robot}"><div class="mb fb" id="fb{i}"><span class="pf">[W</span><span class="qm">?</span></div>
+<div class="fl"><div>prefilled</div><div class="flq">chance of each<br>number read here</div></div></div></div>'''
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:18px {PAD}px 0;position:relative}}
@@ -140,6 +142,9 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .mrow{{display:flex;align-items:center;gap:16px;margin-top:40px;margin-left:30px}}
 .rob{{width:120px;height:120px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:28px;padding:8px 32px;font-size:66px;font-weight:700}}
+.fr{{margin-top:34px}} .fb{{font-size:60px;padding:6px 26px;white-space:nowrap}} .pf{{border:4px dashed {INK};border-radius:10px;padding:0 8px}}
+.qm{{display:inline-block;border:5px solid {PURPLE};color:{PURPLE};border-radius:10px;padding:0 10px;margin-left:8px}}
+.fl{{font-size:40px;font-weight:700;line-height:1.15;margin-left:10px;white-space:nowrap}} .flq{{color:{PURPLE};font-weight:800}}
 .ub2{{background:#1F8BFF;color:#fff;border-radius:32px;padding:16px 26px;font-size:46px;line-height:1.2;margin:44px 170px 0 0}}
 .img{{width:{W}px;display:block;margin-left:-{PAD}px}} .vio{{margin-top:70px}} .dose{{margin-top:40px}}
 #gl{{position:absolute;left:0;top:0;z-index:0;pointer-events:none}} #ov{{position:absolute;left:0;top:0;pointer-events:none;z-index:3}}
@@ -159,7 +164,8 @@ const aura=(r,rad)=>{{ const S=(d,st,col,op,f,fill)=>`<rect x="${{r.left-d}}" y=
  return S(8,0,'#B994FF',0.75,'haze',1)+S(50,5,'#C9A8FF',0.45,'w1')+S(32,7,'{LIL}',0.6,'w2')+S(15,9,'#7B3FE4',0.75,'w3')+S(2,8,'{PURPLE}',0.55,'w3'); }};
 const ro=R('rob0'), mb=R('mb0');
 g+=aura({{left:ro.left+2,top:Math.min(ro.top,mb.top)+4,width:mb.right-ro.left-2,height:Math.max(ro.bottom,mb.bottom)-Math.min(ro.top,mb.top)-8}},40);
-g+=aura(R('rq1'),32);
+const q1=R('rq1'), f1=R('frob1'), b1=R('fb1');   // arm C boosts every report-turn query: the question, the assistant template and the prefilled [W
+g+=aura({{left:Math.min(q1.left,f1.left)+2,top:q1.top,width:Math.max(q1.right,b1.right)-Math.min(q1.left,f1.left)-2,height:Math.max(f1.bottom,b1.bottom)-q1.top}},34);
 gl.innerHTML=g;
 // wavy arrow (hero_inject's): from the boosted part up the right margin into the right end of the boosted word
 const SW0=20;
