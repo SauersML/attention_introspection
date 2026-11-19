@@ -110,7 +110,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .mrow{{display:flex;align-items:center;gap:16px;margin-top:12px;margin-left:30px}}
 .rob{{width:104px;height:104px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:28px;padding:8px 32px;font-size:66px;font-weight:700}}
-.fr{{margin-top:12px}} .fb{{font-size:60px;padding:6px 26px;white-space:nowrap}} .pf{{border:4px dashed {INK};border-radius:10px;padding:0 8px;position:relative}} .pfl{{position:absolute;left:50%;top:calc(100% + 18px);transform:translateX(-50%);font-size:42px;font-weight:800;color:{INK};white-space:nowrap}} .fr{{margin-bottom:52px}}
+.fr{{margin-top:12px}} .fb{{font-size:60px;padding:6px 26px;white-space:nowrap}} .pf{{border:4px dashed {INK};border-radius:10px;padding:0 8px;position:relative}} .pfl{{position:absolute;left:50%;top:calc(100% + 18px);transform:translateX(-50%);paint-order:stroke fill;-webkit-text-stroke:14px #fff;font-size:42px;font-weight:800;color:{INK};white-space:nowrap}} .fr{{margin-bottom:52px}}
 .qm{{display:inline-block;border:5px solid {PURPLE};color:{PURPLE};border-radius:10px;padding:0 10px;margin-left:8px}}
 .fl{{font-size:44px;font-weight:700;line-height:1.15;margin-left:10px;white-space:nowrap}} .flq{{color:{PURPLE};font-weight:800}}
 .ub2{{background:#1F8BFF;color:#fff;border-radius:32px;padding:12px 26px;font-size:46px;line-height:1.18;margin:20px 150px 0 0}}
