@@ -6,7 +6,8 @@ attention from answer tokens to each paragraph, per token of the paragraph, aver
 four values' total). Bottom left: per-prompt Spearman between report score and true attention, asked right after answering, self vs
 reader, one violin under each setup; big number = mean; p = paired two-sided sign-flip test of self vs reader (200,000 flips).
 (The held-out gain over every wording, logprob.py "gain_all", is reported in LOGPROB.md, not drawn.)
-usage: monitor_logprob_fig.py results/monitor_inorder/logprob_results.json OUT.png SHARD_DIR [SHARD_DIR ...]"""
+Third violin: a model of another family reading the same transcript (monitor/reader_xmodel.py, results/monitor_inorder/reader_xmodel_scored.json).
+usage: monitor_logprob_fig.py results/monitor_inorder/logprob_results.json OUT.png results/monitor_inorder/reader_xmodel_scored.json SHARD_DIR [SHARD_DIR ...]"""
 import json, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
@@ -16,7 +17,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, INK
 from pfmt import pstr
 BLUE = "#2F7FC1"   # the reader: the blue end of the shared palette, darkened enough for text
-J = json.load(open(sys.argv[1])); OUTP = os.path.abspath(sys.argv[2]); DIRS = sys.argv[3:]
+GREEN = "#1A9E77"  # the reader of another model family
+J = json.load(open(sys.argv[1])); OUTP = os.path.abspath(sys.argv[2]); X = None if sys.argv[3] == "-" else json.load(open(sys.argv[3])); DIRS = sys.argv[4:]
 TR = "norm"  # preregistered primary truth
 RES, PP, IDS = J["res"][TR], J["perprompt"][TR], J["ids"]
 C, H, G = {}, {}, {}
@@ -71,42 +73,61 @@ ROWS = [("after|most", "right after"), ("before|most", "before answering"), ("la
         ("after|least", "least attended"), ("after|free", "free answer")]
 ROWS = [r for r in ROWS if r[0] in RES]
 GROUP = {0: "which paragraph most?", [k for k, _ in ROWS].index("after|rate"): "0\u201310 rating", [k for k, _ in ROWS].index("after|least"): "other questions"}
-BW = W - 2 * PAD; BH = 1300
+BW = W - 2 * PAD; BH = 1560 - (0 if X else 80)
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 fig = plt.figure(figsize=(BW / 100, BH / 100), dpi=100)
 # left: violins of per-prompt rank correlation
-L0, LW, B0, T0 = 0, BW, 40, 420      # px: left edge, width, bottom margin, top band for the big numbers
-ax = fig.add_axes([L0 / BW, B0 / BH, LW / BW, (BH - B0 - T0) / BH])
+SH = 0 if X else 80                   # no second bracket row without the third violin
+AXL, B0, T0 = 300, 40, 640 - SH           # px: axes left edge (room for the y label and ticks), bottom margin, top band
+AXW = BW - AXL - 10
+Y_NAME, Y_BR2, Y_BR1, Y_NUM = 80, 280, 360 - SH, 410 - SH     # px from the top: names, the two p brackets, big numbers
+ax = fig.add_axes([AXL / BW, B0 / BH, AXW / BW, (BH - B0 - T0) / BH])
+kx = fig.add_axes([0, 0, 1, 1], facecolor="none", zorder=-1); kx.set_xlim(0, BW); kx.set_ylim(BH, 0); kx.axis("off")
 rng = np.random.default_rng(1)
 dsr = np.subtract(PP["after|most"]["self"], PP["after|most"]["reader"]); obs = abs(dsr.mean())
 NF = 200000
 PV = (sum(int((np.abs((np.random.default_rng(k).choice([-1.0, 1.0], (20000, len(dsr))) * dsr).mean(1)) >= obs - 1e-12).sum()) for k in range(10)) + 1) / (NF + 1)
 PTXT = pstr(PV, floor=1 / (NF + 1))
 print("self - reader", round(dsr.mean(), 4), "p", PV, PTXT)
-XC = [0.5, 1.5]; XL = (0.0, 2.0)   # each violin under its own setup's column
-for j, (who, col) in enumerate([("self", PURPLE), ("reader", BLUE)]):
-    z = np.array(PP["after|most"][who]); st = RES["after|most"][who]; x0 = XC[j]
+def flip(x):
+    x = np.asarray(x, float); o = abs(x.mean())
+    return (sum(int((np.abs((np.random.default_rng(k).choice([-1.0, 1.0], (20000, len(x))) * x).mean(1)) >= o - 1e-12).sum()) for k in range(10)) + 1) / (NF + 1)
+PV2 = flip(np.subtract(PP["after|most"]["self"], X["perprompt"]["x_reader"])) if X else None; PTXT2 = pstr(PV2, floor=1 / (NF + 1)) if X else None
+P0 = flip(PP["after|most"]["self"]); P0TXT = pstr(P0, floor=1 / (NF + 1))
+print("self - x reader p", PV2, PTXT2, "self vs 0 p", P0, P0TXT)
+# three violins: the self-report, Qwen3-32B reading the transcript, and a model of another family reading the same transcript
+ARMS = [("self", PURPLE, "Qwen3-32B\nself-report", PP["after|most"]["self"]), ("reader", BLUE, "Qwen3-32B\nreading the text", PP["after|most"]["reader"]),
+        ]
+if X:
+    assert np.allclose(X["perprompt"]["self"], PP["after|most"]["self"]) and np.allclose(X["perprompt"]["qwen_reader"], PP["after|most"]["reader"])
+    ARMS.append(("x", GREEN, X["model"].split("/")[-1].replace("-it", "").replace("gemma", "Gemma") + "\nreading the text", X["perprompt"]["x_reader"]))
+XC = [0.5 + j for j in range(len(ARMS))]; XL = (0.0, float(len(ARMS)))
+X2P = lambda x: AXL + AXW * (x - XL[0]) / (XL[1] - XL[0])          # data x -> page px
+for j, (who, col, name, z) in enumerate(ARMS):
+    z = np.array(z); x0 = XC[j]
     kde = gaussian_kde(z, bw_method=0.3); yy = np.linspace(-1.0, 1.0, 300); dd = kde(yy); dd = dd / dd.max() * 0.40
     ax.fill_betweenx(yy, x0 - dd, x0 + dd, color=col, alpha=0.18, lw=0); ax.plot(np.r_[x0 - dd, (x0 + dd)[::-1], x0 - dd[:1]], np.r_[yy, yy[::-1], yy[:1]], color=col, lw=2.5)
     xj = x0 + rng.uniform(-1, 1, len(z)) * kde(z) / kde(yy).max() * 0.36; yj = np.clip(z + rng.uniform(-0.03, 0.03, len(z)), -1, 1)
     ax.scatter(xj, yj, s=330, color=col, alpha=0.40, edgecolors="none", zorder=3); ax.scatter(xj, yj, s=5, color="black", zorder=4)
-    fig.text((L0 + LW * (x0 - XL[0]) / (XL[1] - XL[0])) / BW, 1 - 262 / BH, f"{st['mean']:.2f}", ha="center", va="top", fontsize=px(100), fontweight="bold", color=col)
-ax.plot([0.12, XL[1]], [0, 0], color=INK, lw=4, ls=(0, (4, 3)), zorder=6)
-ax.text(1.0, -0.04, "no relation", ha="center", va="top", fontsize=px(56), color=INK, zorder=7)
-for t, s in [(-1, "\u22121"), (0, "0"), (1, "1")]:
-    ax.text(0.0, t, s, ha="left", va="center", fontsize=px(72), fontweight="bold", color=INK)
-ax.set_xlim(*XL); ax.set_ylim(-1.06, 1.06); ax.set_xticks([]); ax.set_yticks([])
-for s_ in ax.spines.values(): s_.set_visible(False)
-# p bracket between the two big numbers
-xl, xr = [(L0 + LW * (x - XL[0]) / (XL[1] - XL[0])) / BW for x in XC]; yb = 1 - 212 / BH
-fig.add_artist(plt.Line2D([xl, xl, xr, xr], [yb - 30 / BH, yb, yb, yb - 30 / BH], transform=fig.transFigure, color=INK, lw=4))
-fig.text((xl + xr) / 2, yb + 10 / BH, PTXT, ha="center", va="bottom", fontsize=px(56), color=INK,
-         bbox=dict(fc="white", ec="none", pad=4))
-fig.text((L0 + LW / 2) / BW, 1 - 10 / BH, "rank correlation with true attention,\nasked right after answering", ha="center", va="top", fontsize=px(50), fontweight="bold", color=INK, linespacing=1.1)
-# key for the dots, top left of the violin panel, level with the big numbers
-kx = fig.add_axes([0, 0, 1, 1], facecolor="none"); kx.set_xlim(0, BW); kx.set_ylim(BH, 0); kx.axis("off")
-ky = 318; kx.scatter([30], [ky], s=px(44) ** 2, color=PURPLE, alpha=0.75, edgecolors="none"); kx.scatter([30], [ky], s=px(6) ** 2, color="black")
-kx.text(66, ky, "= one prompt", ha="left", va="center", fontsize=px(52), fontweight="bold", color=INK)
+    kx.text(X2P(x0), Y_NAME, name, ha="center", va="top", fontsize=px(54), fontweight="bold", color=col, linespacing=1.05)
+    kx.text(X2P(x0), Y_NUM, f"{z.mean():.2f}", ha="center", va="top", fontsize=px(100), fontweight="bold", color=col)
+# chance: rank correlation 0
+ax.axhline(0, color=INK, lw=4, ls=(0, (4, 3)), zorder=6)
+ax.text(XL[1], 0.025, "chance", ha="right", va="bottom", fontsize=px(56), fontweight="bold", color=INK, zorder=7,
+        bbox=dict(fc="white", ec="none", pad=2, alpha=0.85))
+kx.text(X2P(XC[0]), Y_NUM + 118, "above chance,\n" + P0TXT, ha="center", va="top", fontsize=px(50), color=PURPLE, fontweight="bold", linespacing=1.05)
+ax.set_xlim(*XL); ax.set_ylim(-1.06, 1.06); ax.set_xticks([])
+ax.set_yticks([-1, -0.5, 0, 0.5, 1]); ax.set_yticklabels(["\u22121", "\u22120.5", "0", "0.5", "1"], fontsize=px(50), fontweight="bold", color=INK)
+ax.tick_params(axis="y", length=14, width=3, color=INK, pad=8)
+ax.set_ylabel("rank correlation with\ntrue attention, per prompt", fontsize=px(52), fontweight="bold", color=INK, labelpad=18, linespacing=1.1)
+for k_, s_ in ax.spines.items(): s_.set_visible(k_ == "left")
+ax.spines["left"].set_linewidth(3); ax.spines["left"].set_bounds(-1, 1)
+# paired p brackets: self vs each reader
+for j, yb, ptxt in [(1, Y_BR1, PTXT), (2, Y_BR2, PTXT2)][:len(ARMS) - 1]:
+    xl, xr = X2P(XC[0]), X2P(XC[j])
+    kx.plot([xl, xl, xr, xr], [yb + 26, yb, yb, yb + 26], color=INK, lw=4)
+    kx.text((xl + xr) / 2 + (0 if j == 1 else (xr - xl) / 4), yb - 6, ptxt, ha="center", va="bottom", fontsize=px(52), color=INK, bbox=dict(fc="white", ec="none", pad=3))
+kx.text(BW / 2, 6, "which paragraph did the model attend to most? asked right after answering", ha="center", va="top", fontsize=px(52), fontweight="bold", color=INK)
 VP = os.path.join(HERE, "monitor_logprob_bottom.png"); fig.savefig(VP, dpi=100, facecolor="white"); plt.close(fig)
 
 # ---------------- page ----------------
@@ -128,7 +149,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .rob{{width:110px;height:110px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:8px 30px;font-size:58px;font-weight:700;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
 .mb.rp{{border-width:5px;padding:6px 14px 0}}
-.truth{{display:flex;align-items:center;justify-content:center;gap:40px;margin-top:26px}}
+.truth{{display:grid;grid-template-columns:1fr auto 1fr;align-items:center;gap:40px;margin-top:26px}}
 .tl{{font-size:56px;font-weight:800;text-align:right;line-height:1.1}}
 .tbox{{border:4px solid {INK};border-radius:28px;padding:6px 14px 0}}
 .key{{display:flex;align-items:center;gap:14px;font-size:52px;font-weight:800;white-space:nowrap}}
@@ -137,7 +158,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .ring{{display:inline-block;width:46px;height:46px;border-radius:50%;border:5px solid {INK}}}
 .bot{{width:{W - 2 * PAD}px;display:block;margin-top:30px}}
 </style></head><body><div class="cols">{LEFT}{RIGHT}</div>
-<div class="truth"><div class="tl">true attention,<br>measured inside<br>the model</div><div class="tbox">{bars(truth, AMB)}</div></div>
+<div class="truth"><div class="tl">true attention,<br>measured inside<br>the model</div><div class="tbox">{bars(truth, AMB)}</div><div></div></div>
 <img class="bot" src="data:image/png;base64,{VIO}"></body></html>'''
 hp = os.path.join(HERE, "monitor_logprob.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "monitor_logprob_raw.png")
 subprocess.run(["nice", "-n", "19", CH, "--headless=new", "--disable-gpu", "--hide-scrollbars", f"--window-size={W},3600",
