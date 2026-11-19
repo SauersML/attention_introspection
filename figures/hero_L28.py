@@ -189,7 +189,7 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28_tall" if NARROW else 
     VIO = base64.b64encode(open(os.path.join(HERE, f"v{out}_dose.png"), "rb").read()).decode()
     cols = []
     for c, name, col in CONDS:
-        pl = "".join(f'<div class="pl"><b class="{"k" if i + 1 == K else ""}">[P{i+1}]</b> {html.escape(short(p, 2 if i == 0 else 3))}</div>' for i, p in enumerate(paras))
+        pl = "".join(f'<div class="pl"><b>[P{i+1}]</b> <span class="{"k" if i + 1 == K else ""}">{html.escape(short(p, 2 if i == 0 else 3))}</span></div>' for i, p in enumerate(paras))   # highlight the paragraph text: attention is measured on its body tokens, not the label
         cols.append(f'''<div class="col"><div class="cname" style="color:{col}">{name}</div>
   <div class="ub"><div>Here are four paragraphs.</div>{pl}
     <div class="var" style="color:{col}">{html.escape(LINE[c])}</div>
@@ -220,7 +220,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .mbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;overflow:hidden}}
 </style></head><body><div class="cols">{"".join(cols)}</div><div class="vw"><img class="vio" src="data:image/png;base64,{VIO}">
   <div class="cbox" style="left:{CB['left']*sc:.0f}px;width:{(CB['right']-CB['left'])*sc:.0f}px;top:{CB['top']*sc:.0f}px;height:{(CB['bottom']-CB['top'])*sc:.0f}px">
-    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}">one dot <span class="dot"></span> = one prompt</div><div class="cl1 nw">% change in attention to the named paragraph, compared to:</div></div>
+    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}">one dot <span class="dot"></span> = one prompt</div><div class="cl1 nw">% change in attention to the mentioned paragraph, compared to:</div></div>
     <div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][0].format(k=K))}</div></div></div>
   <div class="mbox" style="left:{(VW + 36) / 2:.0f}px;width:{(VW - 36) / 2:.0f}px;top:{BOX['top']*FH*sc:.0f}px;height:{SVGH:.0f}px">{SVG}</div></div></body></html>'''
     hp = os.path.join(HERE, f"{out}_dose.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, f"{out}_dose_raw.png")
