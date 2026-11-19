@@ -9,7 +9,9 @@ is not in this average; it is stored separately as "att_first"). The paragraph s
 is merged with the space after the label). Method-box head arcs are a schematic: dose.json stores only the head mean.
 p: two-sided sign-flip test over contexts on the mean % change. Example bubble text: dose.json id 300 (real prompt)."""
 import json, base64, subprocess, os, html, sys
-import numpy as np, matplotlib
+import numpy as np
+from scipy.stats import gaussian_kde
+import matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
 from PIL import Image, ImageFont
 
@@ -150,6 +152,9 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28_tall" if NARROW else 
         z = r["z"]; up = r["mean"] > 0; colr = PURPLE if up else RED
         vv = a.violinplot([z], positions=[x0], widths=0.7, showextrema=False)
         for bb in vv["bodies"]: bb.set_facecolor(colr); bb.set_alpha(0.22); bb.set_edgecolor(colr); bb.set_linewidth(2.5)
+        mu = np.log2(1 + r["mean"] / 100)   # mean bar at the mean % change the big label reports, across the violin
+        kd = gaussian_kde(z); yy = np.linspace(z.min(), z.max(), 100); mw = 0.35 * np.interp(mu, yy, kd(yy) / kd(yy).max())
+        a.plot([x0 - mw, x0 + mw], [mu] * 2, color="black", lw=7, solid_capstyle="butt", zorder=5.5)
         xj = x0 + rng.uniform(-0.25, 0.25, len(z))
         a.scatter(xj, z, s=650, c=pct_colour(2.0 ** z), alpha=0.45, edgecolors="none", zorder=3); a.scatter(xj, z, s=6, color="black", zorder=4)
         eff = f"{r['mean']:+.0f}%{chr(10) if NARROW else ' '}attention".replace("-", "\u2212")
