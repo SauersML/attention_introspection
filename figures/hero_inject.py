@@ -200,14 +200,14 @@ const arrow=(p0,c1,c2,tip,col,ol)=>{{ const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2
  const d=`M${{p0}} C${{c1}} ${{c2}} ${{e}}`, h=`M${{tip}} L${{b[0]-H*uy}},${{b[1]+H*ux}} L${{b[0]+H*uy}},${{b[1]-H*ux}} Z`;
  const o=ol?`<path d="${{d}}" fill="none" stroke="{INK}" stroke-width="${{SW+6}}" stroke-linecap="round"/><path d="${{h}}" fill="{INK}" stroke="{INK}" stroke-width="6" stroke-linejoin="round"/>`:'';
  let w='';
- if (ol) {{ // waves inside the arrow body: a darker sine line running along the curve
-  const B=(t,i)=>{{const u=1-t; return u*u*u*p0[i]+3*u*u*t*c1[i]+3*u*t*t*c2[i]+t*t*t*e[i];}};
-  const N=400, P=[]; let len=0, prev=null;
-  for (let k=0;k<=N;k++){{ const t=k/N, x=B(t,0), y=B(t,1); if(prev) len+=Math.hypot(x-prev[0],y-prev[1]); P.push([x,y,len]); prev=[x,y]; }}
-  const amp=SW*0.28, wl=SW*2.2; let pts=[];
-  for (let k=0;k<=N;k++){{ const a=P[Math.max(k-1,0)], b=P[Math.min(k+1,N)]; let tx=b[0]-a[0], ty=b[1]-a[1]; const m=Math.hypot(tx,ty)||1; tx/=m; ty/=m;
-   const off=amp*Math.sin(2*Math.PI*P[k][2]/wl); pts.push(`${{(P[k][0]-ty*off).toFixed(1)}},${{(P[k][1]+tx*off).toFixed(1)}}`); }}
-  w=`<polyline points="${{pts.join(' ')}}" fill="none" stroke="{PURPLE}" stroke-width="${{SW*0.22}}" stroke-linecap="round" stroke-linejoin="round" opacity="0.9"/>`; }}
+ if (ol) {{ // the arrow body filled with a 2D wavy purple texture (same vibe as the auras), masked to the arrow's shape
+  const xs=[p0[0],c1[0],c2[0],tip[0]], ys=[p0[1],c1[1],c2[1],tip[1]], pad=SW*3;
+  const X=Math.min(...xs)-pad, Y=Math.min(...ys)-pad, Wd=Math.max(...xs)-X+pad, Ht=Math.max(...ys)-Y+pad;
+  w=`<defs><mask id="amask" maskUnits="userSpaceOnUse" x="${{X}}" y="${{Y}}" width="${{Wd}}" height="${{Ht}}"><path d="${{d}}" fill="none" stroke="#fff" stroke-width="${{SW}}" stroke-linecap="round"/><path d="${{h}}" fill="#fff"/></mask>`+
+   `<filter id="wfill" filterUnits="userSpaceOnUse" x="${{X}}" y="${{Y}}" width="${{Wd}}" height="${{Ht}}"><feTurbulence type="turbulence" baseFrequency="0.010 0.035" numOctaves="2" seed="11" result="n"/>`+
+   `<feColorMatrix in="n" type="matrix" values="-1.05 0 0 0 0.80  -1.30 0 0 0 0.70  -0.80 0 0 0 0.96  0 0 0 0 1"/></filter></defs>`+
+   `<g mask="url(#amask)"><rect x="${{X}}" y="${{Y}}" width="${{Wd}}" height="${{Ht}}" fill="#A98BD6" filter="url(#wfill)"/></g>`; }}
+ if (ol) return o+w;
  return o+`<path d="${{d}}" fill="none" stroke="${{col}}" stroke-width="${{SW}}" stroke-linecap="round"/>`+w+
   `<path d="${{h}}" fill="${{col}}"/>`; }};
 // purple: up out of the report question's top edge, one quarter-turn, into the right end of [P2]
