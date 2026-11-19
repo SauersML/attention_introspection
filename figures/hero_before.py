@@ -57,8 +57,8 @@ for ctrl, ctag, out in [("b_mention", "mention", "hero_before")]:
         res.append(dict(c=c, z=np.log2(M[c] / M[ctrl]), mean=z.mean(), p=pstr(p, floor=1 / (nf + 1)), ci=np.percentile(bs, [2.5, 97.5])))
         numbers[(ctag, c)] = (round(z.mean(), 1), p, nf, round(100 * (z > 0).mean()))
     # ---------- violins: per-prompt % change vs the line that only mentions the paragraph (also placed before), log-ratio axis
-    VW = W - 52; VH = 1080; vp = os.path.join(TMP, f"_v{out}.png")
-    info = violins(res, VW, VH, vp, skip=(18, 250), mean_mark=True)
+    VW = W - 52; VH = 720; vp = os.path.join(TMP, f"_v{out}.png")
+    info = violins(res, VW, VH, vp, skip=(18, 250), mean_mark=True, tick_right=190)
     base = f'<span>0% =</span><div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][1].format(k=K))}</div></div>'
     cols = "".join(bubble_col(name, col, paras, K, LINE[c], qline, ANS[c], line_first=True) for c, name, col in CONDS)
     HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>{CSS} body{{width:{W}px}} .vio{{width:{VW}px}}</style></head><body>

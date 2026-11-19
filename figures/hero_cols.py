@@ -56,7 +56,7 @@ def ticks_for(lo, hi):
     cand = [0.25, 0.5, 0.75, 1.5, 2, 3, 4, 6]
     return [r for r in cand if lo < np.log2(r) < hi]
 
-def violins(cols, VW, VH, png, gap=36, seed=1, top_band=200, bot_band=200, ticks=None, skip=(0, 0), mean_mark=False):
+def violins(cols, VW, VH, png, gap=36, seed=1, top_band=200, bot_band=200, ticks=None, skip=(0, 0), mean_mark=False, tick_right=None):
     """skip: (from, to) px below the dashed baseline kept free of y labels (the baseline label sits there);
     mean_mark: a black bar across each violin at its mean % change (log2(1 + mean/100))"""
     """cols: list (one per page column; None = empty column) of dict(z = log2(value / baseline) per prompt, mean = mean % change, p = p text).
@@ -95,7 +95,7 @@ def violins(cols, VW, VH, png, gap=36, seed=1, top_band=200, bot_band=200, ticks
     for r in (ticks if ticks is not None else ticks_for(allz.min() - 0.15, allz.max() + 0.2)):   # shared y axis: labels on the left column only
         yp = Y(np.log2(r))
         if yp < 40 or yp > VH - 40 or info["y0"] + skip[0] - 40 < yp < info["y0"] + skip[1] + 40: continue
-        ax.text(8, np.log2(r), pct(100 * (r - 1)), fontsize=58, fontweight="bold", color=INK, ha="left", va="center", zorder=6)
+        ax.text(tick_right or 8, np.log2(r), pct(100 * (r - 1)), fontsize=58, fontweight="bold", color=INK, ha="right" if tick_right else "left", va="center", zorder=6)   # tick_right: right-align the labels at that x
     ax.axis("off"); fig.savefig(png, dpi=72, facecolor="white"); plt.close(fig)
     return info
 
