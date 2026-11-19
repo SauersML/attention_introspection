@@ -11,7 +11,7 @@ p: two-sided sign-flip test over contexts on the mean % change. Example bubble t
 import json, base64, subprocess, os, html, sys
 import numpy as np, matplotlib
 matplotlib.use("Agg"); import matplotlib.pyplot as plt
-from PIL import Image
+from PIL import Image, ImageFont
 
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import PURPLE, RED, INK, pct_colour
@@ -92,8 +92,11 @@ def method_svg(w, h, cf, ci, rob):
     if NARROW:   # no room right of the answer: one line under the paragraph labels
         dy = 64; o.append(f'<text x="{w / 2:.1f}" y="{ty + sq + 106:.1f}" font-size="{F + 6}" fill="{INK}" text-anchor="middle">averaged over heads and answer tokens</text>')
     else:
-        for j, t in enumerate(["averaged over", "heads and", "answer tokens"]):
-            o.append(f'<text x="{cx + 6:.1f}" y="{ty - 20 + 52 * j:.1f}" font-size="{F + 6}" fill="{INK}" text-anchor="middle">{t}</text>')
+        AL = ["averaged over", "heads and", "answer tokens"]   # shrinks only as far as needed to stay inside the box
+        hv = ImageFont.truetype("/System/Library/Fonts/HelveticaNeue.ttc", 100); cx = (bx + bw + w) / 2
+        AF = min(F + 6, int(100 * (w - bx - bw - 36) / max(hv.getlength(t) for t in AL)))
+        for j, t in enumerate(AL):
+            o.append(f'<text x="{cx:.1f}" y="{ty - 20 + 52 * j:.1f}" font-size="{AF}" fill="{INK}" text-anchor="middle">{t}</text>')
     o.append(f'<line x1="24" x2="{w - 24:.0f}" y1="{ty + 92 + dy}" y2="{ty + 92 + dy}" stroke="#E4E5E9" stroke-width="3"/>')
     # ---- (b) bottom: per-layer curve
     TF = F + 14; TY = F + 30   # y-axis % larger   # axis numbers and "layer": as large as the curve label
@@ -159,7 +162,7 @@ for ctrl, ctag, out in [("1_mention", "mention", "hero_L28_tall" if NARROW else 
         else:    # effect below the dots, p under the effect
             texts.append(a.annotate(eff, (x0, z.min()), xytext=(0, -26), textcoords="offset points", fontsize=100, fontweight="bold", color=colr, ha="center", va="top"))
             texts.append(a.annotate(pt, (x0, z.min()), xytext=(0, -138 - 100 * eff.count(chr(10))), textcoords="offset points", fontsize=44, color=colr, ha="center", va="top"))
-    a.axhline(0, color=INK, lw=4, zorder=4)
+    a.axhline(0, color=INK, lw=4, zorder=0.5)
     a.set_xlim(-0.66, 2.01); a.set_xticks([]); a.set_yticks([])
     for s_ in a.spines.values(): s_.set_visible(False)
     lo, hi = min(allz.min(), 0), max(allz.max(), 0); a.set_ylim(lo, hi)
@@ -212,12 +215,12 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .cub{{background:#1F8BFF;border-radius:26px;padding:14px 16px}}
 .cl{{display:flex;flex-direction:column;gap:2px}} .cl1.big{{font-size:61px}} .cl1{{font-size:46px;font-weight:800;display:flex;align-items:center;gap:14px;white-space:{WS};line-height:1.15}} .cl2{{font-size:44px;font-weight:700;line-height:1.15}}
 .dot{{display:inline-block;flex-shrink:0;width:46px;height:46px;border-radius:50%;background:{PURPLE};opacity:.75}}
-.cl1.nw{{display:block}} .cl1.nw .dot{{vertical-align:middle;margin:0 6px}}
+.cl1.nw{{display:block;white-space:normal}} .cl1.nw .dot{{vertical-align:middle;margin:0 6px}}
 .cub .var{{color:{INK};font-size:46px;white-space:{WS}}}
 .mbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;overflow:hidden}}
 </style></head><body><div class="cols">{"".join(cols)}</div><div class="vw"><img class="vio" src="data:image/png;base64,{VIO}">
   <div class="cbox" style="left:{CB['left']*sc:.0f}px;width:{(CB['right']-CB['left'])*sc:.0f}px;top:{CB['top']*sc:.0f}px;height:{(CB['bottom']-CB['top'])*sc:.0f}px">
-    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}">one dot <span class="dot"></span> = one prompt</div><div class="cl1{" nw" if NARROW else ""}">% change in attention to the named paragraph, compared to:</div></div>
+    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}">one dot <span class="dot"></span> = one prompt</div><div class="cl1 nw">% change in attention to the named paragraph, compared to:</div></div>
     <div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][0].format(k=K))}</div></div></div>
   <div class="mbox" style="left:{(VW + 36) / 2:.0f}px;width:{(VW - 36) / 2:.0f}px;top:{BOX['top']*FH*sc:.0f}px;height:{SVGH:.0f}px">{SVG}</div></div></body></html>'''
     hp = os.path.join(HERE, f"{out}_dose.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, f"{out}_dose_raw.png")
