@@ -1,7 +1,7 @@
 # Privileged-channel test on a list of single words (Qwen3-32B), plus the instruction test on the same contexts.
 # Same design as privileged/privileged.py (results/privileged_shuffled/PREREG.md): arms A (answer queries only), B (answer + report
 # question), C (report question only); doses x1/4 x1/2 x2 x5 x10 on every word in turn; primary wording W1 only.
-# Context: "Here is a list of eight words." + 8 lines "[Wl] noun" (labels randomly permuted to positions), then the
+# Context: "Here is a list of eight words." + 8 lines "[Wl] noun" (labels randomly permuted to positions; [W1]..[W8] in order with --inorder), then the
 # par_arith task. Words: one noun from each of 8 different semantic categories (so no two in a list are related),
 # each a single token after a space.
 # Instruction test: "Focus your attention on word [Wk]." / "Completely ignore word [Wk]. Do not look at it at all." vs
@@ -20,6 +20,7 @@ ap.add_argument("--shard", type=int, default=0)
 ap.add_argument("--nshard", type=int, default=1)
 ap.add_argument("--seed", type=int, default=11)
 ap.add_argument("--limit", type=int, default=0)
+ap.add_argument("--inorder", action="store_true", help="labels in order ([W1]..[WN] in slots 1..N) and report options listed in order")
 args = ap.parse_args()
 os.makedirs(args.out, exist_ok=True)
 OUT = args.out
@@ -131,6 +132,7 @@ for i in range(args.n):
              segs=[rng.choice(POOL[ct]) for ct in cats], cats=cats)
     c["lab"] = [x + 1 for x in rng.sample(range(N), N)]
     c["opt"] = rng.sample(range(1, N + 1), N)
+    if args.inorder: c["lab"] = list(range(1, N + 1)); c["opt"] = list(range(1, N + 1))  # override after the draws
     ctxs.append(c)
 
 QLINE = "Unrelated question: what is {x} + {y}? Answer with just the number."

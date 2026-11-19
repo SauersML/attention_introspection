@@ -2,6 +2,8 @@
 
 Two reviews: a code review of this repository (findings 1–6), and an independent source review by Vesper (`hypha-experiments-1118.md`, findings A1–A4; thanks to Vesper). Each finding below, then what changed. New GPU runs: two small Qwen3-32B pod runs (A100, $1.11 in total, plus $0.16 for two first attempts stopped before loading the model, one out of disk space).
 
+This log predates the in-order reruns: its numbers for the privileged-channel and monitoring tests (and `results/monitor/`, now `results/monitor_shuffled/`) are from the first runs, with shuffled labels or options. The in-order numbers and both runs side by side are in the README, "Checks: shuffled labels".
+
 ## 1. Monitor: "private signal" claim (with Vesper A1, A2)
 Finding: the shuffled self-report is the wrong null (it breaks within-prompt structure and every link to the transcript, so any second noisy reader beats it); the headline used total mass, not the preregistered length-normalised truth; the pass rule verdict was not reported; feedback examples showed the normalised truth.
 Changed:

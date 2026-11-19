@@ -1,11 +1,13 @@
-"""Hero column for the privileged-channel run (Qwen3-32B, 100 paragraph prompts), boost while the report question is read (arm C), largest boost only.
-Top: one real prompt (context 28, hero_question_example.json: the run's prompt text rebuilt by privileged_rebuild.py; labels [P1]..[P4] in order;
-the median of the five in-order paragraph contexts on the specificity below), Qwen's real answer, the report question, and the digit Qwen picks
-(greedy next token) after the prefilled "P" (first report wording) with attention to [P2] boosted while the question is read (nominal x10, measured x6.6 attention mass).
+"""Hero column for the privileged-channel run (Qwen3-32B, 100 paragraph prompts of the in-order run, results/privileged_inorder_full),
+boost while the report question is read (arm C), largest boost only. Labels [P1]..[P4] in slots 1..4, report options in order.
+Top: one real prompt (the paragraphs-with-arithmetic prompt, whose answer fits the bubble, with specificity below nearest the median of all 100; text from privileged_inorder_ctx.json, checked
+against the record), Qwen's real answer, the report question, and the digit Qwen picks (greedy next token) after the prefilled "P"
+(first report wording) with attention to [P2] boosted while the question is read (nominal x10; measured attention mass from results.json).
 A hand-drawn purple syringe goes into the injected robot (purple eyes); a wavy purple aura marks the robot and the report question; the thick purple arrow runs from the report question to [P2], where the boost acts.
 Bottom: one violin, one dot per prompt: rotation specificity (change in log P(report = boosted paragraph) minus the mean change for the
 other paragraphs, averaged over boosting each paragraph in turn), W1, exactly as privileged_fig.py / analyze_priv.py. y on that log scale,
 ticks as % change = exp(.) - 1. Big label: exp(mean) - 1. Black line: the mean. p: two-sided sign-flip test over prompts (200,000 flips).
+The shuffled-label version (results/privileged_shuffled) is figures/shuffled/hero_question.png.
 usage: nice -n 19 python3 hero_question.py   (writes figures/hero_question.png)"""
 import json, glob, math, os, sys, html, base64, subprocess
 import numpy as np, matplotlib
@@ -15,10 +17,9 @@ from PIL import Image
 HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE
 COL = "#E07B24"; AMB = "#F2B53A"; LIL = "#A574F2"
-ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged_shuffled/data/")
+ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/privileged_inorder_full/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
-EX = json.load(open(os.path.join(HERE, "hero_question_example.json")))
-MANIP = json.load(open(os.path.join(ROOT, "results/privileged_shuffled/results.json")))["manip"]
+MANIP = json.load(open(os.path.join(ROOT, "results/privileged_inorder_full/results.json")))["manip"]
 ARM, M = "C", 10.0
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 W = 1400; PAD = 26
@@ -41,8 +42,11 @@ rs = [r for r in R if r["setup"] in ("par_arith", "par_qa")]; assert len(rs) == 
 z = np.array([spec(r, ARM, M) for r in rs]); mu = float(z.mean()); p = signflip(z)
 print(f"C x{M:g}: mean {pct(mu):+.1f}%  p={p:.2g}  n={len(z)}  attention x{MANIP[ARM][str(M)]['mean']:.2f}")
 
-# ---------------- the example prompt ----------------
-rec = {r["id"]: r for r in R}[EX["id"]]
+# ---------------- the example prompt: the arithmetic prompt nearest the median ----------------
+QID = min((i for i, r in enumerate(rs) if r["setup"] == "par_arith"), key=lambda i: abs(z[i] - np.median(z))); QID = rs[QID]["id"]   # arithmetic prompts only: the short answer fits the bubble
+EX = {c["id"]: c for c in json.load(open(os.path.join(HERE, "privileged_inorder_ctx.json")))}[QID]
+rec = {r["id"]: r for r in R}[QID]
+print(f"example context {QID}: specificity {pct(spec(rec, ARM, M)):+.1f}% (median {pct(float(np.median(z))):+.1f}%)")
 assert rec["lab"] == EX["lab"] and rec["opt"] == EX["opt"] and rec["ntok"] == EX["ntok"]
 K = EX["lab"].index(2); order = np.argsort(EX["lab"])
 prob = np.exp(rec[ARM][f"{K}|{M}"]["W1"]); prob0 = np.exp(rec["none"]["W1"])
