@@ -20,9 +20,9 @@ Each figure appears once. The control result (focus/ignore at layer 28) is the r
 
 ![](figures/monitor_logprob.png)
 
-5. The noticing test with word lists instead of paragraphs: Qwen never says Yes, and the figure shows which word they pick when made to name one.
+5. The noticing test with word lists instead of paragraphs: eight single-word lines, one of them boosted, then "did you notice, and which one?". Left: Qwen never says Yes, with or without a boost. Right: when made to start "Yes, word [", how often their top answer is the boosted word's number, as change from no boost (12.5%), with the raw rates above each bar.
 
-![](figures/words_told.png)
+![](figures/words_told_pair.jpg)
 
 ## Can Qwen control their attention when told to?
 

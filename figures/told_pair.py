@@ -20,6 +20,8 @@ HERE = os.path.dirname(os.path.abspath(__file__)); sys.path.insert(0, HERE)
 from pal import INK, PURPLE, pct_colour
 from pfmt import pstr
 import injb_draw as dr
+import told_common as tc
+from told_common import signflip
 ROOT = os.path.dirname(HERE); D = os.path.join(ROOT, "results/told_inject/data/")
 R = sorted([json.loads(l) for f in glob.glob(D + "recs_*.jsonl") for l in open(f) if l.strip()], key=lambda r: r["id"])
 CTX = json.load(open(os.path.join(HERE, "told_contexts.json"))); META = json.load(open(D + "meta.json"))
@@ -30,11 +32,6 @@ assert len(R) == 240
 
 def rn(lp):
     p = np.exp(np.asarray(lp)); return p / p.sum()
-def signflip(x, NF=200000, seed=0):
-    x = np.asarray(x); rng = np.random.default_rng(seed); obs = abs(x.mean()); h = 0
-    for _ in range(NF // 20000):
-        s = rng.choice([-1.0, 1.0], (20000, len(x))); h += int((np.abs((s * x).mean(1)) >= obs).sum())
-    return (h + 1) / (NF + 1)
 yes = lambda t: t.strip().lower().startswith("yes")
 
 MASSES = {m: float(np.mean([np.mean([r["boost"][f"{k}|{m}"]["mass"][k] / r["none"]["mass"][k] for k in range(4)]) for r in R])) for m in MS}
@@ -47,10 +44,7 @@ AC = np.array([np.mean([np.argmax(r["none"]["lp_par"]) == k for k in range(4)]) 
 assert np.all(AC == 0.25)   # no boost: one fixed top answer, so exactly 1 of the 4 rotations matches
 AB = {m: np.array([np.mean([np.argmax(r["boost"][f"{k}|{m}"]["lp_par"]) == k for k in range(4)]) for r in R]) for m in MS}
 PN = signflip(AB[20.0] - 0.25, NF)
-def boot(f, n=20000, seed=1):
-    g = np.random.default_rng(seed); out = np.empty(n)
-    for i in range(n): out[i] = f(g.integers(0, len(R), len(R)))
-    return np.percentile(out, [2.5, 97.5])
+boot = lambda f: tc.boot(f, len(R))
 RY = {m: (YB[m].mean() / YC.mean() - 1, boot(lambda ix, m=m: YB[m][ix].mean() / YC[ix].mean() - 1)) for m in MS}
 RN = {m: (AB[m].mean() / 0.25 - 1, boot(lambda ix, m=m: AB[m][ix].mean() / 0.25 - 1)) for m in MS}
 print("yes %:", f"{100*YC.mean():.1f}", [f"{100*YB[m].mean():.1f}" for m in MS], "relative:", [f"{100*RY[m][0]:+.0f} [{100*RY[m][1][0]:+.0f}, {100*RY[m][1][1]:+.0f}]" for m in MS], "p", PY)
@@ -68,24 +62,8 @@ plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 fig = plt.figure(figsize=(VW / 100, VH / 100), dpi=100)
 ax = fig.add_axes([0, BOT / VH, 1, (VH - TOPH - BOT) / VH])
 ax.set_xlim(0, VW); ax.set_ylim(ylo, yhi)
-def panel(x0, rel, p, base, rate):
-    ax.plot([x0 + LM - 20, x0 + PW], [0, 0], color=INK, lw=4, ls=(0, (4, 3)), zorder=2)   # no boost = no change
-    for t in (0.5, 1.0, 1.5):
-        ax.text(x0 + LM - 30, t, f"+{100*t:.0f}%", ha="right", va="center", fontsize=dr.px(72), fontweight="bold", color=INK)
-    ax.text(x0 + 30, (ylo + yhi) / 2 + 0.12, "change from no boost", rotation=90, ha="center", va="center", fontsize=dr.px(64), fontweight="bold", color=INK)
-    ax.text(x0 + LM - 30, 0, "0% =\nno boost", ha="right", va="center", fontsize=dr.px(60), fontweight="bold", color=INK, linespacing=1.0)
-    for i, m in enumerate(MS):
-        xc = x0 + LM + (i + 0.5) * CW; hw = 0.36 * CW; cxf = xc / VW
-        mu, (lo, hi) = rel[m]
-        ax.bar(xc, mu, width=2 * hw, bottom=0, color=PURPLE, alpha=0.7, lw=0, zorder=3)
-        ax.plot([xc, xc], [lo, hi], color=INK, lw=6, zorder=5, solid_capstyle="butt")
-        for yy in (lo, hi): ax.plot([xc - 0.25 * hw, xc + 0.25 * hw], [yy, yy], color=INK, lw=6, zorder=5, solid_capstyle="butt")
-        if m == MS[-1]:
-            fig.text(cxf, 1 - 178 / VH, pstr(p, floor=1 / (NF + 1)), ha="center", va="top", fontsize=56, color=PURPLE)
-        fig.text(cxf, 1 - 6 / VH, f"{100*mu:+.0f}%".replace("-", "\u2212"), ha="center", va="top", fontsize=78, fontweight="bold", color=PURPLE)
-        fig.text(cxf, 1 - 112 / VH, f"{100*base:.0f}% \u2192 {100*rate[m]:.0f}%", ha="center", va="top", fontsize=36, fontweight="bold", color=INK, family=["Helvetica", "Arial Unicode MS"])
-        fig.text(cxf, 196 / VH, f"\u00d7{MASSES[m]:.1f}", ha="center", va="center", fontsize=78, fontweight="bold", color=INK)
-    fig.text((x0 + LM + 2 * CW) / VW, 52 / VH, "attention on the boosted paragraph", ha="center", va="center", fontsize=dr.px(76), fontweight="bold", color=INK)
+G = dict(PW=PW, LM=LM, CW=CW, VW=VW, VH=VH, ylo=ylo, yhi=yhi)
+panel = lambda x0, rel, p, base, rate: tc.bars_panel(fig, ax, x0, G, MS, rel, base, rate, MASSES, (0.5, 1.0, 1.5), "paragraph", p, NF)
 panel(0, RY, PY, YC.mean(), {m: YB[m].mean() for m in MS})
 panel(PW + GAP, RN, PN, 0.25, {m: AB[m].mean() for m in MS})
 ax.set_xticks([]); ax.set_yticks([])

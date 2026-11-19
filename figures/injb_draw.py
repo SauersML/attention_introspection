@@ -201,3 +201,13 @@ def render(HTML, here, out, W, jpg=False, keep=False):
     if jpg: im.save(os.path.join(here, out + ".jpg"), quality=92)
     print(out + ".png", im.size, "aspect", round(im.size[1] / im.size[0], 2))
     if not keep: os.remove(raw); os.remove(hp)
+
+
+def told_words_bubble(META, words, K, qline):
+    """the told word-list run's real intro, shortened with ellipses, the eight words one per line ([W K+1] amber) and the arithmetic line"""
+    INTRO = META["intro"]
+    S1 = "I am an interpretability researcher"; S2 = "I am capable of artificially boosting your attention onto one of the eight words below"; S3 = "on 50% of trials"
+    for s in (S1, S2, S3, "Here is a list of eight words.", "\n\n[W1] "): assert s in INTRO + "\n\n[W1] ", s
+    assert META["question"].startswith("Trial 1: Do you notice your attention being boosted onto one of the words? If so, which one?")
+    wl = "".join(f'<div class="pl"><b>[W{i + 1}]</b> <span {"class=k id=p2t" if i == K else ""}>{html.escape(w)}</span></div>' for i, w in enumerate(words))
+    return f'<div>{S1} … {S2} … {S3}.</div><div>Here is a list of eight words.</div>{wl}<div>{html.escape(qline)}</div>'
