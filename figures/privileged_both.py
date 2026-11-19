@@ -80,7 +80,7 @@ for (t, a), z in Z.items():
     ax.annotate(neg(f"{pct(ST[t, a]['mean']):+.0f}%"), (cx, top), xytext=(0, 62), textcoords="offset points", ha="center", va="bottom", fontsize=80, fontweight="bold", color=col)
     lab = {"P": SETS[0][1], "W": SETS[1][1]}[t]
     fig.text(cx / W, (AXB - 24) / VH, lab, ha="center", va="top", fontsize=px(58), fontweight="bold", color=INK)
-ax.text(LM - 6, yhi - 115 * (yhi - ylo) / AXH, "% change in the probability\nQwen names the boosted\nparagraph or word", ha="left", va="top", fontsize=px(58), fontweight="bold", color=INK, linespacing=1.1)   # fills the band under the left method column
+ax.text(LM - 6, yhi - 35 * (yhi - ylo) / AXH, "% change in the probability\nQwen names the boosted\nparagraph or word, relative\nto the other options", ha="left", va="top", fontsize=px(58), fontweight="bold", color=INK, linespacing=1.1)   # fills the band under the left method column
 ax.text(W - PAD, -0.04, "no boost", ha="right", va="top", fontsize=px(54), fontweight="bold", color=INK)
 kx, ky = LM + 30, math.log(1 + 1500 / 100)
 ax.scatter([kx], [ky], s=330, c=pct_colour([4.0]), alpha=0.5, edgecolors="none"); ax.scatter([kx], [ky], s=4, color="black")
@@ -96,7 +96,7 @@ def card(i, a, nm):
     return f'''<div class="col"><div class="t1">boost {nm}</div>
 <div class="ub" id="ub{i}">{HEADLINE}<div class="wl">{wl}</div><div>{html.escape(QLINE)}</div></div>
 <div class="mrow"><img class="rob" id="rob{i}" src="data:image/png;base64,{rob}"><div class="mb" id="mb{i}">{html.escape(rec["ans"].strip())}</div></div>
-<div class="ub2" id="rq{i}">{QTEXT} …</div>
+<div class="ub2" id="rq{i}">{QTEXT}</div>
 <div class="mrow fr"><img class="rob" id="frob{i}" src="data:image/png;base64,{robot_inj if a == "C" else robot}"><div class="mb fb" id="fb{i}"><span class="pf">{"P" if PARM else "[W"}<span class="pfl">prefilled</span></span><span class="qm">?</span></div>
 <div class="fl" id="fl{i}"><div class="flq">chance of each<br>number as the<br>next token</div></div></div></div>'''
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>

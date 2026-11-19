@@ -161,7 +161,7 @@ def card(i, a, nm):
     return f'''<div class="col"><div class="t1">boost {nm}</div><div class="t2">attention to the boosted {NOUN} ×{ST[a]["att"]:.1f}</div>
 <div class="ub" id="ub{i}">{HEADLINE}<div class="wl">{wl}</div><div>{html.escape(QLINE)}</div></div>
 <div class="mrow"><img class="rob" id="rob{i}" src="data:image/png;base64,{rob}"><div class="mb" id="mb{i}">{html.escape(rec["ans"].strip())}</div></div>
-<div class="ub2" id="rq{i}">{QTEXT} …</div>
+<div class="ub2" id="rq{i}">{QTEXT}</div>
 <div class="mrow fr"><img class="rob" id="frob{i}" src="data:image/png;base64,{robot_inj if a == "C" else robot}"><div class="mb fb" id="fb{i}"><span class="pf">{"P" if PARM else "[W"}</span><span class="qm">?</span></div>
 <div class="fl" id="fl{i}"><div>prefilled</div><div class="flq">chance of each<br>number read here</div></div></div></div>'''
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
