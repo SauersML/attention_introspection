@@ -59,8 +59,8 @@ def ticks_for(lo, hi):
     cand = [0.25, 0.5, 0.75, 1.5, 2, 3, 4, 6]
     return [r for r in cand if lo < np.log2(r) < hi]
 
-def violins(cols, VW, VH, png, gap=36, seed=1, top_band=200, bot_band=200, ticks=None, skip=(0, 0), mean_mark=False, tick_right=None):
-    """skip: (from, to) px below the dashed baseline kept free of y labels (the baseline label sits there);
+def violins(cols, VW, VH, png, gap=36, seed=1, top_band=200, bot_band=200, ticks=None, skip=(0, 0), mean_mark=False, tick_right=None, cxs=None):
+    """cxs: optional column centres in px (default: centred in each column); skip: (from, to) px below the dashed baseline kept free of y labels (the baseline label sits there);
     mean_mark: a black bar across each violin at its mean % change (log2(1 + mean/100))"""
     """cols: list (one per page column; None = empty column) of dict(z = log2(value / baseline) per prompt, mean = mean % change, p = p text).
     Draws violins on one shared log-ratio y axis (labels on the left column only), dots coloured by pct_colour, dashed baseline at 0,
@@ -81,7 +81,7 @@ def violins(cols, VW, VH, png, gap=36, seed=1, top_band=200, bot_band=200, ticks
     Y = lambda v: (yhi - v) * s   # data -> px from top
     info = dict(CW=CW, y0=Y(0), Y=Y, cx=[], tops=[], bots=[])
     for j, c in enumerate(cols):
-        cx = j * (CW + gap) + CW / 2; info["cx"].append(cx)
+        cx = cxs[j] if cxs else j * (CW + gap) + CW / 2; info["cx"].append(cx)
         if c is None: info["tops"].append(None); info["bots"].append(None); continue
         z = c["z"]; up = c["mean"] > 0; colr = PURPLE if up else RED
         kde = gaussian_kde(z); bw = kde.factor * z.std(); ys = np.linspace(z.min() - 1.2 * bw, z.max() + 1.2 * bw, 500); d = kde(ys)

@@ -58,14 +58,14 @@ for ctrl, ctag, out in [("b_mention", "mention", "hero_before")]:
         numbers[(ctag, c)] = (round(z.mean(), 1), p, nf, round(100 * (z > 0).mean()))
     # ---------- violins: per-prompt % change vs the line that only mentions the paragraph (also placed before), log-ratio axis
     VW = W - 52; VH = 720; vp = os.path.join(TMP, f"_v{out}.png")
-    info = violins(res, VW, VH, vp, skip=(18, 250), mean_mark=True, tick_right=190)
+    info = violins(res, VW, VH, vp, skip=(18, 250), mean_mark=True, tick_right=190, cxs=[930, 3 * VW / 4 + 9])   # focus violin right of the baseline row (0% = and its box on one line)
     base = f'<span>0% =</span><div class="cub"><div class="var">{html.escape(meta["conds"][ctrl][1].format(k=K))}</div></div>'
     cols = "".join(bubble_col(name, col, paras, K, LINE[c], qline, ANS[c], line_first=True,
                               ans_note=f"attention to [P{K}] is measured<br>from these answer tokens") for c, name, col in CONDS)
-    HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>{CSS} body{{width:{W}px}} .vio{{width:{VW}px}}</style></head><body>
+    HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>{CSS} body{{width:{W}px}} .bl.wide .cub{{max-width:660px}} .bl.wide .var{{text-wrap:balance}} .vio{{width:{VW}px}}</style></head><body>
 <div class="cols">{cols}</div>
 <div class="vw"><img class="vio" src="data:image/png;base64,{b64(vp)}">
-<div class="ov bl nar" style="left:8px;top:{info["y0"] + 18:.0f}px">{base}</div>
+<div class="ov bl wide" style="left:8px;top:{info["y0"] + 18:.0f}px">{base}</div>
 <div class="ov" style="left:{info["cx"][1] + 60:.0f}px;top:{info["Y"](np.log2(1.75)):.0f}px">{key_svg()}</div>{labels_html(info, res)}</div></body></html>'''
     render(HTML, W, HERE, out, TMP); os.remove(vp)
 for k, v in numbers.items(): print(k, "mean %+.1f%%  p_signflip=%.2g (of %d flips)  share>0 %d%%" % v)
