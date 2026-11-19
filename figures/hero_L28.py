@@ -109,8 +109,9 @@ def method_svg(w, h, cf, ci, rob):
         pts = " ".join(f"{X(l):.1f},{Y(v):.1f}" for l, v in enumerate(cv))
         o.append(f'<polyline points="{pts}" fill="none" stroke="{col}" stroke-width="5" stroke-linejoin="round"/>')
         o.append(f'<circle cx="{X(28):.1f}" cy="{Y(cv[28]):.1f}" r="11" fill="{col}" stroke="#fff" stroke-width="3"/>')
-    for j, t in enumerate(["violins below:"] + (["layer 28", "(the peak)"] if NARROW else ["layer 28 (the peak)"])):
-        o.append(f'<text x="{X(28) + 22:.1f}" y="{y0 - 6 + 46 * j:.1f}" font-size="{F}" font-weight="700" fill="{INK}" text-anchor="start">{t}</text>')
+    LF = F + 12
+    for j, t in enumerate(["violins below:", "layer 28"]):
+        o.append(f'<text x="{X(28) + 22:.1f}" y="{y0 - 6 + (LF + 8) * j:.1f}" font-size="{LF}" font-weight="700" fill="{INK}" text-anchor="start">{t}</text>')
     defs = f'<defs><marker id="ah" viewBox="0 0 10 10" refX="7" refY="5" markerWidth="4.5" markerHeight="4.5" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="{INK}"/></marker></defs>'
     return f'<svg width="{w:.0f}" height="{h:.0f}" viewBox="0 0 {w:.0f} {h:.0f}" xmlns="http://www.w3.org/2000/svg" font-family="Helvetica Neue,Helvetica,Arial,sans-serif">{defs}{"".join(o)}</svg>'
 
