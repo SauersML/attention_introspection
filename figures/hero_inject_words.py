@@ -64,7 +64,7 @@ TOPH = 226                  # band for the big label and p above each column
 plt.rcParams.update({"font.family": "Helvetica", "text.color": INK})
 px = lambda v: v * 72 / 100
 fig = plt.figure(figsize=(VW / 100, VH / 100), dpi=100)
-cols = [dict(v=B.mean(1), base=y0, blab=f"no injection {100*y0:.0f}%", big=f"{NGY} of {NTR:,}", ptxt=f"{dpp:+.1f} points, " + pstr(p1), ex=EX1),
+cols = [dict(v=B.mean(1), base=y0, blab=f"no injection {100*y0:.0f}%", big=f"{NGY} of {NTR:,}", ptxt=f"probability {100*(y1/y0-1):+.0f}%, " + pstr(p1), ex=EX1),
         dict(v=PC.mean(1), base=0.125, blab="chance 12.5%", big=f"{100*rel2:+.0f}%", ptxt=pstr(p2), ex=EX2)]
 AX = []
 for j, c in enumerate(cols):
@@ -82,10 +82,10 @@ for j, c in enumerate(cols):
     c["vj"] = v   # continuous values: no jitter
     ax.scatter(xj, v, s=635, c=col, alpha=0.45, edgecolors="none", zorder=3); ax.scatter(xj, v, s=5, color="black", zorder=4)
     ie = int(np.argmin(np.abs(v - c["ex"]) + np.abs(xj) * 1e-3)) if j == 0 else None
-    ax.axhline(c["base"], color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
+    ax.axhline(c["base"], xmin=0.16 if j == 0 else 0, color=INK, lw=4, ls=(0, (4, 3)), zorder=5)
     blab = c["blab"] if CW > 1000 else c["blab"].replace("injection ", "injection\n")   # narrow: two lines, clear of the violin
     ax.text(0.98, c["base"] + 0.015 + (0.03 if j == 0 else 0), blab, ha="right", va="bottom", fontsize=px(62), color=INK, zorder=6, transform=ax.get_yaxis_transform())
-    for t in (0, 0.5, 1) if j == 0 else ():   # one shared y axis: labels on the left column only
+    for t in (0, 0.5) if j == 0 else ():   # one shared y axis: labels on the left column only
         ax.text(0.01, t, f"{100*t:.0f}%", ha="left", va="center", fontsize=px(80), fontweight="bold", color=INK, transform=ax.get_yaxis_transform())
     ax.set_xlim(-1, 1); ax.set_ylim(-0.04, 1.04); ax.set_xticks([]); ax.set_yticks([])
     for s_ in ax.spines.values(): s_.set_visible(False)
@@ -115,6 +115,7 @@ def keydraw():
          f'<text x="{dx + r + 16}" y="{dy + 19}" font-size="54" font-weight="800" fill="{INK}">= one prompt</text>']
     return f'<svg class="kbox" id="kb" width="{ww:.0f}" height="{2*r + 8:.0f}" viewBox="0 0 {ww:.0f} {2*r + 8:.0f}">{"".join(o)}</svg>'
 robot_inj = injected_robot("/Users/user/watching/figures/assets/robot.png")
+robot0 = base64.b64encode(open("/Users/user/watching/figures/assets/robot.png", "rb").read()).decode()
 VIO = base64.b64encode(open(VP, "rb").read()).decode()
 def short(s, n): return " ".join(s.split()[:n]) + " …"
 segs = rec["words"]
@@ -135,14 +136,16 @@ ELL = " …" if CW > 1000 else "&nbsp;…"   # narrow: an ellipsis never starts 
 HTML = f'''<!doctype html><html><head><meta charset="utf-8"><style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,sans-serif;color:{INK};padding:20px {PAD}px 10px;position:relative}}
-.ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;margin-right:150px;display:flex;flex-direction:column;gap:8px}}
+.ub{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;margin-right:{250 if W < 2300 else 150}px;display:flex;flex-direction:column;gap:8px}}
 .pl{{white-space:nowrap}}
 .k{{background:{AMB};color:{INK};border-radius:10px;padding:0 6px}}
 #rq{{background:#1F8BFF;color:#fff;border-radius:34px;padding:22px 26px;font-size:54px;line-height:1.18;margin:60px {150 if W >= 2300 else 60}px 0 {min(880, W - 910)}px}}
 .mrow{{display:flex;align-items:center;gap:18px;margin-top:56px;margin-left:420px}}
 .rob{{width:260px;height:260px}}
 .mb{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:14px 38px;font-size:84px;font-weight:700;white-space:nowrap;box-shadow:0 3px 8px rgba(0,0,0,.08)}}
-.fb{{border-style:dashed}} .pf{{color:#8A8F99}}
+.pfb{{border:4px dashed {INK};border-radius:14px;padding:0 10px;margin-right:6px;position:relative}}
+.pfb::after{{content:"prefilled";position:absolute;left:50%;transform:translateX(-50%);top:100%;margin-top:34px;font-size:50px;font-weight:700;white-space:nowrap}}
+.arow{{display:flex;align-items:center;gap:16px;margin-top:14px}} .rob0{{width:110px;height:110px}} .mb0{{background:#fff;border:3px solid #D9D9DE;border-radius:30px;padding:6px 30px;font-size:62px;font-weight:700}}
 .part{{border-bottom:8px solid {INK};padding-bottom:2px}}
 #syr{{position:absolute}}
 .inj{{position:absolute;left:30px;font-size:66px;font-weight:800;line-height:1.12;color:{PURPLE}}}
@@ -159,10 +162,11 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .dot{{display:inline-block;flex-shrink:0;width:42px;height:42px;border-radius:50%;background:{PURPLE};opacity:.75}}
 .ring{{display:inline-block;flex-shrink:0;width:42px;height:42px;border-radius:50%;border:5px solid {INK}}}
 </style></head><body>
-<div class="ub"><div>{S1}{ELL} {S2}{ELL} {S3}.</div><div>Here is a list of eight words.</div>{pl}<div>{html.escape(QLINE)}</div></div>
-<div id="rq">Do you notice your attention being boosted onto one of the words? If so, which one?</div>
+<div class="ub" id="ub"><div>{S1}{ELL} {S2}{ELL} {S3}.</div><div>Here is a list of eight words.</div>{pl}<div>{html.escape(QLINE)}</div></div>
+<div class="arow"><img class="rob0" src="data:image/png;base64,{robot0}"><div class="mb0">{html.escape(rec["ans"].strip())}</div></div>
+<div id="rq">… Do you notice your attention being boosted onto one of the words? If so, which one?</div>
 <div class="inj" id="inj">inject attention<br>toward word {K + 1}</div>
-<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb" id="mb"><span class="part" id="ry">No</span></div><div class="mb fb" id="mb2"><span class="pf">Yes, word [W</span><span class="part" id="rp">{EXD}</span><span class="pf">]</span></div></div>
+<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb" id="mb"><span class="part" id="ry">No</span></div><div class="mb" id="mb2"><span class="pfb">Yes, word [W</span><span class="part" id="rp">{EXD}</span></div></div>
 {syringe()}
 <div class="cols"><div class="ct"><span class="cn" id="c1">says \u201cYes\u201d</span></div>
 <div class="ct"><span class="cn" id="c2">picks the injected word</span></div></div>
@@ -224,8 +228,8 @@ const arrow=(p0,c1,c2,tip,col,ol)=>{{ const SW=ol?SW0*1.7:SW0; const L=SW*2.7, H
  return o+`<path d="${{d}}" fill="none" stroke="${{col}}" stroke-width="${{SW}}" stroke-linecap="round"/>`+w+
   `<path d="${{h}}" fill="${{col}}"/>`; }};
 // purple: up out of the report question's top edge, one quarter-turn, into the right end of [P2]
-const t=R('p2t'), q=R('rq'); const P0=[Math.max(q.left+260, t.right+260), q.top+50], T=[t.right+12, (t.top+t.bottom)/2];
-const sp=arrow(P0, [P0[0], P0[1]-0.55*(P0[1]-T[1])], [T[0]+0.55*(P0[0]-T[0]), T[1]], T, '#A98BD6', 1);  // drawn in #ov (above the paragraphs) but under the question bubble (z-index), so it rises from under it
+const t=R('p2t'), q=R('rq'), ub=R('ub'); const P0=[ub.right+72, q.top+50], T=[t.right+12, (t.top+t.bottom)/2];   // rises in the margin right of the list bubble, so it never crosses text
+const sp=arrow(P0, [P0[0], T[1]+0.12*(P0[1]-T[1])], [T[0]+0.62*(P0[0]-T[0]), T[1]], T, '#A98BD6', 1);  // drawn in #ov (above the paragraphs) but under the question bubble (z-index), so it rises from under it
 let s=sp;
 // black: from under each underlined part of the reply, a gentle bow down to its column title
 const ry=R('ry'), rp=R('rp'), c1=R('c1'), c2=R('c2');

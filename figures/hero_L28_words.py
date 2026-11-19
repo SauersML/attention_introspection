@@ -184,7 +184,7 @@ for ctrl, ctag, out in [("mention", "mention", "hero_L28_words_tall" if NARROW e
     VIO = base64.b64encode(open(os.path.join(HERE, f"v{out}_dose.png"), "rb").read()).decode()
     cols = []
     for c, name, col in CONDS:
-        pl = "".join('<div class="pl">' + "&nbsp; ".join(f'<b class="{"k" if i + 1 == K else ""}">[W{i+1}]</b>&nbsp;{html.escape(words[i])}' for i in range(j, min(j + PER, NW))) + '</div>' for j in range(0, NW, PER))   # PER words per line
+        pl = "".join('<div class="pl">' + "&nbsp; ".join(f'<b>[W{i+1}]</b>&nbsp;<span class="{"k" if i + 1 == K else ""}">{html.escape(words[i])}</span>' for i in range(j, min(j + PER, NW))) + '</div>' for j in range(0, NW, PER))   # PER words per line
         cols.append(f'''<div class="col"><div class="cname" style="color:{col}">{name}</div>
   <div class="ub"><div>Here is a list of eight words.</div>{pl}
     <div class="var" style="color:{col}">{html.escape(LINE[c])}</div>
@@ -215,7 +215,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 .mbox{{position:absolute;background:#fff;border:4px solid #000;border-radius:28px;overflow:hidden}}
 </style></head><body><div class="cols">{"".join(cols)}</div><div class="vw"><img class="vio" src="data:image/png;base64,{VIO}">
   <div class="cbox" style="left:{CB['left']*sc:.0f}px;width:{(CB['right']-CB['left'])*sc:.0f}px;top:{CB['top']*sc:.0f}px;height:{(CB['bottom']-CB['top'])*sc:.0f}px">
-    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}">one dot <span class="dot"></span> = one prompt</div><div class="cl1 nw">% change in attention to the named word, compared to:</div></div>
+    <div class="cl"><div class="cl1 big{" nw" if NARROW else ""}">one dot <span class="dot"></span> = one prompt</div><div class="cl1 nw">% change in attention to the mentioned word, compared to:</div></div>
     <div class="cub"><div class="var">{html.escape(CTRL)}</div></div></div>
   <div class="mbox" style="left:{(VW + 36) / 2:.0f}px;width:{(VW - 36) / 2:.0f}px;top:{BOX['top']*FH*sc:.0f}px;height:{SVGH:.0f}px">{SVG}</div></div></body></html>'''
     hp = os.path.join(HERE, f"{out}_dose.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, f"{out}_dose_raw.png")
