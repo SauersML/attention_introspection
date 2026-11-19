@@ -21,14 +21,14 @@ L2 = {c: np.log2(1 + P[c] / 100) for c in P}   # cell colour = pct_colour(1 + ch
 SH = {c: O[c]["share_named_most"] for c in P}   # share of (prompt, named paragraph) pairs where the named paragraph moved most
 W = 2248
 fig = plt.figure(figsize=(W / 100, 15.6))
-axs = [fig.add_axes([0.085, 0.165, 0.405, 0.6]), fig.add_axes([0.59, 0.165, 0.405, 0.6])]
+axs = [fig.add_axes([0.085, 0.165, 0.405, 0.70]), fig.add_axes([0.59, 0.165, 0.405, 0.70])]
 fmt = lambda v: MN(f"{v:+.0f}%") if round(v) else "0%"
 for a, c, title, col, verb in zip(axs, ["focus", "ignore"], ["focus your attention", "completely ignore"], [PURPLE, RED], ["gains", "loses"]):
     a.imshow(L2[c], cmap=DIV, norm=PCTNORM, aspect="auto")
     for k in range(4):
         for m in range(4):
             v = P[c][k, m]; tc = "white" if abs(L2[c][k, m]) > 1.1 else INK
-            a.text(m, k, fmt(v), ha="center", va="center", fontsize=50 if k == m else 44, fontweight="bold", color=tc)
+            if k == m: a.text(m, k, fmt(v), ha="center", va="center", fontsize=56, fontweight="bold", color=tc)   # only the named cell; colour shows the rest
         a.add_patch(Rectangle((k - 0.5, k - 0.5), 1, 1, fill=False, lw=8, ec=INK, zorder=5))
     a.set_xticks(range(4)); a.set_xticklabels([f"P{i}" for i in range(1, 5)]); a.set_yticks(range(4)); a.set_yticklabels([f"P{i}" for i in range(1, 5)])
     a.xaxis.tick_top(); a.xaxis.set_label_position("top"); a.tick_params(length=0, pad=8, labelsize=40)
@@ -38,9 +38,7 @@ for a, c, title, col, verb in zip(axs, ["focus", "ignore"], ["focus your attenti
     for s_ in a.spines.values(): s_.set_visible(False)
     x0 = a.get_position().x0; xc = x0 + a.get_position().width / 2
     fig.text(xc, 0.995, title, ha="center", va="top", fontsize=62, fontweight="bold", color=col)
-    fig.text(xc - 0.092, 0.893, f"{100 * SH[c]:.0f}%", ha="right", va="center", fontsize=92, fontweight="bold", color=col)
-    fig.text(xc - 0.08, 0.893, f"of prompts: the named\nparagraph {verb} the most\n(chance 25%)", ha="left", va="center", fontsize=33,
-             fontweight="bold", color=INK, linespacing=1.1)
+
 # one shared colour key, on the same fixed scale as the cells
 cax = fig.add_axes([0.3, 0.045, 0.4, 0.045])
 gx = np.linspace(-2, 2, 512)[None, :]; cax.imshow(gx, cmap=DIV, norm=PCTNORM, aspect="auto", extent=(-2, 2, 0, 1))
