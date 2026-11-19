@@ -149,7 +149,7 @@ body{{width:{W}px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,s
 <div class="ub"><div>{S1} … {S2} … {S3}.</div><div>Here are four paragraphs.</div>{pl}</div>
 <div id="rq">Do you notice your attention being boosted onto one of the paragraphs? If so, which one?</div>
 <div class="inj" id="inj">inject attention<br>into paragraph 2</div>
-<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb"><span class="part" id="ry">Yes</span>, <span class="part" id="rp">paragraph [P2]</span></div></div>
+<div class="mrow"><img class="rob" id="rob1" src="data:image/png;base64,{robot_inj}"><div class="mb" id="mb"><span class="part" id="ry">Yes</span>, <span class="part" id="rp">paragraph [P2]</span></div></div>
 {syringe()}
 <div class="cols"><div class="ct"><span class="cn" id="c1">says \u201cYes\u201d</span></div>
 <div class="ct"><span class="cn" id="c2">says the injected paragraph</span></div></div>
@@ -168,18 +168,18 @@ const inj=document.getElementById('inj'), rq0=R('rq'); inj.style.top=(rq0.top-46
 // key box: between the violins, right of column 1's narrow top and left of column 2's narrow middle
 const kb=document.getElementById('kb'), vw=R('vw');
 kb.style.left='{CW/2+95:.0f}px'; kb.style.top='{TOPH+(1.04-0.89)/1.08*(VH-TOPH-30):.0f}px';
-// wavy purple aura around the report question and the injected robot
+// wavy purple aura around the report question, Qwen's reply (the boost stays on while Qwen answers) and the injected robot
 const gl=document.getElementById('gl'); let g=`<defs>`;
 [[0.004,0.010,36,7,1],[0.006,0.014,28,4.5,2],[0.008,0.02,18,2.5,3]].forEach(([fx,fy,sc,bl,i])=>{{
  g+=`<filter id="w${{i}}" x="-30%" y="-30%" width="160%" height="160%"><feTurbulence type="turbulence" baseFrequency="${{fx}} ${{fy}}" numOctaves="2" seed="${{5*i+1}}" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="${{sc}}" xChannelSelector="R" yChannelSelector="G" result="d"/><feGaussianBlur in="d" stdDeviation="${{bl}}"/></filter>`;}});
 g+=`<filter id="haze" x="-40%" y="-40%" width="180%" height="180%"><feGaussianBlur stdDeviation="22"/></filter></defs>`;
 const aura=(r,rad)=>{{ const S=(d,st,col,op,f,fill)=>`<rect x="${{r.left-d}}" y="${{r.top-d}}" width="${{r.width+2*d}}" height="${{r.height+2*d}}" rx="${{rad+d}}" fill="${{fill?col:'none'}}" stroke="${{fill?'none':col}}" stroke-width="${{st}}" opacity="${{op}}" filter="url(#${{f}})"/>`;
  return S(8,0,'#B994FF',0.75,'haze',1)+S(50,5,'#C9A8FF',0.45,'w1')+S(32,7,'{LIL}',0.6,'w2')+S(15,9,'#7B3FE4',0.75,'w3')+S(2,8,'{PURPLE}',0.55,'w3'); }};
-g+=aura(rq0,34); const ro=R('rob1'); g+=aura({{left:ro.left+6,top:ro.top+10,width:ro.width-12,height:ro.height-16}},64);
+g+=aura(rq0,34); g+=aura(R('mb'),30); const ro=R('rob1'); g+=aura({{left:ro.left+6,top:ro.top+10,width:ro.width-12,height:ro.height-16}},64);
 gl.innerHTML=g;
 // hand-shaped arrows: one cubic each, explicit control points; the head is drawn along the end tangent (last control -> tip)
-const SW=8;
-const arrow=(p0,c1,c2,tip,col)=>{{ const L=SW*3.3, H=SW*1.45; let ux=tip[0]-c2[0], uy=tip[1]-c2[1]; const n=Math.hypot(ux,uy); ux/=n; uy/=n;
+const SW=20;
+const arrow=(p0,c1,c2,tip,col)=>{{ const L=SW*2.7, H=SW*1.6; let ux=tip[0]-c2[0], uy=tip[1]-c2[1]; const n=Math.hypot(ux,uy); ux/=n; uy/=n;
  const e=[tip[0]-L*ux, tip[1]-L*uy], b=[e[0]+1.5*ux, e[1]+1.5*uy];
  return `<path d="M${{p0}} C${{c1}} ${{c2}} ${{e}}" fill="none" stroke="${{col}}" stroke-width="${{SW}}" stroke-linecap="round"/>`+
   `<path d="M${{tip}} L${{b[0]-H*uy}},${{b[1]+H*ux}} L${{b[0]+H*uy}},${{b[1]-H*ux}} Z" fill="${{col}}"/>`; }};
@@ -192,7 +192,7 @@ const ry=R('ry'), rp=R('rp'), c1=R('c1'), c2=R('c2');
 const quad=(p0,Q,tip,col)=>arrow(p0,[p0[0]+2/3*(Q[0]-p0[0]),p0[1]+2/3*(Q[1]-p0[1])],[tip[0]+2/3*(Q[0]-tip[0]),tip[1]+2/3*(Q[1]-tip[1])],tip,col);
 const cx=r=>(r.left+r.right)/2;
 // mirror pair: each leaves its underline almost straight down and turns outward by about 40 degrees onto its title
-const yt=c1.top+4, ys=ry.bottom+16, dy=yt-ys;
+const yt=c1.top-12, ys=ry.bottom+16, dy=yt-ys;
 for (const [p0x,sg] of [[cx(ry),-1],[rp.left+0.78*rp.width,1]]) {{
  const p0=[p0x,ys], tip=[p0x+sg*0.8*dy,yt]; s+=quad(p0,[p0x+sg*0.12*dy,ys+0.5*dy],tip,'{INK}'); }}
 document.getElementById('ov').innerHTML=s;
