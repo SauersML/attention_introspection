@@ -20,8 +20,8 @@ P = {c: np.array(O[c]["mean"]) for c in ["focus", "ignore"]}
 L2 = {c: np.log2(1 + P[c] / 100) for c in P}   # cell colour = pct_colour(1 + change/100): the fixed ¼×..4× scale of every figure
 SH = {c: O[c]["share_named_most"] for c in P}   # share of (prompt, named paragraph) pairs where the named paragraph moved most
 W = 2248
-fig = plt.figure(figsize=(W / 100, 15.6))
-axs = [fig.add_axes([0.085, 0.165, 0.405, 0.70]), fig.add_axes([0.59, 0.165, 0.405, 0.70])]
+fig = plt.figure(figsize=(W / 100, 16.6))
+axs = [fig.add_axes([0.085, 0.215, 0.405, 0.605]), fig.add_axes([0.59, 0.215, 0.405, 0.605])]
 fmt = lambda v: MN(f"{v:+.0f}%") if round(v) else "0%"
 for a, c, title, col, verb in zip(axs, ["focus", "ignore"], ["focus your attention", "completely ignore"], [PURPLE, RED], ["gains", "loses"]):
     a.imshow(L2[c], cmap=DIV, norm=PCTNORM, aspect="auto")
@@ -31,23 +31,24 @@ for a, c, title, col, verb in zip(axs, ["focus", "ignore"], ["focus your attenti
             if k == m: a.text(m, k, fmt(v), ha="center", va="center", fontsize=56, fontweight="bold", color=tc)   # only the named cell; colour shows the rest
         a.add_patch(Rectangle((k - 0.5, k - 0.5), 1, 1, fill=False, lw=8, ec=INK, zorder=5))
     a.set_xticks(range(4)); a.set_xticklabels([f"P{i}" for i in range(1, 5)]); a.set_yticks(range(4)); a.set_yticklabels([f"P{i}" for i in range(1, 5)])
-    a.xaxis.tick_top(); a.xaxis.set_label_position("top"); a.tick_params(length=0, pad=8, labelsize=40)
+    a.xaxis.tick_top(); a.xaxis.set_label_position("top"); a.tick_params(length=0, pad=8, labelsize=48)
     for t in a.get_xticklabels() + a.get_yticklabels(): t.set_fontweight("bold")
-    a.set_xlabel("attention to paragraph", fontsize=36, fontweight="bold", labelpad=8)
-    a.set_ylabel("paragraph named in the line", fontsize=34, fontweight="bold", labelpad=8)
+    a.set_xlabel("attention to paragraph", fontsize=54, fontweight="bold", labelpad=10)
+    a.set_ylabel("paragraph mentioned", fontsize=54, fontweight="bold", labelpad=10)
     for s_ in a.spines.values(): s_.set_visible(False)
     x0 = a.get_position().x0; xc = x0 + a.get_position().width / 2
-    fig.text(xc, 0.995, title, ha="center", va="top", fontsize=62, fontweight="bold", color=col)
+    a.text(0.5, 1.165, title, transform=a.transAxes, ha="center", va="bottom", fontsize=62, fontweight="bold", color=col)
 
 # one shared colour key, on the same fixed scale as the cells
-cax = fig.add_axes([0.3, 0.045, 0.4, 0.045])
+cax = fig.add_axes([0.3, 0.125, 0.4, 0.036])
 gx = np.linspace(-2, 2, 512)[None, :]; cax.imshow(gx, cmap=DIV, norm=PCTNORM, aspect="auto", extent=(-2, 2, 0, 1))
 cax.set_yticks([]); tk = [-2, -1, 0, 1, 2]; cax.set_xticks(tk)
 cax.set_xticklabels([MN(f"{100 * (2.0 ** t - 1):+.0f}%") if t else "0%" for t in tk]); cax.tick_params(labelsize=40, length=0, pad=8)
 for t in cax.get_xticklabels(): t.set_fontweight("bold")
 for s_ in cax.spines.values(): s_.set_visible(False)
-fig.text(0.29, 0.0675, "less attention", ha="right", va="center", fontsize=42, fontweight="bold", color=RED)
-fig.text(0.71, 0.0675, "more attention", ha="left", va="center", fontsize=42, fontweight="bold", color=PURPLE)
+fig.text(0.29, 0.143, "less attention", ha="right", va="center", fontsize=42, fontweight="bold", color=RED)
+fig.text(0.71, 0.143, "more attention", ha="left", va="center", fontsize=42, fontweight="bold", color=PURPLE)
+fig.text(0.5, 0.008, "% change in how much Qwen's answer attends to each paragraph,\ncompared to only mentioning the paragraph", ha="center", va="bottom", linespacing=1.15, fontsize=44, fontweight="bold", color=INK)
 hm = os.path.join(HERE, "_rotate2_maps.png"); fig.savefig(hm, dpi=100, facecolor="white"); plt.close(fig)
 # ---- method on top: the real prompt of context 0
 R = json.load(open(os.path.join(D, "R2.json"))); r = R[0]
@@ -76,7 +77,7 @@ body{{width:2300px;background:#fff;font-family:"Helvetica Neue",Helvetica,Arial,
 <div class="alt">{chip(LN["mention"], INK, '<div class="lab">← 0%</div>')}{chip(LN["focus"], PURPLE)}{chip(LN["ignore"], RED, '<div class="lab">[Pk] = P1, P2, P3 or P4</div>')}</div>
 <div>{html.escape(q)}</div></div>
 <div class="mrow"><img class="rob" src="data:image/png;base64,{robot}"><div class="mb">{html.escape(r["ans_none"].strip())}</div>
-<div class="ref">% = change in attention from<br>the answer to each paragraph</div></div>
+</div>
 <img class="maps" src="data:image/png;base64,{maps}"></body></html>'''
 CH = "/Users/user/.pw/chromium-1248/chrome-mac-arm64/Google Chrome for Testing.app/Contents/MacOS/Google Chrome for Testing"
 hp = os.path.join(HERE, "rotate2.html"); open(hp, "w").write(HTML); raw = os.path.join(HERE, "rotate2_raw.png")
